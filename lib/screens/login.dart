@@ -323,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: _loading
                                     ? null
                                     : () => Navigator.pushNamed(context, '/cadastro'),
-                                child: const Text("Ainda não possui cadastro? Cadastre-se.",
+                                child: const Text("Ainda não possui cadastro?Cadastre-se.",
                                 style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontStyle: FontStyle.italic,
