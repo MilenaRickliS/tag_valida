@@ -189,190 +189,202 @@ class _CadastroScreenState extends State<CadastroScreen> {
           padding: const EdgeInsets.all(16),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
-            child: Card(
-              color: Colors.white,
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _field(
-                        c: nome,
-                        label: "Nome (fantasia)",
-                        validator: (v) => _req(v, "o nome"),
-                        prefixIcon: const Icon(Icons.storefront_outlined),
-                      ),
-                      _field(
-                        c: razao,
-                        label: "Razão social",
-                        validator: (v) => _req(v, "a razão social"),
-                        prefixIcon: const Icon(Icons.business_outlined),
-                      ),
-                      _field(
-                        c: email,
-                        label: "E-mail",
-                        type: TextInputType.emailAddress,
-                        validator: (v) {
-                          final s = (v ?? "").trim();
-                          if (s.isEmpty) return "Informe o e-mail";
-                          if (!s.contains("@")) return "E-mail inválido";
-                          return null;
-                        },
-                        prefixIcon: const Icon(Icons.email_outlined),
-                      ),
-                      _field(
-                        c: senha,
-                        label: "Senha",
-                        obscure: _obscure,
-                        validator: (v) {
-                          if ((v ?? "").isEmpty) return "Informe a senha";
-                          if ((v ?? "").length < 6) return "Senha deve ter no mínimo 6 caracteres";
-                          return null;
-                        },
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                          icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+            child:
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/logo1.png',
+                  height: 90,
+                ),
+
+                const SizedBox(height: 16), 
+              Card(
+                color: Colors.white,
+                elevation: 3,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _field(
+                          c: nome,
+                          label: "Nome (fantasia)",
+                          validator: (v) => _req(v, "o nome"),
+                          prefixIcon: const Icon(Icons.storefront_outlined),
                         ),
-                      ),
+                        _field(
+                          c: razao,
+                          label: "Razão social",
+                          validator: (v) => _req(v, "a razão social"),
+                          prefixIcon: const Icon(Icons.business_outlined),
+                        ),
+                        _field(
+                          c: email,
+                          label: "E-mail",
+                          type: TextInputType.emailAddress,
+                          validator: (v) {
+                            final s = (v ?? "").trim();
+                            if (s.isEmpty) return "Informe o e-mail";
+                            if (!s.contains("@")) return "E-mail inválido";
+                            return null;
+                          },
+                          prefixIcon: const Icon(Icons.email_outlined),
+                        ),
+                        _field(
+                          c: senha,
+                          label: "Senha",
+                          obscure: _obscure,
+                          validator: (v) {
+                            if ((v ?? "").isEmpty) return "Informe a senha";
+                            if ((v ?? "").length < 6) return "Senha deve ter no mínimo 6 caracteres";
+                            return null;
+                          },
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(() => _obscure = !_obscure),
+                            icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                          ),
+                        ),
 
-                      const Divider(height: 24),
+                        const Divider(height: 24),
 
-                      _field(
-                        c: cnpj,
-                        label: "CNPJ",
-                        type: TextInputType.number,
-                        validator: (v) => _req(v, "o CNPJ", min: 11),
-                        prefixIcon: const Icon(Icons.badge_outlined),
-                      ),
-                      _field(
-                        c: telefone,
-                        label: "Telefone",
-                        type: TextInputType.phone,
-                        validator: (v) => _req(v, "o telefone", min: 8),
-                        prefixIcon: const Icon(Icons.phone_outlined),
-                      ),
-                      _field(
-                        c: responsavel,
-                        label: "Responsável",
-                        validator: (v) => _req(v, "o responsável"),
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
+                        _field(
+                          c: cnpj,
+                          label: "CNPJ",
+                          type: TextInputType.number,
+                          validator: (v) => _req(v, "o CNPJ", min: 11),
+                          prefixIcon: const Icon(Icons.badge_outlined),
+                        ),
+                        _field(
+                          c: telefone,
+                          label: "Telefone",
+                          type: TextInputType.phone,
+                          validator: (v) => _req(v, "o telefone", min: 8),
+                          prefixIcon: const Icon(Icons.phone_outlined),
+                        ),
+                        _field(
+                          c: responsavel,
+                          label: "Responsável",
+                          validator: (v) => _req(v, "o responsável"),
+                          prefixIcon: const Icon(Icons.person_outline),
+                        ),
 
-                      const Divider(height: 24),
+                        const Divider(height: 24),
 
-                      _field(
-                        c: cep,
-                        label: "CEP",
-                        type: TextInputType.number,
-                        validator: (v) => _req(v, "o CEP", min: 8),
-                        prefixIcon: const Icon(Icons.location_on_outlined),
-                      ),
-                      _field(
-                        c: rua,
-                        label: "Rua",
-                        validator: (v) => _req(v, "a rua"),
-                        prefixIcon: const Icon(Icons.signpost_outlined),
-                      ),
-                      _field(
-                        c: numero,
-                        label: "Número",
-                        type: TextInputType.number,
-                        validator: (v) => _req(v, "o número"),
-                        prefixIcon: const Icon(Icons.tag_outlined),
-                      ),
-                      _field(
-                        c: bairro,
-                        label: "Bairro",
-                        validator: (v) => _req(v, "o bairro"),
-                        prefixIcon: const Icon(Icons.map_outlined),
-                      ),
-                      _field(
-                        c: complemento,
-                        label: "Complemento (opcional)",
-                        validator: (_) => null,
-                        prefixIcon: const Icon(Icons.add_location_alt_outlined),
-                      ),
-                      _field(
-                        c: cidade,
-                        label: "Cidade",
-                        validator: (v) => _req(v, "a cidade"),
-                        prefixIcon: const Icon(Icons.location_city_outlined),
-                      ),
-                      _field(
-                        c: estado,
-                        label: "Estado (UF)",
-                        validator: (v) => _req(v, "o estado/UF", min: 2),
-                        prefixIcon: const Icon(Icons.flag_outlined),
-                      ),
-                      _field(
-                        c: logo,
-                        label: "Logo (URL ou caminho) (opcional)",
-                        validator: (_) => null,
-                        prefixIcon: const Icon(Icons.image_outlined),
-                      ),
+                        _field(
+                          c: cep,
+                          label: "CEP",
+                          type: TextInputType.number,
+                          validator: (v) => _req(v, "o CEP", min: 8),
+                          prefixIcon: const Icon(Icons.location_on_outlined),
+                        ),
+                        _field(
+                          c: rua,
+                          label: "Rua",
+                          validator: (v) => _req(v, "a rua"),
+                          prefixIcon: const Icon(Icons.signpost_outlined),
+                        ),
+                        _field(
+                          c: numero,
+                          label: "Número",
+                          type: TextInputType.number,
+                          validator: (v) => _req(v, "o número"),
+                          prefixIcon: const Icon(Icons.tag_outlined),
+                        ),
+                        _field(
+                          c: bairro,
+                          label: "Bairro",
+                          validator: (v) => _req(v, "o bairro"),
+                          prefixIcon: const Icon(Icons.map_outlined),
+                        ),
+                        _field(
+                          c: complemento,
+                          label: "Complemento (opcional)",
+                          validator: (_) => null,
+                          prefixIcon: const Icon(Icons.add_location_alt_outlined),
+                        ),
+                        _field(
+                          c: cidade,
+                          label: "Cidade",
+                          validator: (v) => _req(v, "a cidade"),
+                          prefixIcon: const Icon(Icons.location_city_outlined),
+                        ),
+                        _field(
+                          c: estado,
+                          label: "Estado (UF)",
+                          validator: (v) => _req(v, "o estado/UF", min: 2),
+                          prefixIcon: const Icon(Icons.flag_outlined),
+                        ),
+                        _field(
+                          c: logo,
+                          label: "Logo (URL ou caminho) (opcional)",
+                          validator: (_) => null,
+                          prefixIcon: const Icon(Icons.image_outlined),
+                        ),
 
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                      ElevatedButton(
-                        onPressed: _loading ? null : _cadastrar,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:const Color(0xFFC29500),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: const BorderSide(
-                                    color: Colors.black,
-                                    width: 1.5,
+                        ElevatedButton(
+                          onPressed: _loading ? null : _cadastrar,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:const Color(0xFFC29500),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: const BorderSide(
+                                      color: Colors.black,
+                                      width: 1.5,
+                                    ),
+                          ),
+
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text("Cadastrar", style: TextStyle(
+                                        fontWeight: FontWeight.w600),
                                   ),
                         ),
 
-                        child: _loading
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text("Cadastrar", style: TextStyle(
-                                      fontWeight: FontWeight.w600),
+                        const SizedBox(height: 10),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                            onPressed: _loading
+                                  ? null
+                                  : () => Navigator.pushNamed(context, '/login'),
+                              child: const Text(
+                                "Já possui conta? Faça login.",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.black,               
+                                  decoration: TextDecoration.underline, 
+                                  
                                 ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                           onPressed: _loading
-                                ? null
-                                : () => Navigator.pushNamed(context, '/login'),
-                            child: const Text(
-                              "Já possui conta? Faça login.",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black,               
-                                decoration: TextDecoration.underline, 
-                                
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
 
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              ],
           ),
         ),
       ),
+    )
     );
   }
 }
