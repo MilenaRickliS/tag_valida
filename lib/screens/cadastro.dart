@@ -115,10 +115,61 @@ class _CadastroScreenState extends State<CadastroScreen> {
         obscureText: obscure,
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
+          labelStyle: const TextStyle(
+            color: Colors.black54,
+          ),
+          floatingLabelStyle: const TextStyle(
+            color: Color(0xFFC29500),
+            fontWeight: FontWeight.w600,
+          ),
+
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.85),
+
           prefixIcon: prefixIcon,
           suffixIcon: suffixIcon,
+
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.black.withOpacity(0.15),
+            ),
+          ),
+
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFFC29500), 
+              width: 1.8,
+            ),
+          ),
+
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.red,
+            ),
+          ),
+
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 1.5,
+            ),
+          ),
         ),
+
         validator: validator,
       ),
     );
@@ -129,7 +180,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
       appBar: AppBar(
-        title: const Text("Cadastro"),
+        title: const Text("Cadastro", style: TextStyle(fontWeight: FontWeight.w600),),
         backgroundColor: const Color(0xFFFDF7ED),
         elevation: 0,
       ),
@@ -139,6 +190,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
             child: Card(
+              color: Colors.white,
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
@@ -269,16 +321,25 @@ class _CadastroScreenState extends State<CadastroScreen> {
                       ElevatedButton(
                         onPressed: _loading ? null : _cadastrar,
                         style: ElevatedButton.styleFrom(
+                          backgroundColor:const Color(0xFFC29500),
+                          foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: const BorderSide(
+                                    color: Colors.black,
+                                    width: 1.5,
+                                  ),
                         ),
+
                         child: _loading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text("Cadastrar"),
+                            : const Text("Cadastrar", style: TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                ),
                       ),
 
                       const SizedBox(height: 10),
@@ -286,13 +347,24 @@ class _CadastroScreenState extends State<CadastroScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text("Já tem conta? "),
                           TextButton(
-                            onPressed: _loading ? null : () => Navigator.pop(context),
-                            child: const Text("Voltar para login"),
+                           onPressed: _loading
+                                ? null
+                                : () => Navigator.pushNamed(context, '/login'),
+                            child: const Text(
+                              "Já possui conta? Faça login.",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.black,               
+                                decoration: TextDecoration.underline, 
+                                
+                              ),
+                            ),
                           ),
                         ],
                       ),
+
                     ],
                   ),
                 ),
