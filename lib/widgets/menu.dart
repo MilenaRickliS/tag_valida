@@ -37,7 +37,7 @@ class TopMenu extends StatelessWidget {
           MenuIcon(
             tooltip: "Home",
             icon: Icons.home_outlined,
-            onPressed: () {},
+            onPressed: () => Navigator.pushNamed(context, '/home'),
             size: btnSize,
             iconSize: iconSize,
             borderW: borderW,
@@ -47,7 +47,7 @@ class TopMenu extends StatelessWidget {
           MenuIcon(
             tooltip: "Perfil",
             icon: Icons.person_outline,
-            onPressed: () {},
+            onPressed: () => Navigator.pushNamed(context, '/perfil'),
             size: btnSize,
             iconSize: iconSize,
             borderW: borderW,
@@ -57,7 +57,7 @@ class TopMenu extends StatelessWidget {
           MenuIcon(
             tooltip: "Ajuda",
             icon: Icons.help_outline,
-            onPressed: () {},
+            onPressed: () => Navigator.pushNamed(context, '/ajuda'),
             size: btnSize,
             iconSize: iconSize,
             borderW: borderW,

@@ -6,10 +6,14 @@ class HomeBackgroundArc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _ArcPainter(compact: compact),
-      child: const SizedBox.expand(),
+    return IgnorePointer(
+      ignoring: true,
+      child: CustomPaint(
+        painter: _ArcPainter(compact: compact),
+        child: const SizedBox.expand(),
+      ),
     );
+
   }
 }
 

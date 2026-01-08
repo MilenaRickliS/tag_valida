@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           final quickActions = <Widget>[
             CameraFabCard(
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, '/prever-validade'),
             ),
 
           ];
