@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/menu.dart';
-import '../widgets/home_background_arc.dart';
 import '../widgets/home_menu_card_v2.dart';
 import '../widgets/camera_fab_card.dart';
 
@@ -14,6 +13,59 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Widget produtosValidosLink(BuildContext context,
+      {double titleSize = 28, double subtitleSize = 13}) {
+    return InkWell(
+      onTap: () => Navigator.pushNamed(context, '/etiquetas-ativas'),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          children: [
+            Text(
+              "Todos os produtos\ndentro da validade",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: titleSize,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF2E8B73),
+                height: 1.12,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Clique aqui para visualizar seus produtos",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: subtitleSize,
+                decoration: TextDecoration.underline,
+                color: Colors.black.withOpacity(0.55),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _gridColumns(double w) {
+    if (w < 600) return 1; 
+    if (w < 1024) return 2;
+    return 4; 
+  }
+
+  double _gridAspect(double w) {
+    if (w < 600) return 2.25;
+    if (w < 1024) return 1.15;
+    return 0.95;
+  }
+
+  double _contentMaxWidth(double w) {
+    if (w < 600) return 520;
+    if (w < 1024) return 860;
+    return 1180;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -24,229 +76,141 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return const SizedBox();
     }
-
+  final w = MediaQuery.of(context).size.width;
+  final compact = w < 835;
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final compact = w < 835;
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFDF7ED),
+        elevation: 0,
+        toolbarHeight: compact ? 160 : 100, 
+        centerTitle: true,
+        title: compact
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/logo1.png', height: 78),
+                  const SizedBox(height: 10),
+                  const TopMenu(),
+                ],
+              )
+            : Row(
+                children: [
+                  Image.asset('assets/logo1.png', height: 92),
+                  const Spacer(),
+                  const TopMenu(),
+                ],
+              ),
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final cols = _gridColumns(w);
+            final maxW = _contentMaxWidth(w);
 
+            final isMobile = w < 600;
+            final titleSize = isMobile ? 26.0 : (w < 1024 ? 30.0 : 34.0);
+            final subtitleSize = isMobile ? 13.0 : 14.0;
 
-          final quickActions = <Widget>[
-            CameraFabCard(
-              onTap: () => Navigator.pushNamed(context, '/prever-validade'),
-            ),
-
-          ];
-
-          return Scaffold(
-            backgroundColor: const Color(0xFFFDF7ED),
-            appBar: AppBar(
-              backgroundColor: const Color(0xFFFDF7ED),
-              elevation: 0,
-              toolbarHeight: compact ? 150 : 100, 
-              title: compact
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Image.asset('assets/logo1.png', height: 86),
-                        const SizedBox(height: 12),
-                        const TopMenu(), 
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        Image.asset('assets/logo1.png', height: 100),
-                        const Spacer(),
-                        const TopMenu(),
-                      ],
-                    ),
-              centerTitle: compact, 
-            ),
-            body: Stack(
-              children: [
-                
-                Positioned.fill(child: HomeBackgroundArc(compact: compact)),
-
-              
-                if (compact)
-                 
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(18, 24, 18, 28),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 14),
-                          const Text(
-                            "Todos os produtos\ndentro da validade",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF2E8B73),
-                              height: 1.15,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "Clique aqui para visualizar seus produtos",
-                            style: TextStyle(
-                              fontSize: 13,
-                              decoration: TextDecoration.underline,
-                              color: Colors.black.withOpacity(0.55),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 20),
-
-                       
-                          Column(
-                            children: [
-                              for (int i = 0; i < quickActions.length; i++) ...[
-                                quickActions[i],
-                                if (i != quickActions.length - 1) const SizedBox(height: 14),
-                              ]
-                            ],
-                          ),
-
-                          const SizedBox(height: 22),
-
-                          GridView.count(
-                            crossAxisCount: 1,
-                            crossAxisSpacing: 14,
-                            mainAxisSpacing: 14,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            childAspectRatio: 3.0, 
-                            children: [
-                              HomeMenuCardV2(
-                                icon: Icons.add_circle_outline,
-                                title: "Criar etiqueta",
-                                subtitle: "Clique aqui para criar uma nova etiqueta para seus produtos",
-                                onTap: () => Navigator.pushNamed(context, '/criar-etiqueta'),
-                              ),
-                              HomeMenuCardV2(
-                                icon: Icons.check_circle_outline,
-                                title: "Etiquetas ativas",
-                                subtitle: "Clique aqui para ver todas as suas etiquetas ativas no estoque",
-                                onTap: () => Navigator.pushNamed(context, '/etiquetas-ativas'),
-                              ),
-                              HomeMenuCardV2(
-                                icon: Icons.event_note_outlined,
-                                title: "Etiquetas diárias",
-                                subtitle:
-                                    "Clique aqui para ver todas as suas etiquetas diárias (produtos que são sempre feitos)",
-                                onTap: () => Navigator.pushNamed(context, '/etiquetas-diarias'),
-                              ),
-                              HomeMenuCardV2(
-                                icon: Icons.settings_outlined,
-                                title: "Configurações",
-                                subtitle: "Clique aqui para ir até as configurações do app",
-                                onTap: () => Navigator.pushNamed(context, '/configuracoes'),
-                              ),
-                            ],
-                          ),
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 16 : 24,
+                vertical: isMobile ? 16 : 24,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxW),
+                  child: Container(
+                    padding: EdgeInsets.all(isMobile ? 16 : 22),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFB7E4C7),
+                          Color(0xFF74C69D),
+                          Color(0xFF40916C),
                         ],
                       ),
-                    ),
-                  )
-                else
-                  
-                  Stack(
-                    children: [
-                     
-                      Positioned(
-                        right: 26,
-                        top: 40,
-                        child: Column(
-                          children: [
-                            for (int i = 0; i < quickActions.length; i++) ...[
-                              quickActions[i],
-                              if (i != quickActions.length - 1) const SizedBox(height: 14),
-                            ],
-                          ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.16),
+                          blurRadius: 26,
+                          offset: const Offset(0, 14),
                         ),
-                      ),
-                      Align(
-                        alignment: Alignment.topCenter,
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(top: 80, left: 40, right: 40, bottom: 40),
-                          child: Column(
-                            children: [
-                              const Text(
-                                "Todos os produtos\ndentro da validade",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2E8B73),
-                                  height: 1.15,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                "Clique aqui para visualizar seus produtos",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  decoration: TextDecoration.underline,
-                                  color: Colors.black.withOpacity(0.55),
-                                ),
-                              ),
-                              const SizedBox(height: 34),
-                              SizedBox(
-                                width: w >= 900 ? 980 : double.infinity,
-                                child: GridView.count(
-                                  crossAxisCount: w >= 900 ? 4 : 2,
-                                  crossAxisSpacing: 22,
-                                  mainAxisSpacing: 22,
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  childAspectRatio: w >= 900 ? 0.78 : 0.9,
-                                  children: [
-                                    HomeMenuCardV2(
-                                      icon: Icons.add_circle_outline,
-                                      title: "Criar etiqueta",
-                                      subtitle:
-                                          "Clique aqui para criar uma nova etiqueta para seus produtos",
-                                      onTap: () => Navigator.pushNamed(context, '/criar-etiqueta'),
-                                    ),
-                                    HomeMenuCardV2(
-                                      icon: Icons.check_circle_outline,
-                                      title: "Etiquetas ativas",
-                                      subtitle:
-                                          "Clique aqui para ver todas as suas etiquetas ativas no estoque",
-                                      onTap: () => Navigator.pushNamed(context, '/etiquetas-ativas'),
-                                    ),
-                                    HomeMenuCardV2(
-                                      icon: Icons.event_note_outlined,
-                                      title: "Etiquetas diárias",
-                                      subtitle:
-                                          "Clique aqui para ver todas as suas etiquetas diárias (produtos que são sempre feitos)",
-                                      onTap: () => Navigator.pushNamed(context, '/etiquetas-diarias'),
-                                    ),
-                                    HomeMenuCardV2(
-                                      icon: Icons.settings_outlined,
-                                      title: "Configurações",
-                                      subtitle:
-                                          "Clique aqui para ir até as configurações do app",
-                                      onTap: () => Navigator.pushNamed(context, '/configuracoes'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        produtosValidosLink(
+                          context,
+                          titleSize: titleSize,
+                          subtitleSize: subtitleSize,
+                        ),
+                        const SizedBox(height: 18),
+
+                      
+                        Align(
+                          alignment: Alignment.center,
+                          child: CameraFabCard(
+                            width: isMobile ? double.infinity : 420,
+                            height: 98,
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/prever-validade'),
                           ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 22),
+
+                        GridView.count(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          childAspectRatio: _gridAspect(w),
+                          children: [
+                            HomeMenuCardV2(
+                              icon: Icons.add_circle_outline,
+                              title: "Criar etiqueta",
+                              subtitle:
+                                  "Crie uma nova etiqueta para seus produtos",
+                              onTap: () => Navigator.pushNamed(
+                                  context, '/criar-etiqueta'),
+                            ),
+                            HomeMenuCardV2(
+                              icon: Icons.check_circle_outline,
+                              title: "Etiquetas ativas",
+                              subtitle: "Veja as etiquetas ativas no estoque",
+                              onTap: () => Navigator.pushNamed(
+                                  context, '/etiquetas-ativas'),
+                            ),
+                            HomeMenuCardV2(
+                              icon: Icons.event_note_outlined,
+                              title: "Etiquetas diárias",
+                              subtitle: "Produtos feitos diariamente",
+                              onTap: () => Navigator.pushNamed(
+                                  context, '/etiquetas-diarias'),
+                            ),
+                            HomeMenuCardV2(
+                              icon: Icons.settings_outlined,
+                              title: "Configurações",
+                              subtitle: "Ajustes do aplicativo",
+                              onTap: () => Navigator.pushNamed(
+                                  context, '/configuracoes'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
-          );
-        },
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

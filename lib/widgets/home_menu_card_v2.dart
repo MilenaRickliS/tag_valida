@@ -17,52 +17,87 @@ class HomeMenuCardV2 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      color: Colors.white.withOpacity(0.94),
+      borderRadius: BorderRadius.circular(22),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2A2828), width: 1.2),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.10),
-                blurRadius: 10,
-                offset: const Offset(0, 6),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+           
               Text(
-                title.toLowerCase(),
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 14),
+
+              const SizedBox(height: 12),
+
+              
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(icon, size: 18, color: Colors.black54),
-                  const SizedBox(width: 8),
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      border: Border.all(
+                        color: Colors.black.withOpacity(0.08),
+                      ),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 22,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       subtitle,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.25,
-                        color: Colors.black.withOpacity(0.55),
+                        color: Colors.black.withOpacity(0.62),
                       ),
                     ),
                   ),
                 ],
+              ),
+
+              const Spacer(),
+
+             
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 26,
+                  color: Colors.black.withOpacity(0.35),
+                ),
               ),
             ],
           ),
