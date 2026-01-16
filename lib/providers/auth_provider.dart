@@ -92,12 +92,12 @@ class AuthProvider with ChangeNotifier {
     required String rua,
     required String numero,
     required String bairro,
-    required String complemento,
+    String? complemento,
     required String cidade,
     required String estado,
     required String telefone,
     required String responsavel,
-    required String logo,
+    String? logo,
   }) async {
     try {
       final result = await _auth.createUserWithEmailAndPassword(
@@ -117,12 +117,12 @@ class AuthProvider with ChangeNotifier {
         'rua': rua,
         'numero': numero,
         'bairro': bairro,
-        'complemento': complemento,
+        'complemento': complemento ?? '',
         'cidade': cidade,
         'estado': estado,
         'telefone': telefone,
         'responsavel': responsavel,
-        'logo': logo,
+        'logo': logo ?? '',
         'criadoEm': DateTime.now(),
       });
 
