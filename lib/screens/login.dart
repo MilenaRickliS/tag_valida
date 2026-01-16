@@ -25,14 +25,26 @@ class _LoginScreenState extends State<LoginScreen> {
     _loadRememberedEmail();
   }
 
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _loadRememberedEmail() async {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString("remember_email");
     final remember = prefs.getBool("remember_enabled") ?? true;
 
+    if (!mounted) return;
+
     setState(() {
       _lembrar = remember;
-      if (savedEmail != null && savedEmail.isNotEmpty) {
+      if (remember && savedEmail != null && savedEmail.isNotEmpty) {
         _email.text = savedEmail;
       }
     });
@@ -41,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveRememberedEmail() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool("remember_enabled", _lembrar);
+
     if (_lembrar) {
       await prefs.setString("remember_email", _email.text.trim());
     } else {
@@ -48,12 +61,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _toggleRemember(bool? v) async {
+    final next = v ?? true;
+
+    setState(() => _lembrar = next);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("remember_enabled", next);
+
+    if (!next) {
+      _email.clear();
+      await prefs.remove("remember_email");
+    } else {
+     
+      await prefs.setString("remember_email", _email.text.trim());
+    }
+  }
+
   Future<void> _entrar() async {
     FocusScope.of(context).unfocus();
-
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
+
     try {
       await context.read<AuthProvider>().signIn(
             _email.text.trim(),
@@ -65,34 +95,136 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao entrar: $e")),
-      );
+      _snack(e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _resetSenha() async {
-    final email = _email.text.trim();
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Informe seu e-mail para recuperar a senha.")),
-      );
-      return;
-    }
+    final controller = TextEditingController(text: _email.text.trim());
+
+    final email = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFFFDF7ED),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(
+            color: Color(0xFFC29500),
+            width: 1.2,
+          ),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+
+        title: Row(
+          children: const [
+            Icon(
+              Icons.lock_reset,
+              color: Color(0xFFC29500),
+            ),
+            SizedBox(width: 10),
+            Text(
+              "Recuperar senha",
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Informe o e-mail cadastrado para receber o link de recuperação.",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: "E-mail",
+                prefixIcon: const Icon(Icons.email_outlined),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.black.withOpacity(0.15),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFC29500),
+                    width: 1.6,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black87,
+            ),
+            child: const Text(
+              "Cancelar",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC29500),
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              side: const BorderSide(color: Colors.black, width: 1.2),
+              elevation: 2,
+            ),
+            child: const Text(
+              "Enviar link",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+
+
+    if (email == null || email.isEmpty) return;
 
     try {
       await context.read<AuthProvider>().sendPasswordResetEmail(email);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enviamos um link de recuperação para seu e-mail.")),
-      );
+      _snack("Enviamos um link de recuperação para seu e-mail.");
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao enviar e-mail: $e")),
-      );
+      _snack(e.toString());
     }
   }
 
@@ -103,57 +235,38 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(
-        color: Colors.black54,
-      ),
+      labelStyle: const TextStyle(color: Colors.black54),
       floatingLabelStyle: const TextStyle(
         color: Color(0xFFC29500),
         fontWeight: FontWeight.w600,
       ),
-
       filled: true,
-      fillColor: Colors.white.withOpacity(0.85),
-
+      fillColor: Colors.white, 
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
-
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
-
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: Colors.black.withOpacity(0.15),
-        ),
+        borderSide: BorderSide(color: Colors.black.withOpacity(0.15)),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFC29500),
-          width: 1.8,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFC29500), width: 1.8),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.red),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
     );
   }
-
 
   @override
   void dispose() {
@@ -167,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
       appBar: AppBar(
-        title: const Text("Login", style: TextStyle(fontWeight: FontWeight.w600),),
+        title: const Text("Login", style: TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: const Color(0xFFFDF7ED),
         elevation: 0,
       ),
@@ -179,16 +292,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
-                  'assets/logo1.png',
-                  height: 90,
-                ),
-
+                Image.asset('assets/logo1.png', height: 90),
                 const SizedBox(height: 16),
                 Card(
                   color: Colors.white,
                   elevation: 3,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Form(
@@ -211,8 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             decoration: _decoration(
                               label: "E-mail",
-                              prefixIcon: Icon(Icons.email_outlined),
-                              
+                              prefixIcon: const Icon(Icons.email_outlined),
                             ),
                             validator: (v) {
                               final s = (v ?? "").trim();
@@ -229,7 +339,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: _decoration(
                               label: "Senha",
                               prefixIcon: const Icon(Icons.lock_outline),
-                             
                               suffixIcon: IconButton(
                                 onPressed: () => setState(() => _obscure = !_obscure),
                                 icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
@@ -247,14 +356,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              
                               Row(
                                 children: [
                                   Checkbox(
                                     value: _lembrar,
-                                    activeColor: const Color(0xFFC29500), 
+                                    activeColor: const Color(0xFFC29500),
                                     checkColor: Colors.black,
-                                    onChanged: (v) => setState(() => _lembrar = v ?? true),
+                                    onChanged: _loading ? null : _toggleRemember,
                                   ),
                                   const Text(
                                     "Lembrar de mim",
@@ -266,8 +374,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
-
-                             
                               TextButton(
                                 onPressed: _loading ? null : _resetSenha,
                                 style: TextButton.styleFrom(
@@ -289,21 +395,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
 
-
-
                           const SizedBox(height: 8),
 
                           ElevatedButton(
                             onPressed: _loading ? null : _entrar,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:const Color(0xFFC29500),
+                              backgroundColor: const Color(0xFFC29500),
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: const BorderSide(
-                                          color: Colors.black,
-                                          width: 1.5,
-                                        ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              side: const BorderSide(color: Colors.black, width: 1.5),
                             ),
                             child: _loading
                                 ? const SizedBox(
@@ -311,7 +414,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 22,
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   )
-                                : const Text("Entrar", style: TextStyle(fontWeight: FontWeight.w600),),
+                                : const Text(
+                                    "Entrar",
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
                           ),
 
                           const SizedBox(height: 12),
@@ -323,14 +429,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: _loading
                                     ? null
                                     : () => Navigator.pushNamed(context, '/cadastro'),
-                                child: const Text("Ainda não possui cadastro?Cadastre-se.",
-                                style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.black,               
-                                      decoration: TextDecoration.underline, 
-                                      
-                                    ),
+                                child: const Text(
+                                  "Ainda não possui cadastro? Cadastre-se.",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.black,
+                                    decoration: TextDecoration.underline,
+                                  ),
                                 ),
                               ),
                             ],
@@ -339,9 +445,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                ),
+              ],
             ),
-            ]
-          ),
           ),
         ),
       ),

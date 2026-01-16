@@ -3,6 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 
+class AuthFailure implements Exception {
+  final String message;
+  AuthFailure(this.message);
+  @override
+  String toString() => message;
+}
+
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -11,24 +18,68 @@ class AuthProvider with ChangeNotifier {
   UserModel? get user => _user;
 
   Future<void> signIn(String email, String password) async {
-    final result = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    final uid = result.user!.uid;
-    final doc = await _firestore.collection('usuarios').doc(uid).get();
+      final uid = result.user?.uid;
+      if (uid == null) {
+        throw AuthFailure("Não foi possível autenticar. Tente novamente.");
+      }
 
-    if (!doc.exists || doc.data() == null) {
-      throw Exception("Usuário não encontrado no Firestore.");
+      final doc = await _firestore.collection('usuarios').doc(uid).get();
+
+      if (!doc.exists || doc.data() == null) {
+        
+        await _auth.signOut();
+        throw AuthFailure("Seu cadastro não foi encontrado. Contate o suporte.");
+      }
+
+      _user = UserModel.fromMap(doc.data()!);
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_mapFirebaseAuthError(e));
+    } on FirebaseException catch (_) {
+      throw AuthFailure("Falha ao acessar o servidor. Verifique sua internet.");
+    } catch (_) {
+      throw AuthFailure("Ocorreu um erro inesperado. Tente novamente.");
     }
+  }
 
-    _user = UserModel.fromMap(doc.data()!);
-    notifyListeners();
+  String _mapFirebaseAuthError(FirebaseAuthException e) {
+    final code = e.code.toLowerCase();
+
+    switch (code) {
+      case 'invalid-email':
+        return "E-mail inválido.";
+      case 'user-disabled':
+        return "Esta conta foi desativada.";
+      case 'user-not-found':
+        return "E-mail não cadastrado.";
+      case 'wrong-password':
+        return "Senha incorreta.";
+      case 'invalid-credential':
+       
+        return "E-mail ou senha incorretos.";
+      case 'too-many-requests':
+        return "Muitas tentativas. Aguarde um pouco e tente novamente.";
+      case 'network-request-failed':
+        return "Sem conexão. Verifique sua internet.";
+      default:
+        return "Não foi possível entrar (${e.code}).";
+    }
   }
 
   Future<void> sendPasswordResetEmail(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_mapFirebaseAuthError(e));
+    } catch (_) {
+      throw AuthFailure("Erro ao enviar e-mail de recuperação.");
+    }
   }
 
   Future<void> register({
@@ -77,10 +128,11 @@ class AuthProvider with ChangeNotifier {
 
       final doc = await _firestore.collection('usuarios').doc(uid).get();
       _user = UserModel.fromMap(doc.data()!);
-
       notifyListeners();
-    } catch (e) {
-      throw Exception('Erro ao registrar usuário: $e');
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_mapFirebaseAuthError(e));
+    } catch (_) {
+      throw AuthFailure("Erro ao registrar. Tente novamente.");
     }
   }
 
