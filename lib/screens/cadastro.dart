@@ -84,13 +84,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
     super.dispose();
   }
 
-  String? _req(String? v, String label, {int min = 1}) {
-    final s = (v ?? "").trim();
-    if (s.isEmpty) return "Informe $label";
-    if (s.length < min) return "$label muito curto";
-    return null;
-  }
-
   String? _vNome(String? v) {
     final s = (v ?? '').trim();
     if (s.isEmpty) return "Nome não pode ser vazio.";
