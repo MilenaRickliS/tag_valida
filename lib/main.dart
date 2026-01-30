@@ -37,7 +37,10 @@ void main() async {
   );
   runApp(
       MultiProvider(
-      providers: [        
+      providers: [     
+         Provider<FirestorePaths>(
+          create: (_) => FirestorePaths(FirebaseFirestore.instance),
+        ),   
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (_) {
           final paths = FirestorePaths(FirebaseFirestore.instance);
