@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -262,7 +264,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: _buildCampoDinamico(context, gerar, campo),
                           );
-                        }).toList(),
+                        }),
                       ],
 
                       const SizedBox(height: 18),

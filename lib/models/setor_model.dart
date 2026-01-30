@@ -27,15 +27,15 @@ class SetorModel {
 
   factory SetorModel.fromDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    DateTime? _dt(dynamic v) => v is Timestamp ? v.toDate() : null;
+    DateTime? dt(dynamic v) => v is Timestamp ? v.toDate() : null;
 
     return SetorModel(
       id: doc.id,
       nome: (data["nome"] ?? "").toString(),
       descricao: data["descricao"]?.toString(),
       ativo: data["ativo"] ?? true,
-      createdAt: _dt(data["createdAt"]),
-      updatedAt: _dt(data["updatedAt"]),
+      createdAt: dt(data["createdAt"]),
+      updatedAt: dt(data["updatedAt"]),
     );
   }
 }

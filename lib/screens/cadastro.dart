@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -334,6 +336,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
      
 
       _lastCepFetched = rawCepDigits;
+      // ignore: use_build_context_synchronously
       FocusScope.of(context).requestFocus(_numeroFocus);
     } catch (e) {
       if (!mounted) return;

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -72,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (user == null) {
       Future.microtask(() {
+        // ignore: use_build_context_synchronously
         Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
       });
       return const SizedBox();

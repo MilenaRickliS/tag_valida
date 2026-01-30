@@ -27,7 +27,7 @@ class CategoriaModel {
 
   factory CategoriaModel.fromDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    DateTime? _dt(dynamic v) => v is Timestamp ? v.toDate() : null;
+    DateTime? dt(dynamic v) => v is Timestamp ? v.toDate() : null;
 
     return CategoriaModel(
       id: doc.id,
@@ -36,8 +36,8 @@ class CategoriaModel {
           ? data["diasVencimento"]
           : int.tryParse(data["diasVencimento"].toString()) ?? 0,
       ativo: data["ativo"] ?? true,
-      createdAt: _dt(data["createdAt"]),
-      updatedAt: _dt(data["updatedAt"]),
+      createdAt: dt(data["createdAt"]),
+      updatedAt: dt(data["updatedAt"]),
     );
   }
 }
