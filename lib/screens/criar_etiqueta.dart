@@ -52,6 +52,27 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
     final tipos = context.watch<TiposEtiquetaProvider>().items;
     final gerar = context.watch<GerarEtiquetaProvider>();
 
+
+    final TipoEtiquetaModel? tipoAtual = (gerar.tipoId == null)
+        ? null
+        : tipos.where((t) => t.id == gerar.tipoId).isNotEmpty
+            ? tipos.firstWhere((t) => t.id == gerar.tipoId)
+            : null;
+
+  
+    final deveAutoValidade =
+        tipoAtual?.usarRegraValidadeCategoria == true &&
+        gerar.categoria != null &&
+        gerar.fabricacao != null;
+
+    if (deveAutoValidade) {
+      final novaValidade =
+          gerar.fabricacao!.add(Duration(days: gerar.categoria!.diasVencimento));
+      if (gerar.validade != novaValidade) {
+        gerar.validade = novaValidade; 
+      }
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
       appBar: AppBar(
@@ -85,9 +106,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
               children: [
                 InkWell(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/tipos-etiqueta');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/tipos-etiqueta'),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -150,6 +169,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                     ),
                   ),
                 ),
+
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
@@ -167,8 +187,10 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Gerar etiqueta",
-                          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+                      const Text(
+                        "Gerar etiqueta",
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         "Selecione o tipo, preencha os dados e gere sua etiqueta.",
@@ -176,19 +198,45 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      
-                      _Dropdown<TipoEtiquetaModel>(
-                        label: "Tipo de etiqueta",
-                        value: gerar.tipo,
-                        items: tipos,
-                        getLabel: (t) => t.nome,
-                        onChanged: (t) => context.read<GerarEtiquetaProvider>().setTipo(t),
-                        emptyHint: "Cadastre um tipo de etiqueta primeiro.",
-                      ),
+                     
+                      if (tipos.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFDF7ED),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.black.withOpacity(0.10)),
+                          ),
+                          child: Text(
+                            "Cadastre um tipo de etiqueta primeiro.",
+                            style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                          ),
+                        )
+                      else
+                        DropdownButtonFormField<String>(
+                          value: (gerar.tipoId != null && tipos.any((t) => t.id == gerar.tipoId))
+                              ? gerar.tipoId
+                              : null,
+                          items: tipos
+                              .map((t) => DropdownMenuItem<String>(
+                                    value: t.id,
+                                    child: Text(t.nome),
+                                  ))
+                              .toList(),
+                          onChanged: (id) {
+                              final novoTipo = tipos.firstWhere((t) => t.id == id);
+                              context.read<GerarEtiquetaProvider>().setTipoId(id, tipoAtual: novoTipo);
+                            },
+
+                          decoration: const InputDecoration(
+                            labelText: "Tipo de etiqueta",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
 
                       const SizedBox(height: 12),
 
-                      
                       TextField(
                         controller: gerar.produtoCtrl,
                         decoration: const InputDecoration(
@@ -199,19 +247,17 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
                       const SizedBox(height: 12),
 
-                    
                       _Dropdown(
                         label: "Categoria",
                         value: gerar.categoria,
                         items: cats,
                         getLabel: (c) => c.nome,
-                        onChanged: (c) => context.read<GerarEtiquetaProvider>().setCategoria(c),
+                        onChanged: (c) => context.read<GerarEtiquetaProvider>().setCategoria(c, tipoAtual: tipoAtual),
                         emptyHint: "Cadastre categorias na tela Categorias.",
                       ),
 
                       const SizedBox(height: 12),
 
-                    
                       _Dropdown(
                         label: "Setor/Responsável",
                         value: gerar.setor,
@@ -223,14 +269,14 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
                       const SizedBox(height: 12),
 
-                      
                       Row(
                         children: [
                           Expanded(
                             child: _DateField(
                               label: "Fabricação",
                               value: gerar.fabricacao,
-                              onPick: (d) => context.read<GerarEtiquetaProvider>().setFabricacao(d),
+                              onPick: (d) => context.read<GerarEtiquetaProvider>().setFabricacao(d, tipoAtual: tipoAtual),
+
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -244,7 +290,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                         ],
                       ),
 
-                      if (gerar.tipo?.usarRegraValidadeCategoria == true) ...[
+                      if (tipoAtual?.usarRegraValidadeCategoria == true) ...[
                         const SizedBox(height: 8),
                         Text(
                           "A validade é calculada automaticamente pela categoria (você ainda pode ajustar manualmente).",
@@ -254,17 +300,19 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
                       const SizedBox(height: 18),
 
-                      
-                      if (gerar.tipo != null) ...[
-                        const Text("Campos adicionais",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                      if (tipoAtual != null) ...[
+                        const Text(
+                          "Campos adicionais",
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                        ),
                         const SizedBox(height: 10),
-                        ...gerar.tipo!.camposCustom.map((campo) {
+                        ...tipoAtual.camposCustom.map((campo) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: _buildCampoDinamico(context, gerar, campo),
                           );
                         }),
+                        const SizedBox(height: 6),
                       ],
 
                       const SizedBox(height: 18),
@@ -275,11 +323,22 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                           onPressed: gerar.saving
                               ? null
                               : () async {
-                                  final uid = context.read<AuthProvider>().user!.uid;
                                   final prov = context.read<GerarEtiquetaProvider>();
+                                  final uid = context.read<AuthProvider>().user!.uid;
+
+                                  final TipoEtiquetaModel? tipoParaSalvar = tipoAtual;
+                                  if (tipoParaSalvar == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Selecione o tipo de etiqueta.")),
+                                    );
+                                    return;
+                                  }
 
                                   try {
-                                    final id = await prov.salvarEtiqueta(uid: uid);
+                                    final id = await prov.salvarEtiqueta(
+                                      uid: uid,
+                                      tipoAtual: tipoParaSalvar,
+                                    );
 
                                     if (!context.mounted) return;
                                     Navigator.push(
@@ -311,8 +370,8 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                     ],
                   ),
                 ),
-              ]
-            ) 
+              ],
+            ),
           ),
         ),
       ),
@@ -327,14 +386,22 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
         return TextField(
           maxLines: 3,
           decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(key: campo.key, label: campo.label, value: v),
+          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+                key: campo.key,
+                label: campo.label,
+                value: v,
+              ),
         );
 
       case CampoTipo.number:
         return TextField(
           keyboardType: TextInputType.number,
           decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(key: campo.key, label: campo.label, value: num.tryParse(v)),
+          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+                key: campo.key,
+                label: campo.label,
+                value: num.tryParse(v),
+              ),
         );
 
       case CampoTipo.boolType:
@@ -349,34 +416,36 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
           child: SwitchListTile(
             title: Text(label),
             value: boolVal,
-            onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(key: campo.key, label: campo.label, value: v),
+            onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+                  key: campo.key,
+                  label: campo.label,
+                  value: v,
+                ),
           ),
         );
 
       case CampoTipo.date:
-        final obj = gerar.camposValores[campo.key];
-        final val = obj?["value"];
-
-        DateTime? dt;
-        if (val is DateTime) {
-          dt = val;
-        }
+        final val = gerar.camposValores[campo.key]?["value"];
+        final DateTime? dt = (val is DateTime) ? val : null;
 
         return _DateField(
           label: label,
           value: dt,
           onPick: (d) => context.read<GerarEtiquetaProvider>().setCampoValor(
-            key: campo.key,
-            label: campo.label,
-            value: d,
-          ),
+                key: campo.key,
+                label: campo.label,
+                value: d,
+              ),
         );
 
-
       case CampoTipo.text:
-      return TextField(
+        return TextField(
           decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(key: campo.key, label: campo.label, value: v),
+          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+                key: campo.key,
+                label: campo.label,
+                value: v,
+              ),
         );
     }
   }
@@ -391,14 +460,11 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String text;
-    if (value == null) {
-      text = "Selecionar";
-    } else {
-      text = "${value!.day.toString().padLeft(2, "0")}/"
+    final text = (value == null)
+        ? "Selecionar"
+        : "${value!.day.toString().padLeft(2, "0")}/"
           "${value!.month.toString().padLeft(2, "0")}/"
           "${value!.year}";
-    }
 
     return InkWell(
       onTap: () async {
@@ -458,8 +524,11 @@ class _Dropdown<T> extends StatelessWidget {
       );
     }
 
+    
+    final safeValue = (value != null && items.contains(value)) ? value : null;
+
     return DropdownButtonFormField<T>(
-      value: value,
+      value: safeValue,
       items: items
           .map((e) => DropdownMenuItem<T>(
                 value: e,

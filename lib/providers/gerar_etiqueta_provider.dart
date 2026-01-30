@@ -9,7 +9,7 @@ class GerarEtiquetaProvider extends ChangeNotifier {
   final FirestorePaths paths;
   GerarEtiquetaProvider({required this.paths});
 
-  TipoEtiquetaModel? tipo;
+  String? tipoId;
   CategoriaModel? categoria;
   SetorModel? setor;
 
@@ -18,20 +18,24 @@ class GerarEtiquetaProvider extends ChangeNotifier {
   DateTime? fabricacao;
   DateTime? validade;
 
-  
   final Map<String, Map<String, dynamic>> camposValores = {};
 
   bool saving = false;
 
-  void setTipo(TipoEtiquetaModel? t) {
-    tipo = t;
+
+  void setTipoId(String? id, {TipoEtiquetaModel? tipoAtual}) {
+    tipoId = id;
     camposValores.clear();
+
+    _recalcularValidadeSePossivel(tipoAtual);
     notifyListeners();
   }
 
-  void setCategoria(CategoriaModel? c) {
+
+  void setCategoria(CategoriaModel? c, {TipoEtiquetaModel? tipoAtual}) {
     categoria = c;
-    _recalcularValidadeSePossivel();
+
+    _recalcularValidadeSePossivel(tipoAtual);
     notifyListeners();
   }
 
@@ -40,9 +44,11 @@ class GerarEtiquetaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFabricacao(DateTime d) {
+  
+  void setFabricacao(DateTime d, {TipoEtiquetaModel? tipoAtual}) {
     fabricacao = d;
-    _recalcularValidadeSePossivel();
+
+    _recalcularValidadeSePossivel(tipoAtual);
     notifyListeners();
   }
 
@@ -56,48 +62,42 @@ class GerarEtiquetaProvider extends ChangeNotifier {
     required String label,
     required dynamic value,
   }) {
-    camposValores[key] = {
-      "label": label,
-      "value": value,
-    };
+    camposValores[key] = {"label": label, "value": value};
     notifyListeners();
   }
 
+  void _recalcularValidadeSePossivel(TipoEtiquetaModel? tipoAtual) {
+    if (tipoAtual == null || categoria == null || fabricacao == null) return;
 
-  void _recalcularValidadeSePossivel() {
-    if (tipo == null || categoria == null || fabricacao == null) return;
-    if (tipo!.usarRegraValidadeCategoria) {
+    if (tipoAtual.usarRegraValidadeCategoria) {
       validade = fabricacao!.add(Duration(days: categoria!.diasVencimento));
     }
   }
 
-  String? validar() {
-    if (tipo == null) return "Selecione o tipo de etiqueta.";
+  String? validar(TipoEtiquetaModel? tipoAtual) {
+    if (tipoAtual == null) return "Selecione o tipo de etiqueta.";
     if (produtoCtrl.text.trim().isEmpty) return "Informe o nome do produto.";
     if (categoria == null) return "Selecione a categoria.";
     if (setor == null) return "Selecione o setor/responsável.";
     if (fabricacao == null) return "Selecione a data de fabricação.";
     if (validade == null) return "Selecione a data de validade.";
 
-    
-    for (final c in tipo!.camposCustom) {
+    for (final c in tipoAtual.camposCustom) {
       if (c.obrigatorio) {
-        final obj = camposValores[c.key];
-        final v = obj?["value"];
-
+        final v = camposValores[c.key]?["value"];
         final vazio = v == null || (v is String && v.trim().isEmpty);
-        if (vazio) {
-          return "Preencha o campo obrigatório: ${c.label}.";
-        }
-
+        if (vazio) return "Preencha o campo obrigatório: ${c.label}.";
       }
     }
 
     return null;
   }
 
-  Future<String> salvarEtiqueta({ required String uid }) async {
-    final err = validar();
+  Future<String> salvarEtiqueta({
+    required String uid,
+    required TipoEtiquetaModel tipoAtual,
+  }) async {
+    final err = validar(tipoAtual);
     if (err != null) throw Exception(err);
 
     saving = true;
@@ -107,8 +107,8 @@ class GerarEtiquetaProvider extends ChangeNotifier {
 
     final etiqueta = EtiquetaModel(
       id: ref.id,
-      tipoId: tipo!.id,
-      tipoNome: tipo!.nome,
+      tipoId: tipoAtual.id,
+      tipoNome: tipoAtual.nome,
       produtoNome: produtoCtrl.text.trim(),
       categoriaId: categoria!.id,
       categoriaNome: categoria!.nome,
@@ -127,7 +127,6 @@ class GerarEtiquetaProvider extends ChangeNotifier {
 
     return ref.id;
   }
-
 
   @override
   void dispose() {
