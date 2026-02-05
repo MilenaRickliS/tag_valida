@@ -29,6 +29,8 @@ import 'screens/welcome.dart';
 import 'screens/login.dart';
 import 'screens/cadastro.dart';
 import 'screens/home.dart';
+import 'data/local/repos/categorias_local_repo.dart';
+import 'providers/categorias_local_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +48,12 @@ void main() async {
           final paths = FirestorePaths(FirebaseFirestore.instance);
           return CategoriasProvider(paths: paths);
         }),
+        Provider(create: (_) => CategoriasLocalRepo()),
+          ChangeNotifierProvider(
+            create: (context) => CategoriasLocalProvider(
+              repo: context.read<CategoriasLocalRepo>(),
+            ),
+          ),
         ChangeNotifierProvider(create: (_) {
           final paths = FirestorePaths(FirebaseFirestore.instance);
           return SetoresProvider(paths: paths);
