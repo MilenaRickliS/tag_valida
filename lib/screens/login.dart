@@ -294,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset('assets/logo1.png', height: 90),
+                Image.asset('assets/logo1.png', height: 150),
                 const SizedBox(height: 16),
                 Card(
                   color: Colors.white,

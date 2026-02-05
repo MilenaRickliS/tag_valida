@@ -371,7 +371,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
               children: [
                 Image.asset(
                   'assets/logo1.png',
-                  height: 90,
+                  height: 150,
                 ),
 
                 const SizedBox(height: 16), 

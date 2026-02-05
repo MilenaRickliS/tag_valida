@@ -87,7 +87,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   position: _logoSlide,
                   child: Image.asset(
                     'assets/logo1.png',
-                    height: 110,
+                    height: 150,
                   ),
                 ),
               ),
