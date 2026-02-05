@@ -460,10 +460,6 @@ class _EmptyBox extends StatelessWidget {
     required this.subtitle,
   });
 
-  const _EmptyBox.error(String subtitle, {super.key})
-      : icon = Icons.error_outline,
-        title = "Erro",
-        subtitle = subtitle;
 
   @override
   Widget build(BuildContext context) {
