@@ -1,0 +1,190 @@
+
+import 'package:sqflite/sqflite.dart';
+import '../app_db.dart';
+import '../outbox/outbox_helper.dart';
+import '../mappers/etiqueta_local.dart';
+import '../../../models/etiqueta_model.dart';
+
+class EtiquetasLocalRepo {
+  Future<void> upsert(String uid, EtiquetaModel e) async {
+    final db = await AppDb.instance.db;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    await db.transaction((txn) async {
+     
+      await txn.insert(
+        'etiquetas',
+        e.toLocalMap(uid: uid, nowMs: nowMs),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+    
+      final payload = <String, dynamic>{
+        "tipoId": e.tipoId,
+        "tipoNome": e.tipoNome,
+        "produtoNome": e.produtoNome,
+        "categoriaId": e.categoriaId,
+        "categoriaNome": e.categoriaNome,
+        "setorId": e.setorId,
+        "setorNome": e.setorNome,
+
+       
+        "dataFabricacaoMs": e.dataFabricacao.millisecondsSinceEpoch,
+        "dataValidadeMs": e.dataValidade.millisecondsSinceEpoch,
+
+        "camposCustomValores": e.camposCustomValores, 
+        "status": e.status,
+
+      
+        "createdAtMs": (e.createdAt?.millisecondsSinceEpoch ?? nowMs),
+        "updatedAtMs": nowMs,
+      };
+
+      await OutboxHelper.enqueueUpsert(
+        txn: txn,
+        uid: uid,
+        entity: "etiquetas",
+        entityId: e.id,
+        payload: payload,
+        nowMs: nowMs,
+      );
+    });
+  }
+
+  
+  Future<void> deleteHard(String uid, String id) async {
+    final db = await AppDb.instance.db;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    await db.transaction((txn) async {
+      await txn.delete(
+        'etiquetas',
+        where: 'uid = ? AND id = ?',
+        whereArgs: [uid, id],
+      );
+
+      await OutboxHelper.enqueueDelete(
+        txn: txn,
+        uid: uid,
+        entity: "etiquetas",
+        entityId: id,
+        nowMs: nowMs,
+      );
+    });
+  }
+
+
+
+  Future<List<EtiquetaModel>> listByPeriodo({
+    required String uid,
+    required DateTime inicio,
+    required DateTime fim,
+    String? status,
+    String? categoriaId,
+    String? setorId,
+    String? tipoId,
+  }) async {
+    final db = await AppDb.instance.db;
+
+    final where = <String>['uid = ?', 'createdAt >= ?', 'createdAt <= ?'];
+    final args = <Object>[
+      uid,
+      inicio.millisecondsSinceEpoch,
+      fim.millisecondsSinceEpoch,
+    ];
+
+    if (status != null) { where.add('status = ?'); args.add(status); }
+    if (categoriaId != null) { where.add('categoriaId = ?'); args.add(categoriaId); }
+    if (setorId != null) { where.add('setorId = ?'); args.add(setorId); }
+    if (tipoId != null) { where.add('tipoId = ?'); args.add(tipoId); }
+
+    final rows = await db.query(
+      'etiquetas',
+      where: where.join(' AND '),
+      whereArgs: args,
+      orderBy: 'createdAt DESC',
+    );
+
+    return rows.map(EtiquetaLocalMapper.fromLocalMap).toList();
+  }
+
+  Future<List<Map<String, Object?>>> countPorCategoria({
+    required String uid,
+    required DateTime inicio,
+    required DateTime fim,
+    String? status,
+  }) async {
+    final db = await AppDb.instance.db;
+
+    final where = <String>['uid = ?', 'createdAt >= ?', 'createdAt <= ?'];
+    final args = <Object>[
+      uid,
+      inicio.millisecondsSinceEpoch,
+      fim.millisecondsSinceEpoch,
+    ];
+    if (status != null) { where.add('status = ?'); args.add(status); }
+
+    return db.rawQuery('''
+      SELECT categoriaId, categoriaNome, COUNT(*) as total
+      FROM etiquetas
+      WHERE ${where.join(' AND ')}
+      GROUP BY categoriaId, categoriaNome
+      ORDER BY total DESC
+    ''', args);
+  }
+
+  Future<List<Map<String, Object?>>> countPorSetor({
+    required String uid,
+    required DateTime inicio,
+    required DateTime fim,
+    String? status,
+  }) async {
+    final db = await AppDb.instance.db;
+
+    final where = <String>['uid = ?', 'createdAt >= ?', 'createdAt <= ?'];
+    final args = <Object>[
+      uid,
+      inicio.millisecondsSinceEpoch,
+      fim.millisecondsSinceEpoch,
+    ];
+    if (status != null) { where.add('status = ?'); args.add(status); }
+
+    return db.rawQuery('''
+      SELECT setorId, setorNome, COUNT(*) as total
+      FROM etiquetas
+      WHERE ${where.join(' AND ')}
+      GROUP BY setorId, setorNome
+      ORDER BY total DESC
+    ''', args);
+  }
+
+  Future<int> countVencidasAtivas({
+    required String uid,
+    required DateTime hoje,
+  }) async {
+    final db = await AppDb.instance.db;
+    final hojeStart = DateTime(hoje.year, hoje.month, hoje.day).millisecondsSinceEpoch;
+
+    final r = await db.rawQuery('''
+      SELECT COUNT(*) as total
+      FROM etiquetas
+      WHERE uid = ?
+        AND status = 'ativa'
+        AND dataValidadeMs < ?
+    ''', [uid, hojeStart]);
+
+    return (r.first['total'] as int?) ?? 0;
+  }
+
+  Future<EtiquetaModel?> getById({required String uid, required String id}) async {
+    final db = await AppDb.instance.db;
+    final rows = await db.query(
+      'etiquetas',
+      where: 'uid = ? AND id = ?',
+      whereArgs: [uid, id],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return EtiquetaLocalMapper.fromLocalMap(rows.first);
+  }
+}

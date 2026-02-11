@@ -1,53 +1,54 @@
 import 'package:sqflite/sqflite.dart';
+
 import '../app_db.dart';
 import '../outbox/outbox_helper.dart';
-import '../mappers/categoria_local.dart';
-import '../../../models/categoria_model.dart';
+import '../mappers/setor_local.dart';
+import '../../../models/setor_model.dart';
 
-class CategoriasLocalRepo {
-  Future<List<CategoriaModel>> listActive(String uid) async {
+class SetoresLocalRepo {
+  Future<List<SetorModel>> listActive(String uid) async {
     final db = await AppDb.instance.db;
 
     final rows = await db.query(
-      'categorias',
+      'setores',
       where: 'uid = ? AND ativo = 1',
       whereArgs: [uid],
       orderBy: 'nome COLLATE NOCASE ASC',
     );
 
-    return rows.map(CategoriaLocalMapper.fromLocalMap).toList();
+    return rows.map(SetorLocalMapper.fromLocalMap).toList();
   }
 
-  Future<void> upsert(String uid, CategoriaModel cat) async {
+  Future<void> upsert(String uid, SetorModel setor) async {
     final db = await AppDb.instance.db;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     await db.transaction((txn) async {
       await txn.insert(
-        'categorias',
-        cat.toLocalMap(uid: uid, nowMs: nowMs),
+        'setores',
+        setor.toLocalMap(uid: uid, nowMs: nowMs),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-    
       final payload = {
-        "nome": cat.nome,
-        "diasVencimento": cat.diasVencimento,
-        "ativo": cat.ativo,
-        "createdAtMs": (cat.createdAt?.millisecondsSinceEpoch ?? nowMs),
+        "nome": setor.nome,
+        "descricao": setor.descricao,
+        "ativo": setor.ativo,
+        "createdAtMs": (setor.createdAt?.millisecondsSinceEpoch ?? nowMs),
         "updatedAtMs": nowMs,
       };
 
       await OutboxHelper.enqueueUpsert(
         txn: txn,
         uid: uid,
-        entity: "categorias",
-        entityId: cat.id,
+        entity: "setores",
+        entityId: setor.id,
         payload: payload,
         nowMs: nowMs,
       );
     });
   }
+
 
   Future<void> softDelete(String uid, String id) async {
     final db = await AppDb.instance.db;
@@ -55,7 +56,7 @@ class CategoriasLocalRepo {
 
     await db.transaction((txn) async {
       await txn.update(
-        'categorias',
+        'setores',
         {'ativo': 0, 'updatedAt': nowMs},
         where: 'uid = ? AND id = ?',
         whereArgs: [uid, id],
@@ -64,7 +65,7 @@ class CategoriasLocalRepo {
       await OutboxHelper.enqueueUpsert(
         txn: txn,
         uid: uid,
-        entity: "categorias",
+        entity: "setores",
         entityId: id,
         payload: {
           "ativo": false,

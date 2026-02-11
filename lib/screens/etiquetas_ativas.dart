@@ -1,15 +1,15 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
-import '../providers/tipo_etiqueta_provider.dart';
 import '../models/tipo_etiqueta_model.dart';
-import '../services/firestore_paths.dart';
 import '../widgets/menu.dart';
 import 'etiqueta_preview.dart';
+import '../providers/tipos_etiqueta_local_provider.dart';
+import '../data/local/repos/etiquetas_local_repo.dart';
+import '../models/etiqueta_model.dart';
 
 class EtiquetasAtivasScreen extends StatefulWidget {
   const EtiquetasAtivasScreen({super.key});
@@ -29,7 +29,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
 
     final uid = context.read<AuthProvider>().user?.uid;
     if (uid != null) {
-      context.read<TiposEtiquetaProvider>().fetch(uid);
+      context.read<TiposEtiquetaLocalProvider>().fetch(uid);
       _loaded = true;
     }
   }
@@ -44,7 +44,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
       return const Scaffold(body: Center(child: Text("Faça login novamente.")));
     }
 
-    final tiposProv = context.watch<TiposEtiquetaProvider>();
+    final tiposProv = context.watch<TiposEtiquetaLocalProvider>();
     final tipos = tiposProv.items;
 
     if (_tipoSelecionadoId == null && tipos.isNotEmpty) {
@@ -101,7 +101,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                       tooltip: "Atualizar tipos",
                       onPressed: tiposProv.loading
                           ? null
-                          : () => context.read<TiposEtiquetaProvider>().fetch(uid),
+                          : () => context.read<TiposEtiquetaLocalProvider>().fetch(uid),
                       icon: tiposProv.loading
                           ? const SizedBox(
                               width: 18,
@@ -226,16 +226,18 @@ class _EtiquetasPorTipoList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paths = context.read<FirestorePaths>();
+    final repo = context.read<EtiquetasLocalRepo>();
 
-    final query = paths
-        .etiquetas(uid)
-        .where("status", isEqualTo: "ativa")
-        .where("tipoId", isEqualTo: tipoId)
-        .orderBy("dataValidade");
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: query.snapshots(),
+  
+    return FutureBuilder<List<EtiquetaModel>>(
+      future: repo.listByPeriodo(
+        uid: uid,
+       
+        inicio: DateTime(2000, 1, 1),
+        fim: DateTime(2100, 1, 1),
+        status: "ativa",
+        tipoId: tipoId,
+      ),
       builder: (context, snap) {
         if (snap.hasError) {
           return _EmptyBox(
@@ -249,8 +251,8 @@ class _EtiquetasPorTipoList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = snap.data!.docs;
-        if (docs.isEmpty) {
+        final items = snap.data!;
+        if (items.isEmpty) {
           return _EmptyBox(
             icon: Icons.inbox_outlined,
             title: "Nenhuma etiqueta ativa",
@@ -260,27 +262,26 @@ class _EtiquetasPorTipoList extends StatelessWidget {
           );
         }
 
+        items.sort((a, b) => a.dataValidade.compareTo(b.dataValidade));
+
         return ListView.separated(
-          itemCount: docs.length,
+          itemCount: items.length,
           separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (context, i) {
-            final doc = docs[i];
-            final d = doc.data() as Map<String, dynamic>;
+            final e = items[i];
 
-            final produto = (d["produtoNome"] ?? "").toString();
-            final categoria = (d["categoriaNome"] ?? "").toString();
-            final setor = (d["setorNome"] ?? "").toString();
+            final produto = e.produtoNome;
+            final categoria = e.categoriaNome;
+            final setor = e.setorNome;
 
-            final fab = _tsToDate(d["dataFabricacao"]);
-            final val = _tsToDate(d["dataValidade"]);
+            final fab = e.dataFabricacao;
+            final val = e.dataValidade;
 
             final now = DateTime.now();
-            final vencida = (val != null) ? val.isBefore(DateTime(now.year, now.month, now.day)) : false;
+            final hoje = DateTime(now.year, now.month, now.day);
+            final vencida = val.isBefore(hoje);
 
-           
-            final alerta = (!vencida && val != null)
-                ? val.difference(DateTime(now.year, now.month, now.day)).inDays <= 3
-                : false;
+            final alerta = !vencida && val.difference(hoje).inDays <= 3;
 
             return Container(
               padding: const EdgeInsets.all(14),
@@ -360,14 +361,13 @@ class _EtiquetasPorTipoList extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   IconButton(
                     tooltip: "Abrir",
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => EtiquetaPreviewScreen(uid: uid, etiquetaId: doc.id),
+                          builder: (_) => EtiquetaPreviewScreen(uid: uid, etiquetaId: e.id),
                         ),
                       );
                     },
@@ -380,12 +380,6 @@ class _EtiquetasPorTipoList extends StatelessWidget {
         );
       },
     );
-  }
-
-  DateTime? _tsToDate(dynamic v) {
-    if (v is Timestamp) return v.toDate();
-    if (v is DateTime) return v;
-    return null;
   }
 
   String _fmtDate(DateTime? d) {

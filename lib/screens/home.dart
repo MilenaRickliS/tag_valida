@@ -2,10 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
 import '../widgets/menu.dart';
 import '../widgets/home_menu_card_v2.dart';
 import '../widgets/camera_fab_card.dart';
+import '../data/sync/sync_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +17,34 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _syncedOnce = false;
+  bool _syncing = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_syncedOnce) return;
+
+    final user = context.read<AuthProvider>().user;
+    if (user == null) return;
+
+    _syncedOnce = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      setState(() => _syncing = true);
+
+      try {
+        await context.read<SyncService>().syncNow(user.uid);
+      } catch (_) {
+   
+      } finally {
+        if (mounted) setState(() => _syncing = false);
+      }
+    });
+  }
+
   Widget produtosValidosLink(BuildContext context,
       {double titleSize = 28, double subtitleSize = 13}) {
     return InkWell(
@@ -51,9 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int _gridColumns(double w) {
-    if (w < 600) return 1; 
+    if (w < 600) return 1;
     if (w < 1024) return 2;
-    return 4; 
+    return 4;
   }
 
   double _gridAspect(double w) {
@@ -74,19 +104,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (user == null) {
       Future.microtask(() {
-        // ignore: use_build_context_synchronously
+        if (!context.mounted) return;
         Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
       });
       return const SizedBox();
     }
-  final w = MediaQuery.of(context).size.width;
-  final compact = w < 835;
+
+    final w = MediaQuery.of(context).size.width;
+    final compact = w < 835;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFDF7ED),
         elevation: 0,
-        toolbarHeight: compact ? 160 : 100, 
+        toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
         title: compact
             ? Column(
@@ -147,6 +179,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Column(
                       children: [
+                        if (_syncing) ...[
+                          const LinearProgressIndicator(minHeight: 3),
+                          const SizedBox(height: 12),
+                        ],
+
                         produtosValidosLink(
                           context,
                           titleSize: titleSize,
@@ -154,14 +191,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 18),
 
-                      
                         Align(
                           alignment: Alignment.center,
                           child: CameraFabCard(
                             width: isMobile ? double.infinity : 420,
                             height: 98,
-                            onTap: () =>
-                                Navigator.pushNamed(context, '/prever-validade'),
+                            onTap: () => Navigator.pushNamed(context, '/prever-validade'),
                           ),
                         ),
 
@@ -178,31 +213,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             HomeMenuCardV2(
                               icon: Icons.add_circle_outline,
                               title: "Criar etiqueta",
-                              subtitle:
-                                  "Crie uma nova etiqueta para seus produtos",
-                              onTap: () => Navigator.pushNamed(
-                                  context, '/criar-etiqueta'),
+                              subtitle: "Crie uma nova etiqueta para seus produtos",
+                              onTap: () => Navigator.pushNamed(context, '/criar-etiqueta'),
                             ),
                             HomeMenuCardV2(
                               icon: Icons.check_circle_outline,
                               title: "Etiquetas ativas",
                               subtitle: "Veja as etiquetas ativas no estoque",
-                              onTap: () => Navigator.pushNamed(
-                                  context, '/etiquetas-ativas'),
+                              onTap: () => Navigator.pushNamed(context, '/etiquetas-ativas'),
                             ),
                             HomeMenuCardV2(
                               icon: Icons.event_note_outlined,
                               title: "Etiquetas diárias",
                               subtitle: "Produtos feitos diariamente",
-                              onTap: () => Navigator.pushNamed(
-                                  context, '/etiquetas-diarias'),
+                              onTap: () => Navigator.pushNamed(context, '/etiquetas-diarias'),
                             ),
                             HomeMenuCardV2(
                               icon: Icons.settings_outlined,
                               title: "Configurações",
                               subtitle: "Ajustes do aplicativo",
-                              onTap: () => Navigator.pushNamed(
-                                  context, '/configuracoes'),
+                              onTap: () => Navigator.pushNamed(context, '/configuracoes'),
                             ),
                           ],
                         ),

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
-import '../providers/categorias_provider.dart';
-import '../providers/setores_provider.dart';
-import '../providers/tipo_etiqueta_provider.dart';
-import '../providers/gerar_etiqueta_provider.dart';
+import '../providers/categorias_local_provider.dart';
+import '../providers/setores_local_provider.dart';
+import '../providers/tipos_etiqueta_local_provider.dart';
+import '../providers/gerar_etiqueta_local_provider.dart';
 
 import '../models/tipo_etiqueta_model.dart';
 import '../widgets/menu.dart';
@@ -30,9 +30,9 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
     final uid = context.read<AuthProvider>().user?.uid;
     if (uid != null) {
-      context.read<CategoriasProvider>().fetch(uid);
-      context.read<SetoresProvider>().fetch(uid);
-      context.read<TiposEtiquetaProvider>().fetch(uid);
+      context.read<CategoriasLocalProvider>().fetch(uid);
+      context.read<SetoresLocalProvider>().fetch(uid);
+      context.read<TiposEtiquetaLocalProvider>().fetch(uid);
       _loaded = true;
     }
   }
@@ -47,10 +47,10 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       return const Scaffold(body: Center(child: Text("Faça login novamente.")));
     }
 
-    final cats = context.watch<CategoriasProvider>().items;
-    final sets = context.watch<SetoresProvider>().items;
-    final tipos = context.watch<TiposEtiquetaProvider>().items;
-    final gerar = context.watch<GerarEtiquetaProvider>();
+    final cats = context.watch<CategoriasLocalProvider>().items;
+    final sets = context.watch<SetoresLocalProvider>().items;
+    final tipos = context.watch<TiposEtiquetaLocalProvider>().items;
+    final gerar = context.watch<GerarEtiquetaLocalProvider>();
 
 
     final TipoEtiquetaModel? tipoAtual = (gerar.tipoId == null)
@@ -226,7 +226,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                               .toList(),
                           onChanged: (id) {
                               final novoTipo = tipos.firstWhere((t) => t.id == id);
-                              context.read<GerarEtiquetaProvider>().setTipoId(id, tipoAtual: novoTipo);
+                              context.read<GerarEtiquetaLocalProvider>().setTipoId(id, tipoAtual: novoTipo);
                             },
 
                           decoration: const InputDecoration(
@@ -252,7 +252,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                         value: gerar.categoria,
                         items: cats,
                         getLabel: (c) => c.nome,
-                        onChanged: (c) => context.read<GerarEtiquetaProvider>().setCategoria(c, tipoAtual: tipoAtual),
+                        onChanged: (c) => context.read<GerarEtiquetaLocalProvider>().setCategoria(c, tipoAtual: tipoAtual),
                         emptyHint: "Cadastre categorias na tela Categorias.",
                       ),
 
@@ -263,7 +263,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                         value: gerar.setor,
                         items: sets,
                         getLabel: (s) => s.nome,
-                        onChanged: (s) => context.read<GerarEtiquetaProvider>().setSetor(s),
+                        onChanged: (s) => context.read<GerarEtiquetaLocalProvider>().setSetor(s),
                         emptyHint: "Cadastre setores na tela Setores.",
                       ),
 
@@ -275,7 +275,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                             child: _DateField(
                               label: "Fabricação",
                               value: gerar.fabricacao,
-                              onPick: (d) => context.read<GerarEtiquetaProvider>().setFabricacao(d, tipoAtual: tipoAtual),
+                              onPick: (d) => context.read<GerarEtiquetaLocalProvider>().setFabricacao(d, tipoAtual: tipoAtual),
 
                             ),
                           ),
@@ -284,7 +284,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                             child: _DateField(
                               label: "Validade",
                               value: gerar.validade,
-                              onPick: (d) => context.read<GerarEtiquetaProvider>().setValidadeManual(d),
+                              onPick: (d) => context.read<GerarEtiquetaLocalProvider>().setValidadeManual(d),
                             ),
                           ),
                         ],
@@ -323,7 +323,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                           onPressed: gerar.saving
                               ? null
                               : () async {
-                                  final prov = context.read<GerarEtiquetaProvider>();
+                                  final prov = context.read<GerarEtiquetaLocalProvider>();
                                   final uid = context.read<AuthProvider>().user!.uid;
 
                                   final TipoEtiquetaModel? tipoParaSalvar = tipoAtual;
@@ -378,7 +378,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
     );
   }
 
-  Widget _buildCampoDinamico(BuildContext context, GerarEtiquetaProvider gerar, CampoCustomModel campo) {
+  Widget _buildCampoDinamico(BuildContext context, GerarEtiquetaLocalProvider gerar, CampoCustomModel campo) {
     final label = campo.obrigatorio ? "${campo.label} *" : campo.label;
 
     switch (campo.tipo) {
@@ -386,7 +386,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
         return TextField(
           maxLines: 3,
           decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+          onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
                 key: campo.key,
                 label: campo.label,
                 value: v,
@@ -397,7 +397,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
         return TextField(
           keyboardType: TextInputType.number,
           decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+          onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
                 key: campo.key,
                 label: campo.label,
                 value: num.tryParse(v),
@@ -416,7 +416,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
           child: SwitchListTile(
             title: Text(label),
             value: boolVal,
-            onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+            onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
                   key: campo.key,
                   label: campo.label,
                   value: v,
@@ -431,7 +431,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
         return _DateField(
           label: label,
           value: dt,
-          onPick: (d) => context.read<GerarEtiquetaProvider>().setCampoValor(
+          onPick: (d) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
                 key: campo.key,
                 label: campo.label,
                 value: d,
@@ -441,7 +441,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       case CampoTipo.text:
         return TextField(
           decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-          onChanged: (v) => context.read<GerarEtiquetaProvider>().setCampoValor(
+          onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
                 key: campo.key,
                 label: campo.label,
                 value: v,

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tag_valida/providers/tipo_etiqueta_provider.dart';
+import '../providers/tipos_etiqueta_local_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/tipo_etiqueta_model.dart';
 import '../widgets/menu.dart';
@@ -24,7 +24,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
 
     final uid = context.read<AuthProvider>().user?.uid;
     if (uid != null) {
-      context.read<TiposEtiquetaProvider>().fetch(uid);
+      context.read<TiposEtiquetaLocalProvider>().fetch(uid);
       _loaded = true;
     }
   }
@@ -39,7 +39,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
       return const Scaffold(body: Center(child: Text("Faça login novamente.")));
     }
 
-    final prov = context.watch<TiposEtiquetaProvider>();
+    final prov = context.watch<TiposEtiquetaLocalProvider>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
@@ -144,7 +144,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
     );
 
     if (ok == true && context.mounted) {
-      await context.read<TiposEtiquetaProvider>().delete(uid, t.id);
+      await context.read<TiposEtiquetaLocalProvider>().delete(uid, t.id);
     }
   }
 
@@ -356,7 +356,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                       camposCustom: campos,
                     );
 
-                    final prov = context.read<TiposEtiquetaProvider>();
+                    final prov = context.read<TiposEtiquetaLocalProvider>();
 
                     if (isEdit) {
                       await prov.update(uid, novoTipo);

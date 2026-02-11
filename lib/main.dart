@@ -31,6 +31,14 @@ import 'screens/cadastro.dart';
 import 'screens/home.dart';
 import 'data/local/repos/categorias_local_repo.dart';
 import 'providers/categorias_local_provider.dart';
+import 'data/local/repos/setores_local_repo.dart';
+import 'data/local/repos/tipos_etiqueta_local_repo.dart';
+import 'providers/setores_local_provider.dart';
+import 'providers/tipos_etiqueta_local_provider.dart';
+import 'data/local/repos/etiquetas_local_repo.dart';
+import 'providers/gerar_etiqueta_local_provider.dart';
+import 'data/sync/sync_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,15 +66,35 @@ void main() async {
           final paths = FirestorePaths(FirebaseFirestore.instance);
           return SetoresProvider(paths: paths);
         }),
+        Provider(create: (_) => SetoresLocalRepo()),
+          ChangeNotifierProvider(
+            create: (context) => SetoresLocalProvider(
+              repo: context.read<SetoresLocalRepo>(),
+            ),
+          ),
         ChangeNotifierProvider(create: (_) {
           final paths = FirestorePaths(FirebaseFirestore.instance);
           return TiposEtiquetaProvider(paths: paths);
         }),
+        Provider(create: (_) => TiposEtiquetaLocalRepo()),
+          ChangeNotifierProvider(
+            create: (context) => TiposEtiquetaLocalProvider(
+              repo: context.read<TiposEtiquetaLocalRepo>(),
+            ),
+          ),
         ChangeNotifierProvider(create: (_) {
           final paths = FirestorePaths(FirebaseFirestore.instance);
           return GerarEtiquetaProvider(paths: paths);
         }), 
-      ],
+        Provider(create: (_) => EtiquetasLocalRepo()),
+          ChangeNotifierProvider(
+            create: (context) => GerarEtiquetaLocalProvider(
+              repo: context.read<EtiquetasLocalRepo>(),
+            ),
+          ),
+        Provider(create: (_) => SyncService(FirebaseFirestore.instance)),
+                ],
+      
       child: MyApp(),
     ),
   );

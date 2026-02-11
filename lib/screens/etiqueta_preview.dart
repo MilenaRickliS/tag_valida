@@ -1,8 +1,11 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../data/local/repos/etiquetas_local_repo.dart';
+import '../models/etiqueta_model.dart';
 
 class EtiquetaPreviewScreen extends StatelessWidget {
   final String uid;
@@ -18,11 +21,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ref = FirebaseFirestore.instance
-        .collection("usuarios")
-        .doc(uid)
-        .collection("etiquetas")
-        .doc(etiquetaId);
+    final repo = context.read<EtiquetasLocalRepo>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7ED),
@@ -32,26 +31,26 @@ class EtiquetaPreviewScreen extends StatelessWidget {
         title: const Text("Preview da etiqueta"),
         centerTitle: true,
       ),
-      body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        future: ref.get(),
+      body: FutureBuilder<EtiquetaModel?>(
+        future: repo.getById(uid: uid, id: etiquetaId),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snap.hasData || !snap.data!.exists) {
+
+          final e = snap.data;
+          if (e == null) {
             return const Center(child: Text("Etiqueta não encontrada."));
           }
 
-          final data = snap.data!.data()!;
-          DateTime dt(dynamic v) => (v as Timestamp).toDate();
+          final produtoNome = e.produtoNome;
+          final categoriaNome = e.categoriaNome;
+          final setorNome = e.setorNome;
+          final tipoNome = e.tipoNome;
+          final fabricacao = e.dataFabricacao;
+          final validade = e.dataValidade;
 
-          final produtoNome = (data["produtoNome"] ?? "").toString();
-          final categoriaNome = (data["categoriaNome"] ?? "").toString();
-          final setorNome = (data["setorNome"] ?? "").toString();
-          final tipoNome = (data["tipoNome"] ?? "").toString();
-          final fabricacao = dt(data["dataFabricacao"]);
-          final validade = dt(data["dataValidade"]);
-          final custom = Map<String, dynamic>.from(data["camposCustomValores"] ?? {});
+          final custom = Map<String, dynamic>.from(e.camposCustomValores);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(18),
@@ -75,9 +74,10 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tipoNome,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
+                      Text(
+                        tipoNome,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(height: 12),
 
                       _linha("Produto", produtoNome),
@@ -90,23 +90,29 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                         const SizedBox(height: 14),
                         Divider(color: Colors.black.withOpacity(0.08)),
                         const SizedBox(height: 10),
-                        const Text("Campos adicionais",
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w700)),
+                        const Text(
+                          "Campos adicionais",
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 10),
 
-                        ...custom.entries.map((e) {
-                           final obj = Map<String, dynamic>.from(e.value as Map);
-                          final label = (obj["label"] ?? e.key).toString();
+                        ...custom.entries.map((entry) {
+                          
+                          final obj = Map<String, dynamic>.from(entry.value as Map);
+                          final label = (obj["label"] ?? entry.key).toString();
                           final val = obj["value"];
+
                           String texto;
-                          if (val is Timestamp) {
-                            texto = _fmtDate(val.toDate());
-                          } else if (val is DateTime) {
-                            texto = _fmtDate(val);
+                          if (val is int) {
+                           
+                            final dt = DateTime.fromMillisecondsSinceEpoch(val);
+                            texto = _fmtDate(dt);
+                          } else if (val is bool) {
+                            texto = val ? "Sim" : "Não";
                           } else {
                             texto = val?.toString() ?? "";
                           }
+
                           return _linha(label, texto);
                         }),
                       ],
@@ -118,11 +124,8 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Em breve: imprimir / gerar PDF"),
-                                  ),
+                                  const SnackBar(content: Text("Em breve: imprimir / gerar PDF")),
                                 );
                               },
                               icon: const Icon(Icons.print_outlined),
@@ -147,7 +150,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           onPressed: () => Navigator.pop(context),
                           child: const Text("Voltar"),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -167,16 +170,20 @@ class EtiquetaPreviewScreen extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black.withOpacity(0.55),
-                )),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black.withOpacity(0.55),
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

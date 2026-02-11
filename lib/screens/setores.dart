@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/setores_provider.dart';
+import '../providers/setores_local_provider.dart';
 import '../models/setor_model.dart';
 import '../widgets/menu.dart';
 
@@ -27,7 +27,7 @@ class _SetoresScreenState extends State<SetoresScreen> {
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          context.read<SetoresProvider>().fetch(uid);
+          context.read<SetoresLocalProvider>().fetch(uid);
         });
       }
     }
@@ -38,7 +38,7 @@ class _SetoresScreenState extends State<SetoresScreen> {
     final compact = w < 835;
 
     final uid = context.watch<AuthProvider>().user?.uid;
-    final prov = context.watch<SetoresProvider>();
+    final prov = context.watch<SetoresLocalProvider>();
 
     if (uid == null) {
       return const Scaffold(body: Center(child: Text("Faça login novamente.")));
@@ -147,7 +147,7 @@ class _SetoresScreenState extends State<SetoresScreen> {
     );
 
     if (ok == true && context.mounted) {
-      await context.read<SetoresProvider>().softDelete(uid, s.id);
+      await context.read<SetoresLocalProvider>().softDelete(uid, s.id);
     }
   }
 
@@ -191,7 +191,7 @@ class _SetoresScreenState extends State<SetoresScreen> {
                 return;
               }
 
-              final prov = context.read<SetoresProvider>();
+              final prov = context.read<SetoresLocalProvider>();
 
               if (isEdit) {
                 await prov.update(
