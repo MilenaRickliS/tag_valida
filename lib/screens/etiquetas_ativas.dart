@@ -22,6 +22,8 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
   bool _loaded = false;
   String? _tipoSelecionadoId;
 
+   String? _statusFiltro;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -32,7 +34,17 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
       context.read<TiposEtiquetaLocalProvider>().fetch(uid);
       _loaded = true;
     }
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map) {
+      _statusFiltro = args["statusFiltro"]?.toString();
+    }
+
+    _loaded = true;
+  
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -91,11 +103,17 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        "Etiquetas ativas",
-                        style:
-                            TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                        _statusFiltro == "vencido"
+                            ? "Produtos vencidos"
+                            : _statusFiltro == "alerta"
+                                ? "Produtos em alerta"
+                                : "Etiquetas ativas",
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -140,6 +158,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                           uid: uid,
                           tipoId: _tipoSelecionadoId!,
                           tipo: tipoAtual,
+                          initialStatusFiltro: _statusFiltro,
                         ),
                 ),
               ],
@@ -218,11 +237,13 @@ class _EtiquetasPorTipoList extends StatefulWidget {
   final String uid;
   final String tipoId;
   final TipoEtiquetaModel? tipo;
+   final String? initialStatusFiltro; 
 
   const _EtiquetasPorTipoList({
     required this.uid,
     required this.tipoId,
     required this.tipo,
+    this.initialStatusFiltro,
   });
 
   @override
@@ -243,6 +264,18 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
   @override
   void initState() {
     super.initState();
+
+  
+    if (widget.initialStatusFiltro == "vencido") {
+      _fBom = false;
+      _fAlerta = false;
+      _fVencido = true;
+    } else if (widget.initialStatusFiltro == "alerta") {
+      _fBom = false;
+      _fAlerta = true;
+      _fVencido = false;
+    }
+
     _searchCtrl.addListener(() {
       setState(() => _q = _searchCtrl.text);
     });
