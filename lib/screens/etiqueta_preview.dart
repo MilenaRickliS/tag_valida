@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
+import './criar_etiqueta.dart'; 
 
 class EtiquetaPreviewScreen extends StatelessWidget {
   final String uid;
@@ -16,8 +17,32 @@ class EtiquetaPreviewScreen extends StatelessWidget {
     required this.uid,
     required this.etiquetaId,
   });
+  
 
   String _fmtDate(DateTime d) => DateFormat("dd/MM/yyyy").format(d);
+
+  Future<bool> _confirmDelete(BuildContext context, String nome) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Excluir etiqueta?"),
+        content: Text("Tem certeza que deseja excluir “$nome”?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +55,63 @@ class EtiquetaPreviewScreen extends StatelessWidget {
         elevation: 0,
         title: const Text("Preview da etiqueta"),
         centerTitle: true,
+        actions: [
+          FutureBuilder<EtiquetaModel?>(
+            future: repo.getById(uid: uid, id: etiquetaId),
+            builder: (context, snap) {
+              final e = snap.data;
+              if (e == null) return const SizedBox.shrink();
+
+              return PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (v) async {
+                  if (v == "edit") {
+                    
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CriarEtiquetaScreen(
+                          editarEtiquetaId: e.id,
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (v == "delete") {
+                    final ok = await _confirmDelete(context, e.produtoNome);
+                    if (!ok) return;
+
+                    await repo.deleteSoft(uid, e.id); 
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Etiqueta excluída.")),
+                      );
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: "edit",
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.edit_outlined),
+                      title: Text("Editar"),
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: "delete",
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.delete_outline, color: Colors.red),
+                      title: Text("Excluir"),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<EtiquetaModel?>(
         future: repo.getById(uid: uid, id: etiquetaId),

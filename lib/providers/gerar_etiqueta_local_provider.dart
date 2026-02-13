@@ -23,9 +23,108 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
 
   bool saving = false;
 
+  String? editingEtiquetaId;
+  DateTime? editingCreatedAt;
+
+ 
+  final Map<String, TextEditingController> customCtrls = {};
+
+  TextEditingController ctrlFor(String key, {String initial = ""}) {
+    return customCtrls.putIfAbsent(
+      key,
+      () => TextEditingController(text: initial),
+    );
+  }
+
+  void _setCtrlText(String key, String text) {
+    final c = customCtrls[key];
+    if (c == null) {
+      customCtrls[key] = TextEditingController(text: text);
+    } else {
+      if (c.text != text) c.text = text;
+    }
+  }
+
+  void clearEditing() {
+    editingEtiquetaId = null;
+    editingCreatedAt = null;
+  }
+
+  void resetAll() {
+    clearEditing();
+    tipoId = null;
+    categoria = null;
+    setor = null;
+    fabricacao = null;
+    validade = null;
+    produtoCtrl.clear();
+    camposValores.clear();
+
+    for (final c in customCtrls.values) {
+      c.dispose();
+    }
+    customCtrls.clear();
+
+    notifyListeners();
+  }
+
+
+  void loadFromEtiqueta({
+    required EtiquetaModel e,
+    required CategoriaModel? categoriaObj,
+    required SetorModel? setorObj,
+    required TipoEtiquetaModel? tipoAtual,
+  }) {
+    editingEtiquetaId = e.id;
+    editingCreatedAt = e.createdAt;
+
+    tipoId = e.tipoId;
+    produtoCtrl.text = e.produtoNome;
+
+    categoria = categoriaObj;
+    setor = setorObj;
+
+    fabricacao = e.dataFabricacao;
+    validade = e.dataValidade;
+
+    camposValores
+      ..clear()
+      ..addAll(
+        (e.camposCustomValores).map(
+          (k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map)),
+        ),
+      );
+
+    
+    if (tipoAtual != null) {
+      for (final c in tipoAtual.camposCustom) {
+        final v = camposValores[c.key]?["value"];
+
+        if (c.tipo == CampoTipo.text || c.tipo == CampoTipo.multiline) {
+          _setCtrlText(c.key, (v ?? "").toString());
+        } else if (c.tipo == CampoTipo.number) {
+          _setCtrlText(c.key, v == null ? "" : v.toString());
+        }
+      }
+    }
+
+    _recalcularValidadeSePossivel(tipoAtual);
+    notifyListeners();
+  }
+
+
   void setTipoId(String? id, {TipoEtiquetaModel? tipoAtual}) {
     tipoId = id;
+
+   
+    clearEditing();
+
+    
     camposValores.clear();
+    for (final c in customCtrls.values) {
+      c.dispose();
+    }
+    customCtrls.clear();
 
     _recalcularValidadeSePossivel(tipoAtual);
     notifyListeners();
@@ -33,7 +132,6 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
 
   void setCategoria(CategoriaModel? c, {TipoEtiquetaModel? tipoAtual}) {
     categoria = c;
-
     _recalcularValidadeSePossivel(tipoAtual);
     notifyListeners();
   }
@@ -45,7 +143,6 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
 
   void setFabricacao(DateTime d, {TipoEtiquetaModel? tipoAtual}) {
     fabricacao = d;
-
     _recalcularValidadeSePossivel(tipoAtual);
     notifyListeners();
   }
@@ -64,6 +161,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
   void _recalcularValidadeSePossivel(TipoEtiquetaModel? tipoAtual) {
     if (tipoAtual == null || categoria == null || fabricacao == null) return;
 
@@ -71,6 +169,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       validade = fabricacao!.add(Duration(days: categoria!.diasVencimento));
     }
   }
+
 
   String? validar(TipoEtiquetaModel? tipoAtual) {
     if (tipoAtual == null) return "Selecione o tipo de etiqueta.";
@@ -90,6 +189,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     return null;
   }
 
+ 
   Future<String> salvarEtiqueta({
     required String uid,
     required TipoEtiquetaModel tipoAtual,
@@ -100,7 +200,6 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     saving = true;
     notifyListeners();
 
-  
     final id = DateTime.now().millisecondsSinceEpoch.toString();
 
     final etiqueta = EtiquetaModel(
@@ -127,9 +226,47 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     return id;
   }
 
+ 
+  Future<void> salvarEdicao({
+    required String uid,
+    required TipoEtiquetaModel tipoAtual,
+  }) async {
+    final err = validar(tipoAtual);
+    if (err != null) throw Exception(err);
+    if (editingEtiquetaId == null) throw Exception("Nada para editar.");
+
+    saving = true;
+    notifyListeners();
+
+    final etiqueta = EtiquetaModel(
+      id: editingEtiquetaId!,
+      tipoId: tipoAtual.id,
+      tipoNome: tipoAtual.nome,
+      produtoNome: produtoCtrl.text.trim(),
+      categoriaId: categoria!.id,
+      categoriaNome: categoria!.nome,
+      setorId: setor!.id,
+      setorNome: setor!.nome,
+      dataFabricacao: fabricacao!,
+      dataValidade: validade!,
+      camposCustomValores: camposValores,
+      status: "ativa",
+      createdAt: editingCreatedAt, 
+    );
+
+   
+    await repo.upsert(uid, etiqueta);
+
+    saving = false;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     produtoCtrl.dispose();
+    for (final c in customCtrls.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 }

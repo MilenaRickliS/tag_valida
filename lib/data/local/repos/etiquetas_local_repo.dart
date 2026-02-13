@@ -51,6 +51,70 @@ class EtiquetasLocalRepo {
     });
   }
 
+  Future<void> update(String uid, EtiquetaModel e) async {
+    
+    await upsert(uid, e);
+  }
+
+  Future<void> deleteSoft(String uid, String id) async {
+    final db = await AppDb.instance.db;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+  
+    final current = await getById(uid: uid, id: id);
+    if (current == null) return;
+
+    final updated = EtiquetaModel(
+      id: current.id,
+      tipoId: current.tipoId,
+      tipoNome: current.tipoNome,
+      produtoNome: current.produtoNome,
+      categoriaId: current.categoriaId,
+      categoriaNome: current.categoriaNome,
+      setorId: current.setorId,
+      setorNome: current.setorNome,
+      dataFabricacao: current.dataFabricacao,
+      dataValidade: current.dataValidade,
+      camposCustomValores: current.camposCustomValores,
+      status: "excluida",
+      createdAt: current.createdAt,
+    );
+
+    await db.transaction((txn) async {
+      await txn.insert(
+        'etiquetas',
+        updated.toLocalMap(uid: uid, nowMs: nowMs),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      final payload = <String, dynamic>{
+        "tipoId": updated.tipoId,
+        "tipoNome": updated.tipoNome,
+        "produtoNome": updated.produtoNome,
+        "categoriaId": updated.categoriaId,
+        "categoriaNome": updated.categoriaNome,
+        "setorId": updated.setorId,
+        "setorNome": updated.setorNome,
+        "dataFabricacaoMs": updated.dataFabricacao.millisecondsSinceEpoch,
+        "dataValidadeMs": updated.dataValidade.millisecondsSinceEpoch,
+        "camposCustomValores": updated.camposCustomValores,
+        "status": updated.status,
+        "createdAtMs": (updated.createdAt?.millisecondsSinceEpoch ?? nowMs),
+        "updatedAtMs": nowMs,
+      };
+
+      await OutboxHelper.enqueueUpsert(
+        txn: txn,
+        uid: uid,
+        entity: "etiquetas",
+        entityId: updated.id,
+        payload: payload,
+        nowMs: nowMs,
+      );
+    });
+  }
+
+
   
   Future<void> deleteHard(String uid, String id) async {
     final db = await AppDb.instance.db;
