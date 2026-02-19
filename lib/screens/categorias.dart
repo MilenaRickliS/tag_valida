@@ -9,7 +9,6 @@ import '../widgets/menu.dart';
 import 'package:flutter/services.dart';
 
 final _nomeDeny = FilteringTextInputFormatter.deny(
-  // remove tudo que NÃO for: letra (com acento), número ou espaço
   RegExp(r"[^0-9A-Za-zÀ-ÖØ-öø-ÿÇç ]"),
 );
 

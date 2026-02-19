@@ -118,7 +118,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       return;
     }
 
-    // Se for edição, ignora template.
+  
     if (widget.editarEtiquetaId != null) {
       _loadedTemplate = true;
       return;
@@ -165,7 +165,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       setorId: t.setorId,
       setorNome: t.setorNome,
       dataFabricacao: now,
-      dataValidade: now, // recalcula se tipo usa regra
+      dataValidade: now, 
       camposCustomValores: t.camposCustomValores,
       status: "ativa",
       quantidade: t.quantidadePadrao,
@@ -201,7 +201,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
     final tipos = context.watch<TiposEtiquetaLocalProvider>().items;
     final gerar = context.watch<GerarEtiquetaLocalProvider>();
 
-    // prioridade: edição > template
+   
     if (widget.editarEtiquetaId != null) {
       _tryLoadEditIfNeeded(uid: uid, cats: cats, sets: sets, tipos: tipos);
       _loadedTemplate = true;
@@ -215,7 +215,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
         ? null
         : (tipos.any((t) => t.id == gerar.tipoId) ? tipos.firstWhere((t) => t.id == gerar.tipoId) : null);
 
-    // auto validade (sem set direto)
+  
     final deveAutoValidade = tipoAtual?.usarRegraValidadeCategoria == true &&
         gerar.categoria != null &&
         gerar.fabricacao != null;
@@ -287,7 +287,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.black,
+                            color: const Color(0xFFed7227),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.label_outline, color: Colors.white, size: 22),
@@ -550,10 +550,10 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                                 },
                           icon: gerar.saving
                               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                              : Icon(isEditing ? Icons.save_outlined : Icons.local_offer_outlined),
+                              : Icon(isEditing ? Icons.save_outlined : Icons.local_offer_outlined, color: Colors.white,),
                           label: Text(gerar.saving ? "Salvando..." : (isEditing ? "Salvar alterações" : "Gerar etiqueta")),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2B2B2B),
+                            backgroundColor: const Color(0xFF428e2e),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
