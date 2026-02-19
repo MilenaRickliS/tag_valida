@@ -175,10 +175,10 @@ class _ConfigTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFF2B2B2B),
+                color: const Color(0xffed7227),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: Colors.white, size: 22),
+              child: Icon(icon, color: Colors.black, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
