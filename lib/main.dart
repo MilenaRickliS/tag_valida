@@ -32,6 +32,7 @@ import 'screens/cadastro.dart';
 import 'screens/home.dart';
 import 'screens/perfil.dart';
 import 'screens/ajuda.dart';
+import 'screens/scanner_etiqueta.dart';
 import 'screens/tipo_etiqueta.dart';
 import 'screens/criar_etiqueta.dart';
 import 'screens/etiquetas_ativas.dart';
@@ -56,15 +57,10 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Firebase paths (1x)
         Provider<FirestorePaths>(
           create: (_) => FirestorePaths(FirebaseFirestore.instance),
         ),
-
-        // Auth
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-
-        // Providers Firestore
         ChangeNotifierProvider(
           create: (ctx) => CategoriasProvider(paths: ctx.read<FirestorePaths>()),
         ),
@@ -78,14 +74,12 @@ void main() async {
           create: (ctx) => GerarEtiquetaProvider(paths: ctx.read<FirestorePaths>()),
         ),
 
-        // Repos locais (1x cada)
         Provider<CategoriasLocalRepo>(create: (_) => CategoriasLocalRepo()),
         Provider<SetoresLocalRepo>(create: (_) => SetoresLocalRepo()),
         Provider<TiposEtiquetaLocalRepo>(create: (_) => TiposEtiquetaLocalRepo()),
         Provider<EtiquetasLocalRepo>(create: (_) => EtiquetasLocalRepo()),
         Provider<EstoqueMovLocalRepo>(create: (_) => EstoqueMovLocalRepo()),
 
-        // Providers locais
         ChangeNotifierProvider(
           create: (ctx) => CategoriasLocalProvider(repo: ctx.read<CategoriasLocalRepo>()),
         ),
@@ -109,7 +103,7 @@ void main() async {
           ),
         ),
 
-        // Sync (se precisar)
+
         Provider(
           create: (_) => SyncService(FirebaseFirestore.instance),
         ),
@@ -139,6 +133,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/perfil': (context) => const PerfilScreen(),
         '/ajuda': (context) => const AjudaScreen(),
+        '/scanner': (_) => const ScannerEtiquetaScreen(),
         '/tipos-etiqueta': (_) => const TiposEtiquetaScreen(),
         '/criar-etiqueta': (context) => const CriarEtiquetaScreen(),
         '/etiquetas-ativas': (context) => const EtiquetasAtivasScreen(),

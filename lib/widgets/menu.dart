@@ -77,6 +77,10 @@ class TopMenu extends StatelessWidget {
                   child: _MenuRow(Icons.help_outline, "Ajuda"),
                 ),
                 PopupMenuItem(
+                  value: _MenuItem.scanner,
+                  child: _MenuRow(Icons.qr_code_scanner, "Ler etiqueta"),
+                ),
+                PopupMenuItem(
                   value: _MenuItem.tema,
                   child: _MenuRow(Icons.dark_mode_outlined, "Modo escuro"),
                 ),
@@ -92,6 +96,9 @@ class TopMenu extends StatelessWidget {
                   case _MenuItem.ajuda:
                     _go(context, '/ajuda');
                     break;
+                  case _MenuItem.scanner:
+                  _go(context, '/scanner');
+                  break;
                   case _MenuItem.tema:
                    
                     break;
@@ -129,6 +136,15 @@ class TopMenu extends StatelessWidget {
                 ),
                 SizedBox(width: gap),
                 MenuIcon(
+                  tooltip: "Ler etiqueta",
+                  icon: Icons.qr_code_scanner,
+                  onPressed: () => _go(context, '/scanner'),
+                  size: btnSize,
+                  iconSize: iconSize,
+                  borderW: borderW,
+                ),
+                SizedBox(width: gap),
+                MenuIcon(
                   tooltip: "Modo escuro",
                   icon: Icons.dark_mode_outlined,
                   onPressed: () {
@@ -144,7 +160,7 @@ class TopMenu extends StatelessWidget {
   }
 }
 
-enum _MenuItem { home, perfil, ajuda, tema }
+enum _MenuItem { home, perfil, ajuda, scanner, tema }
 
 class _MenuRow extends StatelessWidget {
   final IconData icon;

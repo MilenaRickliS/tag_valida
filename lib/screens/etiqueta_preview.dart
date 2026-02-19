@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
 import './criar_etiqueta.dart'; 
+import 'package:qr_flutter/qr_flutter.dart';
+import '../utils/etiqueta_qr.dart';
 
 class EtiquetaPreviewScreen extends StatelessWidget {
   final String uid;
@@ -152,6 +154,8 @@ class EtiquetaPreviewScreen extends StatelessWidget {
             return const Center(child: Text("Etiqueta não encontrada."));
           }
 
+           final qrData = buildEtiquetaQrPayload(uid: uid, etiquetaId: e.id);
+
           final produtoNome = e.produtoNome;
           final categoriaNome = e.categoriaNome;
           final setorNome = e.setorNome;
@@ -278,6 +282,23 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           return _linha(label, texto);
                         }),
                       ],
+                      const SizedBox(height: 18),
+
+                        Center(
+                          child: Column(
+                            children: [
+                              QrImageView(
+                                data: qrData,
+                                size: 180,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Escaneie para abrir e gerar PDF",
+                                style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.6)),
+                              ),
+                            ],
+                          ),
+                        ),
 
                       const SizedBox(height: 18),
 
