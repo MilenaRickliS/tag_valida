@@ -17,6 +17,33 @@ class EtiquetaPreviewScreen extends StatelessWidget {
     required this.uid,
     required this.etiquetaId,
   });
+
+  String _fmtNum(num v) {
+    if (v % 1 == 0) return v.toInt().toString();
+    return v.toStringAsFixed(2).replaceAll(".", ",");
+  }
+
+  Color _statusColor(String s) {
+    switch (s) {
+      case "cancelado":
+        return Colors.red;
+      case "vendido":
+        return Colors.orange;
+      default:
+        return Colors.green; 
+    }
+  }
+
+  String _statusLabel(String s) {
+    switch (s) {
+      case "cancelado":
+        return "Cancelado";
+      case "vendido":
+        return "Vendido";
+      default:
+        return "Ativo";
+    }
+  }
   
 
   String _fmtDate(DateTime d) => DateFormat("dd/MM/yyyy").format(d);
@@ -131,6 +158,15 @@ class EtiquetaPreviewScreen extends StatelessWidget {
           final tipoNome = e.tipoNome;
           final fabricacao = e.dataFabricacao;
           final validade = e.dataValidade;
+          final qtd = e.quantidade;
+          final rest = e.quantidadeRestante;
+          final status = (e.statusEstoque.trim().isEmpty) ? "ativo" : e.statusEstoque.trim();
+
+          final num saidas = status == "cancelado"
+              ? qtd
+              : ((qtd - rest) < 0 ? 0 : (qtd - rest));
+
+          final num restanteView = status == "cancelado" ? 0 : rest;
 
           final custom = Map<String, dynamic>.from(e.camposCustomValores);
 
@@ -167,6 +203,50 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       _linha("Setor/Responsável", setorNome),
                       _linha("Fabricação", _fmtDate(fabricacao)),
                       _linha("Validade", _fmtDate(validade)),
+                      _linha("Saídas", _fmtNum(saidas)),
+                      _linha("Restante", _fmtNum(restanteView)),
+
+                    
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 140,
+                              child: Text(
+                                "Status",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black.withOpacity(0.55),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _statusColor(status).withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: _statusColor(status).withOpacity(0.30)),
+                              ),
+                              child: Text(
+                                _statusLabel(status),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: _statusColor(status),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                     
+                      _linha("Quantidade", _fmtNum(qtd)),
+                      _linha("Saídas", _fmtNum(saidas)),
+                      _linha("Restante", _fmtNum(rest)),
 
                       if (custom.isNotEmpty) ...[
                         const SizedBox(height: 14),

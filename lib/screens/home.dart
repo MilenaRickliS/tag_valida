@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
       tituloColor = const Color(0xFFB71C1C);
 
       badge = _MiniCountBadge(
-        text: "${_qtdVencidas} vencido(s)",
+        text: "$_qtdVencidas vencido(s)",
         bg: Colors.white.withOpacity(0.85),
         fg: const Color(0xFFB71C1C),
       );
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
       tituloColor = const Color(0xFF8D6E00);
 
       badge = _MiniCountBadge(
-        text: "${_qtdAlerta} em alerta",
+        text: "$_qtdAlerta em alerta",
         bg: Colors.white.withOpacity(0.85),
         fg: const Color(0xFF8D6E00),
       );

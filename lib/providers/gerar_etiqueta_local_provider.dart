@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-
 import '../models/categoria_model.dart';
 import '../models/setor_model.dart';
 import '../models/tipo_etiqueta_model.dart';
 import '../models/etiqueta_model.dart';
 import '../data/local/repos/etiquetas_local_repo.dart';
+import '../providers/estoque_mov_local_provider.dart';
+import '../models/estoque_mov_model.dart';
 
 class GerarEtiquetaLocalProvider extends ChangeNotifier {
   final EtiquetasLocalRepo repo;
-  GerarEtiquetaLocalProvider({required this.repo});
+  final EstoqueMovLocalProvider mov; 
+  GerarEtiquetaLocalProvider({required this.repo, required this.mov});
 
   String? tipoId;
   CategoriaModel? categoria;
@@ -19,21 +21,37 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
   DateTime? fabricacao;
   DateTime? validade;
 
-  final Map<String, Map<String, dynamic>> camposValores = {};
 
+  final quantidadeCtrl = TextEditingController(text: "1"); 
+
+  final Map<String, Map<String, dynamic>> camposValores = {};
   bool saving = false;
 
   String? editingEtiquetaId;
   DateTime? editingCreatedAt;
 
- 
+  num? editingQuantidade;
+  num? editingQuantidadeRestante;
+  String? editingStatusEstoque;
+  DateTime? editingSoldAt;
+
+
   final Map<String, TextEditingController> customCtrls = {};
 
+  void setQuantidadeText(String v) {
+    quantidadeCtrl.text = v;
+    notifyListeners();
+  }
+
+  void setCancelado(bool cancelado) {
+    editingStatusEstoque = cancelado ? "cancelado" : "ativo";
+    notifyListeners();
+  }
+
+  bool get isCancelado => editingStatusEstoque == "cancelado";
+
   TextEditingController ctrlFor(String key, {String initial = ""}) {
-    return customCtrls.putIfAbsent(
-      key,
-      () => TextEditingController(text: initial),
-    );
+    return customCtrls.putIfAbsent(key, () => TextEditingController(text: initial));
   }
 
   void _setCtrlText(String key, String text) {
@@ -48,6 +66,11 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
   void clearEditing() {
     editingEtiquetaId = null;
     editingCreatedAt = null;
+
+    editingQuantidade = null;
+    editingQuantidadeRestante = null;
+    editingStatusEstoque = null;
+    editingSoldAt = null;
   }
 
   void resetAll() {
@@ -58,8 +81,12 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     fabricacao = null;
     validade = null;
     produtoCtrl.clear();
-    camposValores.clear();
 
+    quantidadeCtrl.text = "1";
+
+    editingStatusEstoque = "ativo";
+
+    camposValores.clear();
     for (final c in customCtrls.values) {
       c.dispose();
     }
@@ -68,6 +95,12 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  num _parseQtdOrThrow() {
+    final raw = quantidadeCtrl.text.trim().replaceAll(",", ".");
+    final v = num.tryParse(raw);
+    if (v == null || v <= 0) throw Exception("Quantidade inválida.");
+    return v;
+  }
 
   void loadFromEtiqueta({
     required EtiquetaModel e,
@@ -87,19 +120,22 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     fabricacao = e.dataFabricacao;
     validade = e.dataValidade;
 
+
+    editingQuantidade = e.quantidade;
+    editingQuantidadeRestante = e.quantidadeRestante;
+    editingStatusEstoque = e.statusEstoque;
+    editingSoldAt = e.soldAt;
+
+
+    quantidadeCtrl.text = e.quantidade.toString();
+
     camposValores
       ..clear()
-      ..addAll(
-        (e.camposCustomValores).map(
-          (k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map)),
-        ),
-      );
+      ..addAll((e.camposCustomValores).map((k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map))));
 
-    
     if (tipoAtual != null) {
       for (final c in tipoAtual.camposCustom) {
         final v = camposValores[c.key]?["value"];
-
         if (c.tipo == CampoTipo.text || c.tipo == CampoTipo.multiline) {
           _setCtrlText(c.key, (v ?? "").toString());
         } else if (c.tipo == CampoTipo.number) {
@@ -112,14 +148,13 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
   void setTipoId(String? id, {TipoEtiquetaModel? tipoAtual}) {
     tipoId = id;
 
-   
     clearEditing();
 
-    
+    editingStatusEstoque = "ativo";
+
     camposValores.clear();
     for (final c in customCtrls.values) {
       c.dispose();
@@ -161,15 +196,17 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
   void _recalcularValidadeSePossivel(TipoEtiquetaModel? tipoAtual) {
     if (tipoAtual == null || categoria == null || fabricacao == null) return;
-
     if (tipoAtual.usarRegraValidadeCategoria) {
       validade = fabricacao!.add(Duration(days: categoria!.diasVencimento));
     }
   }
 
+  void setStatusEstoqueEdicao(String? v) {
+    editingStatusEstoque = v ?? "ativo";
+    notifyListeners();
+  }
 
   String? validar(TipoEtiquetaModel? tipoAtual) {
     if (tipoAtual == null) return "Selecione o tipo de etiqueta.";
@@ -178,6 +215,10 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     if (setor == null) return "Selecione o setor/responsável.";
     if (fabricacao == null) return "Selecione a data de fabricação.";
     if (validade == null) return "Selecione a data de validade.";
+
+    final raw = quantidadeCtrl.text.trim();
+    final qtd = num.tryParse(raw.replaceAll(",", "."));
+    if (qtd == null || qtd <= 0) return "Informe uma quantidade válida.";
 
     for (final c in tipoAtual.camposCustom) {
       if (c.obrigatorio) {
@@ -189,7 +230,6 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     return null;
   }
 
- 
   Future<String> salvarEtiqueta({
     required String uid,
     required TipoEtiquetaModel tipoAtual,
@@ -200,7 +240,9 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     saving = true;
     notifyListeners();
 
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final now = DateTime.now();
+    final id = now.millisecondsSinceEpoch.toString();
+    final qtd = _parseQtdOrThrow();
 
     final etiqueta = EtiquetaModel(
       id: id,
@@ -215,10 +257,21 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       dataValidade: validade!,
       camposCustomValores: camposValores,
       status: "ativa",
-      createdAt: DateTime.now(),
+      createdAt: now,   
+      quantidade: qtd,
+      quantidadeRestante: qtd,
+      statusEstoque: "ativo",
+      soldAt: null,
     );
 
     await repo.upsert(uid, etiqueta);
+
+    await mov.registrarEntrada(
+      uid: uid,
+      etiquetaId: id,
+      quantidade: qtd,
+      motivo: "Criação da etiqueta",
+    );
 
     saving = false;
     notifyListeners();
@@ -226,7 +279,6 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     return id;
   }
 
- 
   Future<void> salvarEdicao({
     required String uid,
     required TipoEtiquetaModel tipoAtual,
@@ -237,6 +289,30 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
 
     saving = true;
     notifyListeners();
+
+    final now = DateTime.now();
+    final qtdNova = _parseQtdOrThrow();
+    final statusWanted = (editingStatusEstoque ?? "ativo").trim().toLowerCase();
+    final restAnterior = editingQuantidadeRestante ?? qtdNova;
+    final wasCancelado =
+        (editingStatusEstoque ?? "ativo").trim().toLowerCase() == "cancelado";
+
+    if (!wasCancelado && statusWanted == "cancelado" && restAnterior > 0) {
+      await mov.registrarCancelamento(
+        uid: uid,
+        etiquetaId: editingEtiquetaId!,
+        quantidade: restAnterior,
+        motivo: "Cancelado na edição",
+      );
+    }
+
+
+    final restante = (statusWanted == "cancelado") ? 0 : restAnterior;
+
+    final statusEstoque = EtiquetaModel.calcStatusEstoque(
+      restante: restante,
+      current: statusWanted,
+    );
 
     final etiqueta = EtiquetaModel(
       id: editingEtiquetaId!,
@@ -251,19 +327,58 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       dataValidade: validade!,
       camposCustomValores: camposValores,
       status: "ativa",
-      createdAt: editingCreatedAt, 
+      createdAt: editingCreatedAt,
+      quantidade: qtdNova,
+      quantidadeRestante: restante,
+      statusEstoque: statusEstoque,
+      soldAt: statusEstoque == "vendido" ? (editingSoldAt ?? now) : null,
     );
 
-   
     await repo.upsert(uid, etiqueta);
 
     saving = false;
     notifyListeners();
   }
 
+  Future<void> ajustarRestante({
+    required String uid,
+    required String etiquetaId,
+    required num novoRestante,
+  }) async {
+   final before = await repo.getById(uid: uid, id: etiquetaId);
+    if (before == null) throw Exception("Etiqueta não encontrada.");
+
+    final oldRest = before.quantidadeRestante;
+
+    await repo.ajustarQuantidade(uid: uid, etiquetaId: etiquetaId, novoRestante: novoRestante);
+
+    final diff = novoRestante - oldRest;
+    if (diff > 0) {
+      await mov.registrar(
+        uid: uid,
+        etiquetaId: etiquetaId,
+        tipo: EstoqueMovModel.tipoAjusteEntrada,
+        quantidade: diff,
+        produtoNome: before.produtoNome,
+        motivo: "Ajuste manual (entrada)",
+      );
+    } else if (diff < 0) {
+      await mov.registrar(
+        uid: uid,
+        etiquetaId: etiquetaId,
+        tipo: EstoqueMovModel.tipoAjusteSaida,
+        quantidade: diff.abs(),
+        produtoNome: before.produtoNome,
+        motivo: "Ajuste manual (saída)",
+      );
+    }
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     produtoCtrl.dispose();
+    quantidadeCtrl.dispose();
     for (final c in customCtrls.values) {
       c.dispose();
     }

@@ -326,6 +326,58 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
                       const SizedBox(height: 12),
 
+                      TextField(
+                        controller: gerar.quantidadeCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: "Quantidade",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                     
+                      if (!isEditing)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.withOpacity(0.30)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle_outline, color: Colors.green.withOpacity(0.90)),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  "Status do estoque: Ativo",
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        DropdownButtonFormField<String>(
+                          value: (gerar.editingStatusEstoque == null || gerar.editingStatusEstoque!.isEmpty)
+                              ? "ativo"
+                              : gerar.editingStatusEstoque,
+                          items: const [
+                            DropdownMenuItem(value: "ativo", child: Text("Ativo")),
+                            DropdownMenuItem(value: "cancelado", child: Text("Cancelado")),
+                          ],
+                          onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setStatusEstoqueEdicao(v),
+                          decoration: const InputDecoration(
+                            labelText: "Status do estoque",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
                       _Dropdown(
                         label: "Categoria",
                         value: gerar.categoria,

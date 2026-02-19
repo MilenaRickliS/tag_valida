@@ -7,7 +7,7 @@ class AppDb {
   static final AppDb instance = AppDb._();
 
   static const _dbName = 'tag_valida.db';
-  static const _dbVersion = 5;
+  static const _dbVersion = 8;
 
   Database? _db;
 
@@ -71,35 +71,41 @@ class AppDb {
       );
     ''');
 
-    await db.execute('''
-      CREATE TABLE etiquetas (
-        id TEXT NOT NULL,
-        uid TEXT NOT NULL,
+   await db.execute('''
+    CREATE TABLE etiquetas (
+      id TEXT NOT NULL,
+      uid TEXT NOT NULL,
 
-        tipoId TEXT NOT NULL,
-        tipoNome TEXT NOT NULL,
+      tipoId TEXT NOT NULL,
+      tipoNome TEXT NOT NULL,
 
-        produtoNome TEXT NOT NULL,
+      produtoNome TEXT NOT NULL,
 
-        categoriaId TEXT NOT NULL,
-        categoriaNome TEXT NOT NULL,
+      categoriaId TEXT NOT NULL,
+      categoriaNome TEXT NOT NULL,
 
-        setorId TEXT NOT NULL,
-        setorNome TEXT NOT NULL,
+      setorId TEXT NOT NULL,
+      setorNome TEXT NOT NULL,
 
-        dataFabricacaoMs INTEGER NOT NULL,
-        dataValidadeMs INTEGER NOT NULL,
+      dataFabricacaoMs INTEGER NOT NULL,
+      dataValidadeMs INTEGER NOT NULL,
 
-        camposCustomValoresJson TEXT NOT NULL,
+      camposCustomValoresJson TEXT NOT NULL,
 
-        status TEXT NOT NULL,
+      status TEXT NOT NULL,
 
-        createdAt INTEGER,
-        updatedAt INTEGER,
+     
+      quantidade REAL NOT NULL DEFAULT 1,
+      quantidadeRestante REAL NOT NULL DEFAULT 1,
+      statusEstoque TEXT NOT NULL DEFAULT 'ativo', 
+      soldAtMs INTEGER,                             
 
-        PRIMARY KEY (uid, id)
-      );
-    ''');
+      createdAt INTEGER,
+      updatedAt INTEGER,
+
+      PRIMARY KEY (uid, id)
+    );
+  ''');
 
     await db.execute('CREATE INDEX idx_categorias_uid ON categorias(uid);');
     await db.execute('CREATE INDEX idx_categorias_uid_ativo ON categorias(uid, ativo);');
@@ -116,7 +122,8 @@ class AppDb {
     await db.execute('CREATE INDEX idx_etq_uid_setor ON etiquetas(uid, setorId);');
     await db.execute('CREATE INDEX idx_etq_uid_tipo ON etiquetas(uid, tipoId);');
     await db.execute('CREATE INDEX idx_etq_uid_status_validade ON etiquetas(uid, status, dataValidadeMs);');
-  
+    await db.execute('CREATE INDEX idx_etq_uid_statusEstoque ON etiquetas(uid, statusEstoque);');
+
     await db.execute('''
       CREATE TABLE outbox (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,6 +140,29 @@ class AppDb {
 
     await db.execute('CREATE INDEX idx_outbox_uid_created ON outbox(uid, createdAt);');
     await db.execute('CREATE INDEX idx_outbox_uid_entity ON outbox(uid, entity);');
+
+
+    await db.execute('''
+      CREATE TABLE estoque_mov (
+        id TEXT NOT NULL,
+        uid TEXT NOT NULL,
+
+        etiquetaId TEXT NOT NULL,
+        tipo TEXT NOT NULL,             
+        quantidade REAL NOT NULL,        
+        motivo TEXT,
+        produtoNome TEXT,  
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+
+        PRIMARY KEY (uid, id)
+      );
+    ''');
+
+    await db.execute('CREATE INDEX idx_mov_uid_created ON estoque_mov(uid, createdAt);');
+    await db.execute('CREATE INDEX idx_mov_uid_etiqueta ON estoque_mov(uid, etiquetaId);');
+    await db.execute('CREATE INDEX idx_mov_uid_tipo ON estoque_mov(uid, tipo);');
+  
   }
 
 
@@ -230,6 +260,61 @@ class AppDb {
       ''');
       await db.execute('CREATE INDEX idx_outbox_uid_created ON outbox(uid, createdAt);');
       await db.execute('CREATE INDEX idx_outbox_uid_entity ON outbox(uid, entity);');
+    }
+    if (oldVersion < 6) {
+      final cols = await db.rawQuery("PRAGMA table_info(etiquetas)");
+      bool hasCol(String name) => cols.any((c) => (c["name"]?.toString() == name));
+
+      if (!hasCol("quantidade")) {
+        await db.execute("ALTER TABLE etiquetas ADD COLUMN quantidade REAL NOT NULL DEFAULT 1;");
+      }
+      if (!hasCol("quantidadeRestante")) {
+        await db.execute("ALTER TABLE etiquetas ADD COLUMN quantidadeRestante REAL NOT NULL DEFAULT 1;");
+      }
+      if (!hasCol("statusEstoque")) {
+        await db.execute("ALTER TABLE etiquetas ADD COLUMN statusEstoque TEXT NOT NULL DEFAULT 'ativo';");
+      }
+      if (!hasCol("soldAtMs")) {
+        await db.execute("ALTER TABLE etiquetas ADD COLUMN soldAtMs INTEGER;");
+      }
+
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_etq_uid_statusEstoque ON etiquetas(uid, statusEstoque);');
+    }
+    if (oldVersion < 7) {
+     
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS estoque_mov (
+          id TEXT NOT NULL,
+          uid TEXT NOT NULL,
+          etiquetaId TEXT NOT NULL,
+          tipo TEXT NOT NULL,
+          quantidade REAL NOT NULL,
+          motivo TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          PRIMARY KEY (uid, id)
+        );
+      ''');
+
+     
+      final cols = await db.rawQuery("PRAGMA table_info(estoque_mov)");
+      bool hasCol(String name) =>
+          cols.any((c) => (c["name"]?.toString() == name));
+
+      if (!hasCol("produtoNome")) {
+        await db.execute("ALTER TABLE estoque_mov ADD COLUMN produtoNome TEXT;");
+      }
+
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_mov_uid_created ON estoque_mov(uid, createdAt);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_mov_uid_etiqueta ON estoque_mov(uid, etiquetaId);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_mov_uid_tipo ON estoque_mov(uid, tipo);');
+    }
+    if (oldVersion < 8) {
+      final cols = await db.rawQuery("PRAGMA table_info(estoque_mov)");
+      final hasProdutoNome = cols.any((c) => c["name"] == "produtoNome");
+      if (!hasProdutoNome) {
+        await db.execute("ALTER TABLE estoque_mov ADD COLUMN produtoNome TEXT;");
+      }
     }
   }
 }

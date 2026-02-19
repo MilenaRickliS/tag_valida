@@ -19,6 +19,12 @@ class EtiquetaModel {
   final Map<String, dynamic> camposCustomValores;
 
   final String status; 
+
+
+  final num quantidade; 
+  final num quantidadeRestante; 
+  final String statusEstoque; 
+  final DateTime? soldAt; 
   final DateTime? createdAt;
 
   EtiquetaModel({
@@ -34,8 +40,22 @@ class EtiquetaModel {
     required this.dataValidade,
     required this.camposCustomValores,
     required this.status,
+    required this.quantidade,
+    required this.quantidadeRestante,
+    required this.statusEstoque,
+    this.soldAt,
     this.createdAt,
   });
+
+  static String calcStatusEstoque({
+    required num restante,
+    String? current,
+  }) {
+    final c = (current ?? "").trim().toLowerCase();
+    if (c == "cancelado") return "cancelado";
+    if (restante <= 0) return "vendido";
+    return "ativo";
+  }
 
   Map<String, dynamic> toMap() => {
         "tipoId": tipoId,
@@ -49,6 +69,13 @@ class EtiquetaModel {
         "dataValidade": Timestamp.fromDate(dataValidade),
         "camposCustomValores": camposCustomValores,
         "status": status,
+
+       
+        "quantidade": quantidade,
+        "quantidadeRestante": quantidadeRestante,
+        "statusEstoque": statusEstoque,
+        "soldAt": soldAt == null ? null : Timestamp.fromDate(soldAt!),
+
         "createdAt": FieldValue.serverTimestamp(),
         "updatedAt": FieldValue.serverTimestamp(),
       };

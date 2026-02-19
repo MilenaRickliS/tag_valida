@@ -1,101 +1,120 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:tag_valida/screens/ajuda.dart';
-import 'package:tag_valida/screens/categorias.dart';
-import 'package:tag_valida/screens/configuracoes.dart';
-import 'package:tag_valida/screens/criar_etiqueta.dart';
-import 'package:tag_valida/screens/criar_etiqueta_diaria.dart';
-import 'package:tag_valida/screens/editar_etiqueta.dart';
-import 'package:tag_valida/screens/etiqueta_ativa_detalhes.dart';
-import 'package:tag_valida/screens/etiqueta_diaria_detalhes.dart';
-import 'package:tag_valida/screens/etiquetas_ativas.dart';
-import 'package:tag_valida/screens/etiquetas_diarias.dart';
-import 'package:tag_valida/screens/historico.dart';
-import 'package:tag_valida/screens/perfil.dart';
-import 'package:tag_valida/screens/prever.dart';
-import 'package:tag_valida/screens/relatorios.dart';
-import 'package:tag_valida/screens/setores.dart';
-import 'package:tag_valida/screens/tipo_etiqueta.dart';
-import 'firebase_options.dart';
 import 'package:provider/provider.dart';
-import 'providers/auth_provider.dart';
+
+import 'firebase_options.dart';
 import 'services/firestore_paths.dart';
+
+import 'providers/auth_provider.dart';
 import 'providers/categorias_provider.dart';
 import 'providers/setores_provider.dart';
 import 'providers/tipo_etiqueta_provider.dart';
 import 'providers/gerar_etiqueta_provider.dart';
+
+import 'data/local/repos/categorias_local_repo.dart';
+import 'data/local/repos/setores_local_repo.dart';
+import 'data/local/repos/tipos_etiqueta_local_repo.dart';
+import 'data/local/repos/etiquetas_local_repo.dart';
+import 'data/local/repos/estoque_mov_local_repo.dart';
+
+import 'providers/categorias_local_provider.dart';
+import 'providers/setores_local_provider.dart';
+import 'providers/tipos_etiqueta_local_provider.dart';
+import 'providers/estoque_mov_local_provider.dart';
+import 'providers/gerar_etiqueta_local_provider.dart';
+
+import 'data/sync/sync_service.dart';
+
 import 'screens/welcome.dart';
 import 'screens/login.dart';
 import 'screens/cadastro.dart';
 import 'screens/home.dart';
-import 'data/local/repos/categorias_local_repo.dart';
-import 'providers/categorias_local_provider.dart';
-import 'data/local/repos/setores_local_repo.dart';
-import 'data/local/repos/tipos_etiqueta_local_repo.dart';
-import 'providers/setores_local_provider.dart';
-import 'providers/tipos_etiqueta_local_provider.dart';
-import 'data/local/repos/etiquetas_local_repo.dart';
-import 'providers/gerar_etiqueta_local_provider.dart';
-import 'data/sync/sync_service.dart';
-
+import 'screens/perfil.dart';
+import 'screens/ajuda.dart';
+import 'screens/tipo_etiqueta.dart';
+import 'screens/criar_etiqueta.dart';
+import 'screens/etiquetas_ativas.dart';
+import 'screens/etiqueta_ativa_detalhes.dart';
+import 'screens/editar_etiqueta.dart';
+import 'screens/etiquetas_diarias.dart';
+import 'screens/etiqueta_diaria_detalhes.dart';
+import 'screens/criar_etiqueta_diaria.dart';
+import 'screens/configuracoes.dart';
+import 'screens/categorias.dart';
+import 'screens/setores.dart';
+import 'screens/relatorios.dart';
+import 'screens/historico.dart';
+import 'screens/prever.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   runApp(
-      MultiProvider(
-      providers: [     
-         Provider<FirestorePaths>(
+    MultiProvider(
+      providers: [
+        // Firebase paths (1x)
+        Provider<FirestorePaths>(
           create: (_) => FirestorePaths(FirebaseFirestore.instance),
-        ),   
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) {
-          final paths = FirestorePaths(FirebaseFirestore.instance);
-          return CategoriasProvider(paths: paths);
-        }),
-        Provider(create: (_) => CategoriasLocalRepo()),
-          ChangeNotifierProvider(
-            create: (context) => CategoriasLocalProvider(
-              repo: context.read<CategoriasLocalRepo>(),
-            ),
+        ),
+
+        // Auth
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // Providers Firestore
+        ChangeNotifierProvider(
+          create: (ctx) => CategoriasProvider(paths: ctx.read<FirestorePaths>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => SetoresProvider(paths: ctx.read<FirestorePaths>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => TiposEtiquetaProvider(paths: ctx.read<FirestorePaths>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => GerarEtiquetaProvider(paths: ctx.read<FirestorePaths>()),
+        ),
+
+        // Repos locais (1x cada)
+        Provider<CategoriasLocalRepo>(create: (_) => CategoriasLocalRepo()),
+        Provider<SetoresLocalRepo>(create: (_) => SetoresLocalRepo()),
+        Provider<TiposEtiquetaLocalRepo>(create: (_) => TiposEtiquetaLocalRepo()),
+        Provider<EtiquetasLocalRepo>(create: (_) => EtiquetasLocalRepo()),
+        Provider<EstoqueMovLocalRepo>(create: (_) => EstoqueMovLocalRepo()),
+
+        // Providers locais
+        ChangeNotifierProvider(
+          create: (ctx) => CategoriasLocalProvider(repo: ctx.read<CategoriasLocalRepo>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => SetoresLocalProvider(repo: ctx.read<SetoresLocalRepo>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => TiposEtiquetaLocalProvider(repo: ctx.read<TiposEtiquetaLocalRepo>()),
+        ),
+
+        ChangeNotifierProvider<EstoqueMovLocalProvider>(
+          create: (ctx) => EstoqueMovLocalProvider(
+            repo: ctx.read<EstoqueMovLocalRepo>(),
           ),
-        ChangeNotifierProvider(create: (_) {
-          final paths = FirestorePaths(FirebaseFirestore.instance);
-          return SetoresProvider(paths: paths);
-        }),
-        Provider(create: (_) => SetoresLocalRepo()),
-          ChangeNotifierProvider(
-            create: (context) => SetoresLocalProvider(
-              repo: context.read<SetoresLocalRepo>(),
-            ),
+        ),
+
+        ChangeNotifierProvider<GerarEtiquetaLocalProvider>(
+          create: (ctx) => GerarEtiquetaLocalProvider(
+            repo: ctx.read<EtiquetasLocalRepo>(),
+            mov: ctx.read<EstoqueMovLocalProvider>(),
           ),
-        ChangeNotifierProvider(create: (_) {
-          final paths = FirestorePaths(FirebaseFirestore.instance);
-          return TiposEtiquetaProvider(paths: paths);
-        }),
-        Provider(create: (_) => TiposEtiquetaLocalRepo()),
-          ChangeNotifierProvider(
-            create: (context) => TiposEtiquetaLocalProvider(
-              repo: context.read<TiposEtiquetaLocalRepo>(),
-            ),
-          ),
-        ChangeNotifierProvider(create: (_) {
-          final paths = FirestorePaths(FirebaseFirestore.instance);
-          return GerarEtiquetaProvider(paths: paths);
-        }), 
-        Provider(create: (_) => EtiquetasLocalRepo()),
-          ChangeNotifierProvider(
-            create: (context) => GerarEtiquetaLocalProvider(
-              repo: context.read<EtiquetasLocalRepo>(),
-            ),
-          ),
-        Provider(create: (_) => SyncService(FirebaseFirestore.instance)),
-                ],
-      
-      child: MyApp(),
+        ),
+
+        // Sync (se precisar)
+        Provider(
+          create: (_) => SyncService(FirebaseFirestore.instance),
+        ),
+      ],
+      child: const MyApp(),
     ),
   );
 }
@@ -138,5 +157,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-

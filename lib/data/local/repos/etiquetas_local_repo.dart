@@ -35,6 +35,11 @@ class EtiquetasLocalRepo {
         "camposCustomValores": e.camposCustomValores, 
         "status": e.status,
 
+        "quantidade": e.quantidade,
+        "quantidadeRestante": e.quantidadeRestante,
+        "statusEstoque": e.statusEstoque,
+        "soldAtMs": e.soldAt?.millisecondsSinceEpoch,
+
       
         "createdAtMs": (e.createdAt?.millisecondsSinceEpoch ?? nowMs),
         "updatedAtMs": nowMs,
@@ -76,6 +81,10 @@ class EtiquetasLocalRepo {
       dataFabricacao: current.dataFabricacao,
       dataValidade: current.dataValidade,
       camposCustomValores: current.camposCustomValores,
+      quantidade: current.quantidade,
+      quantidadeRestante: current.quantidadeRestante,
+      statusEstoque: "cancelado", 
+      soldAt: current.soldAt,
       status: "excluida",
       createdAt: current.createdAt,
     );
@@ -250,5 +259,192 @@ class EtiquetasLocalRepo {
     );
     if (rows.isEmpty) return null;
     return EtiquetaLocalMapper.fromLocalMap(rows.first);
+  }
+
+  Future<void> vender({
+    required String uid,
+    required String etiquetaId,
+    required num quantidadeVendida,
+  }) async {
+    final db = await AppDb.instance.db;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    if (quantidadeVendida <= 0) {
+      throw Exception("Informe uma quantidade > 0.");
+    }
+
+    final current = await getById(uid: uid, id: etiquetaId);
+    if (current == null) throw Exception("Etiqueta não encontrada.");
+
+    if (current.status != "ativa") {
+      throw Exception("Etiqueta não está ativa.");
+    }
+
+    if (current.statusEstoque == "vendido" || current.statusEstoque == "cancelado") {
+      throw Exception("Esta etiqueta já foi finalizada (${current.statusEstoque}).");
+    }
+
+    final restanteAtual = current.quantidadeRestante;
+    final novoRestante = restanteAtual - quantidadeVendida;
+
+    if (novoRestante < 0) {
+      throw Exception("Venda maior que o restante em estoque.");
+    }
+
+    final novoStatusEstoque = (novoRestante <= 0) ? "vendido" : "ativo";
+    final soldAt = (novoStatusEstoque == "vendido")
+        ? (current.soldAt ?? DateTime.fromMillisecondsSinceEpoch(nowMs))
+        : null;
+
+    final updated = EtiquetaModel(
+      id: current.id,
+      tipoId: current.tipoId,
+      tipoNome: current.tipoNome,
+      produtoNome: current.produtoNome,
+      categoriaId: current.categoriaId,
+      categoriaNome: current.categoriaNome,
+      setorId: current.setorId,
+      setorNome: current.setorNome,
+      dataFabricacao: current.dataFabricacao,
+      dataValidade: current.dataValidade,
+      camposCustomValores: current.camposCustomValores,
+      status: current.status,
+      createdAt: current.createdAt,
+
+     
+      quantidade: current.quantidade,
+      quantidadeRestante: novoRestante,
+      statusEstoque: novoStatusEstoque,
+      soldAt: soldAt,
+    );
+
+    await db.transaction((txn) async {
+      await txn.insert(
+        'etiquetas',
+        updated.toLocalMap(uid: uid, nowMs: nowMs),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      final payload = <String, dynamic>{
+        "tipoId": updated.tipoId,
+        "tipoNome": updated.tipoNome,
+        "produtoNome": updated.produtoNome,
+        "categoriaId": updated.categoriaId,
+        "categoriaNome": updated.categoriaNome,
+        "setorId": updated.setorId,
+        "setorNome": updated.setorNome,
+        "dataFabricacaoMs": updated.dataFabricacao.millisecondsSinceEpoch,
+        "dataValidadeMs": updated.dataValidade.millisecondsSinceEpoch,
+        "camposCustomValores": updated.camposCustomValores,
+        "status": updated.status,
+
+       
+        "quantidade": updated.quantidade,
+        "quantidadeRestante": updated.quantidadeRestante,
+        "statusEstoque": updated.statusEstoque,
+        "soldAtMs": updated.soldAt?.millisecondsSinceEpoch,
+
+        "createdAtMs": (updated.createdAt?.millisecondsSinceEpoch ?? nowMs),
+        "updatedAtMs": nowMs,
+      };
+
+      await OutboxHelper.enqueueUpsert(
+        txn: txn,
+        uid: uid,
+        entity: "etiquetas",
+        entityId: updated.id,
+        payload: payload,
+        nowMs: nowMs,
+      );
+    });
+  }
+
+  Future<void> ajustarQuantidade({
+    required String uid,
+    required String etiquetaId,
+    required num novoRestante,
+  }) async {
+    final db = await AppDb.instance.db;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    if (novoRestante < 0) throw Exception("Restante não pode ser negativo.");
+
+    final current = await getById(uid: uid, id: etiquetaId);
+    if (current == null) throw Exception("Etiqueta não encontrada.");
+
+    if (current.status != "ativa") {
+      throw Exception("Etiqueta não está ativa.");
+    }
+
+    
+    if (current.statusEstoque == "cancelado") {
+      throw Exception("Etiqueta cancelada não pode ser ajustada.");
+    }
+
+    final statusEstoque = (novoRestante <= 0) ? "vendido" : "ativo";
+    final soldAt = (statusEstoque == "vendido")
+        ? (current.soldAt ?? DateTime.fromMillisecondsSinceEpoch(nowMs))
+        : null;
+
+    final updated = EtiquetaModel(
+      id: current.id,
+      tipoId: current.tipoId,
+      tipoNome: current.tipoNome,
+      produtoNome: current.produtoNome,
+      categoriaId: current.categoriaId,
+      categoriaNome: current.categoriaNome,
+      setorId: current.setorId,
+      setorNome: current.setorNome,
+      dataFabricacao: current.dataFabricacao,
+      dataValidade: current.dataValidade,
+      camposCustomValores: current.camposCustomValores,
+      status: current.status,
+      createdAt: current.createdAt,
+
+      quantidade: current.quantidade,
+      quantidadeRestante: novoRestante,
+      statusEstoque: statusEstoque,
+      soldAt: soldAt,
+    );
+
+    await db.transaction((txn) async {
+      await txn.insert(
+        'etiquetas',
+        updated.toLocalMap(uid: uid, nowMs: nowMs),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      final payload = <String, dynamic>{
+        "tipoId": updated.tipoId,
+        "tipoNome": updated.tipoNome,
+        "produtoNome": updated.produtoNome,
+        "categoriaId": updated.categoriaId,
+        "categoriaNome": updated.categoriaNome,
+        "setorId": updated.setorId,
+        "setorNome": updated.setorNome,
+        "dataFabricacaoMs": updated.dataFabricacao.millisecondsSinceEpoch,
+        "dataValidadeMs": updated.dataValidade.millisecondsSinceEpoch,
+        "camposCustomValores": updated.camposCustomValores,
+        "status": updated.status,
+
+       
+        "quantidade": updated.quantidade,
+        "quantidadeRestante": updated.quantidadeRestante,
+        "statusEstoque": updated.statusEstoque,
+        "soldAtMs": updated.soldAt?.millisecondsSinceEpoch,
+
+        "createdAtMs": (updated.createdAt?.millisecondsSinceEpoch ?? nowMs),
+        "updatedAtMs": nowMs,
+      };
+
+      await OutboxHelper.enqueueUpsert(
+        txn: txn,
+        uid: uid,
+        entity: "etiquetas",
+        entityId: updated.id,
+        payload: payload,
+        nowMs: nowMs,
+      );
+    });
   }
 }

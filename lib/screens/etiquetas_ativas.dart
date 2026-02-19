@@ -10,6 +10,8 @@ import 'etiqueta_preview.dart';
 import '../providers/tipos_etiqueta_local_provider.dart';
 import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
+import '../widgets/estoque_footer.dart';
+import '../screens/criar_etiqueta.dart';
 
 class EtiquetasAtivasScreen extends StatefulWidget {
   const EtiquetasAtivasScreen({super.key});
@@ -568,6 +570,22 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
 
         var all = snap.data!;
 
+        num entradasTotal = 0;
+        num saidasTotal = 0;
+        num geralTotal = 0;
+
+        
+        for (final e in all) {
+          final qtd = e.quantidade;
+          final rest = e.quantidadeRestante;
+          final status = (e.statusEstoque.trim().isEmpty) ? "ativo" : e.statusEstoque.trim();
+
+          entradasTotal += qtd;
+          geralTotal += (status == "cancelado") ? 0 : rest;
+          final saiu = (status == "cancelado") ? qtd : (qtd - rest);
+          if (saiu > 0) saidasTotal += saiu;
+        }
+
         if (all.isEmpty) {
           return Column(
             children: [
@@ -760,6 +778,12 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
                   ],
                 ],
               ),
+            ),
+
+             EstoqueFooter(
+              entradas: entradasTotal,
+              saidas: saidasTotal,
+              total: geralTotal,
             ),
           ],
         );
@@ -1384,8 +1408,32 @@ class _EtiquetaCard extends StatelessWidget {
 
   const _EtiquetaCard({required this.uid, required this.e});
 
+  Future<bool> _confirmDelete(BuildContext context, String nome) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Excluir etiqueta?"),
+        content: Text("Tem certeza que deseja excluir “$nome”?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final repo = context.read<EtiquetasLocalRepo>();
+
     final produto = e.produtoNome;
     final categoria = e.categoriaNome;
     final setor = e.setorNome;
@@ -1398,100 +1446,156 @@ class _EtiquetaCard extends StatelessWidget {
     final vencida = val.isBefore(hoje);
     final alerta = !vencida && val.difference(hoje).inDays <= 3;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.07)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
+    return Stack(
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    EtiquetaPreviewScreen(uid: uid, etiquetaId: e.id),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: vencida
-                  ? Colors.red.withOpacity(0.12)
-                  : alerta
-                      ? Colors.orange.withOpacity(0.12)
-                      : Colors.black.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black.withOpacity(0.07)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                )
+              ],
             ),
-            child: Icon(
-              vencida
-                  ? Icons.warning_amber_rounded
-                  : alerta
-                      ? Icons.notification_important_outlined
-                      : Icons.local_offer_outlined,
-              color: vencida
-                  ? Colors.red
-                  : alerta
-                      ? Colors.orange
-                      : Colors.black87,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  produto.isEmpty ? "Sem nome" : produto,
-                  style:
-                      const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: vencida
+                        ? Colors.red.withOpacity(0.12)
+                        : alerta
+                            ? Colors.orange.withOpacity(0.12)
+                            : Colors.black.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    vencida
+                        ? Icons.warning_amber_rounded
+                        : alerta
+                            ? Icons.notification_important_outlined
+                            : Icons.local_offer_outlined,
+                    color: vencida
+                        ? Colors.red
+                        : alerta
+                            ? Colors.orange
+                            : Colors.black87,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  [
-                    if (categoria.isNotEmpty) categoria,
-                    if (setor.isNotEmpty) setor,
-                  ].join(" • "),
-                  style: TextStyle(color: Colors.black.withOpacity(0.60)),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 6,
-                  children: [
-                    _MiniPill(
-                      icon: Icons.calendar_month_outlined,
-                      text: "Fab: ${_fmtDate(fab)}",
-                    ),
-                    _MiniPill(
-                      icon: Icons.event_available_outlined,
-                      text: "Val: ${_fmtDate(val)}",
-                      danger: vencida,
-                      warn: alerta,
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        produto.isEmpty ? "Sem nome" : produto,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        [
+                          if (categoria.isNotEmpty) categoria,
+                          if (setor.isNotEmpty) setor,
+                        ].join(" • "),
+                        style:
+                            TextStyle(color: Colors.black.withOpacity(0.60)),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
+                        children: [
+                          _MiniPill(
+                            icon: Icons.calendar_month_outlined,
+                            text: "Fab: ${_fmtDate(fab)}",
+                          ),
+                          _MiniPill(
+                            icon: Icons.event_available_outlined,
+                            text: "Val: ${_fmtDate(val)}",
+                            danger: vencida,
+                            warn: alerta,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            tooltip: "Abrir",
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      EtiquetaPreviewScreen(uid: uid, etiquetaId: e.id),
-                ),
-              );
+        ),
+
+        Positioned(
+          top: 6,
+          right: 6,
+          child: PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, size: 20),
+            onSelected: (v) async {
+              if (v == "edit") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        CriarEtiquetaScreen(editarEtiquetaId: e.id),
+                  ),
+                );
+              }
+
+              if (v == "delete") {
+                final ok = await _confirmDelete(context, produto);
+                if (!ok) return;
+
+                await repo.deleteSoft(uid, e.id);
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Etiqueta excluída.")),
+                  );
+                  (context as Element).markNeedsBuild();
+                }
+              }
             },
-            icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-          )
-        ],
-      ),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: "edit",
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text("Editar"),
+                ),
+              ),
+              PopupMenuItem(
+                value: "delete",
+                child: ListTile(
+                  dense: true,
+                  leading:
+                      Icon(Icons.delete_outline, color: Colors.red),
+                  title: Text("Excluir"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

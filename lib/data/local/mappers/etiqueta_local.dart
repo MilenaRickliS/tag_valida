@@ -19,18 +19,52 @@ extension EtiquetaLocalMapper on EtiquetaModel {
       'dataFabricacaoMs': dataFabricacao.millisecondsSinceEpoch,
       'dataValidadeMs': dataValidade.millisecondsSinceEpoch,
       'camposCustomValoresJson': jsonEncode(camposCustomValores),
+
       'status': status,
+
+
+      'quantidade': quantidade,
+      'quantidadeRestante': quantidadeRestante,
+      'statusEstoque': statusEstoque,
+      'soldAtMs': soldAt?.millisecondsSinceEpoch,
+
       'createdAt': createdAt?.millisecondsSinceEpoch ?? nowMs,
       'updatedAt': nowMs,
     };
   }
 
-  static EtiquetaModel fromLocalMap(Map<String, dynamic> m) {
-    DateTime dtMs(dynamic v) => DateTime.fromMillisecondsSinceEpoch((v ?? 0) as int);
+ static EtiquetaModel fromLocalMap(Map<String, dynamic> m) {
+    DateTime? dtMsNullable(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+      if (v is num) return DateTime.fromMillisecondsSinceEpoch(v.toInt());
+      final parsed = int.tryParse(v.toString());
+      if (parsed == null) return null;
+      return DateTime.fromMillisecondsSinceEpoch(parsed);
+    }
+
+    DateTime dtMs(dynamic v) => dtMsNullable(v) ?? DateTime.fromMillisecondsSinceEpoch(0);
 
     final valoresStr = (m['camposCustomValoresJson'] ?? '{}').toString();
-    final valores = (jsonDecode(valoresStr) as Map).map(
+    final Map<String, dynamic> valores = (jsonDecode(valoresStr) as Map).map(
       (k, v) => MapEntry(k.toString(), v),
+    );
+
+    num asNum(dynamic v, {num def = 1}) {
+      if (v == null) return def;
+      if (v is num) return v;
+      return num.tryParse(v.toString().replaceAll(",", ".")) ?? def;
+    }
+
+    final qtd = asNum(m['quantidade'], def: 1);
+    final rest = asNum(m['quantidadeRestante'], def: qtd);
+
+    final soldAt = dtMsNullable(m['soldAtMs']);
+
+    final statusEstoqueRaw = (m['statusEstoque'] ?? '').toString().trim();
+    final statusEstoque = EtiquetaModel.calcStatusEstoque(
+      restante: rest,
+      current: statusEstoqueRaw.isEmpty ? null : statusEstoqueRaw,
     );
 
     return EtiquetaModel(
@@ -44,9 +78,16 @@ extension EtiquetaLocalMapper on EtiquetaModel {
       setorNome: (m['setorNome'] ?? '').toString(),
       dataFabricacao: dtMs(m['dataFabricacaoMs']),
       dataValidade: dtMs(m['dataValidadeMs']),
-      camposCustomValores: Map<String, dynamic>.from(valores),
+      camposCustomValores: valores,
       status: (m['status'] ?? 'ativa').toString(),
-      createdAt: m['createdAt'] == null ? null : dtMs(m['createdAt']),
+
+   
+      quantidade: qtd,
+      quantidadeRestante: rest,
+      statusEstoque: statusEstoque,
+      soldAt: soldAt,
+
+      createdAt: dtMsNullable(m['createdAt']),
     );
   }
 }
