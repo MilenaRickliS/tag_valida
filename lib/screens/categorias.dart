@@ -8,8 +8,9 @@ import '../models/categoria_model.dart';
 import '../widgets/menu.dart';
 import 'package:flutter/services.dart';
 
-final _nomeAllow = FilteringTextInputFormatter.allow(
-  RegExp(r"[A-Za-zÀ-ÖØ-öø-ÿ0-9 ]"),
+final _nomeDeny = FilteringTextInputFormatter.deny(
+  // remove tudo que NÃO for: letra (com acento), número ou espaço
+  RegExp(r"[^0-9A-Za-zÀ-ÖØ-öø-ÿÇç ]"),
 );
 
 
@@ -19,10 +20,7 @@ final _diasAllow = FilteringTextInputFormatter.digitsOnly;
 class TitleCaseEachWordFormatter extends TextInputFormatter {
   const TitleCaseEachWordFormatter();
 
-  bool _isLetter(String ch) {
-   
-    return RegExp(r"[A-Za-zÀ-ÖØ-öø-ÿ]").hasMatch(ch);
-  }
+  bool _isLetter(String ch) => RegExp(r"[A-Za-zÀ-ÖØ-öø-ÿÇç]").hasMatch(ch);
 
   @override
   TextEditingValue formatEditUpdate(
@@ -392,7 +390,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
                 textCapitalization: TextCapitalization.none,
                 inputFormatters: [
                   const TitleCaseEachWordFormatter(),
-                  _nomeAllow,
+                  _nomeDeny,
                   LengthLimitingTextInputFormatter(40),
                 ],
                 decoration: InputDecoration(
@@ -501,7 +499,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
               }
 
               
-              final nomeOk = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿ0-9 ]+$").hasMatch(nome);
+              final nomeOk = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿÇç0-9 ]+$").hasMatch(nome);
               if (!nomeOk) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Nome inválido. Use apenas letras, números e espaços.")),

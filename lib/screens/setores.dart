@@ -6,6 +6,56 @@ import '../providers/auth_provider.dart';
 import '../providers/setores_local_provider.dart';
 import '../models/setor_model.dart';
 import '../widgets/menu.dart';
+import 'package:flutter/services.dart';
+
+final _nomeDeny = FilteringTextInputFormatter.deny(
+  // remove tudo que NÃO for: letra (com acento), número ou espaço
+  RegExp(r"[^0-9A-Za-zÀ-ÖØ-öø-ÿÇç ]"),
+);
+
+class TitleCaseEachWordFormatter extends TextInputFormatter {
+  const TitleCaseEachWordFormatter();
+
+ bool _isLetter(String ch) => RegExp(r"[A-Za-zÀ-ÖØ-öø-ÿÇç]").hasMatch(ch);
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final t = newValue.text;
+    if (t.isEmpty) return newValue;
+
+    final lower = t.toLowerCase();
+    final chars = lower.split('');
+
+    bool capitalizeNext = true;
+
+    for (int i = 0; i < chars.length; i++) {
+      final ch = chars[i];
+
+      if (ch == ' ') {
+        capitalizeNext = true;
+        continue;
+      }
+
+      if (capitalizeNext && _isLetter(ch)) {
+        chars[i] = ch.toUpperCase();
+        capitalizeNext = false;
+      } else {
+        capitalizeNext = false;
+      }
+    }
+
+    final formatted = chars.join();
+    final sel = newValue.selection;
+    final clampedBase = sel.baseOffset.clamp(0, formatted.length);
+    final clampedExtent = sel.extentOffset.clamp(0, formatted.length);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection(baseOffset: clampedBase, extentOffset: clampedExtent),
+      composing: TextRange.empty,
+    );
+  }
+}
 
 class SetoresScreen extends StatefulWidget {
   const SetoresScreen({super.key});
@@ -16,21 +66,21 @@ class SetoresScreen extends StatefulWidget {
 
 class _SetoresScreenState extends State<SetoresScreen> {
   bool _loaded = false;
+
   @override
-    void didChangeDependencies() {
-      super.didChangeDependencies();
-      if (_loaded) return;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
 
-      final uid = context.read<AuthProvider>().user?.uid;
-      if (uid != null) {
-        _loaded = true;
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          context.read<SetoresLocalProvider>().fetch(uid);
-        });
-      }
+    final uid = context.read<AuthProvider>().user?.uid;
+    if (uid != null) {
+      _loaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<SetoresLocalProvider>().fetch(uid);
+      });
     }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,13 +118,44 @@ class _SetoresScreenState extends State<SetoresScreen> {
                 ],
               ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF2B2B2B),
-        foregroundColor: Colors.white,
-        onPressed: () => _openSetorDialog(context, uid),
-        icon: const Icon(Icons.add),
-        label: const Text("Novo setor"),
+
+    
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.10),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF428e2e),
+          elevation: 0,
+          onPressed: () => _openSetorDialog(context, uid),
+          icon: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFF428e2e),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.add, color: Colors.white, size: 20),
+          ),
+          label: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Text("Novo setor", style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(color: Colors.black.withOpacity(0.08)),
+          ),
+        ),
       ),
+
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 980),
@@ -129,18 +210,77 @@ class _SetoresScreenState extends State<SetoresScreen> {
     );
   }
 
+
   Future<void> _confirmDelete(BuildContext context, String uid, SetorModel s) async {
     final ok = await showDialog<bool>(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => AlertDialog(
-        title: const Text("Excluir setor?"),
-        content: Text("“${s.nome}” será desativado (não some das etiquetas antigas)."),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+        title: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF2F2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.red.withOpacity(0.15)),
+              ),
+              child: const Icon(Icons.delete_outline, color: Colors.red),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text("Excluir setor?", style: TextStyle(fontWeight: FontWeight.w900)),
+            ),
+          ],
+        ),
+
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("O setor:", style: TextStyle(color: Colors.black.withOpacity(0.65))),
+            const SizedBox(height: 4),
+            Text(
+              "“${s.nome}”",
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Será apenas desativado.\nEle continuará aparecendo em etiquetas antigas.",
+              style: TextStyle(color: Colors.black.withOpacity(0.60), height: 1.4),
+            ),
+          ],
+        ),
+
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF2B2B2B),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("Excluir"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB00020),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: const Text("Excluir", style: TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -151,6 +291,7 @@ class _SetoresScreenState extends State<SetoresScreen> {
     }
   }
 
+
   Future<void> _openSetorDialog(BuildContext context, String uid, {SetorModel? setor}) async {
     final nomeCtrl = TextEditingController(text: setor?.nome ?? "");
     final descCtrl = TextEditingController(text: setor?.descricao ?? "");
@@ -158,8 +299,38 @@ class _SetoresScreenState extends State<SetoresScreen> {
 
     await showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => AlertDialog(
-        title: Text(isEdit ? "Editar setor" : "Novo setor"),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F2EA),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black.withOpacity(0.06)),
+              ),
+              child: const Icon(Icons.badge_outlined, color: Color(0xFF2B2B2B)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isEdit ? "Editar setor" : "Novo setor",
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        ),
+
         content: SizedBox(
           width: 420,
           child: Column(
@@ -167,26 +338,104 @@ class _SetoresScreenState extends State<SetoresScreen> {
             children: [
               TextField(
                 controller: nomeCtrl,
-                decoration: const InputDecoration(labelText: "Nome (ex: Padaria / João)"),
+                textCapitalization: TextCapitalization.none,
+                inputFormatters: [
+                  const TitleCaseEachWordFormatter(),
+                  _nomeDeny,
+                  LengthLimitingTextInputFormatter(40),
+                ],
+                decoration: InputDecoration(
+                  labelText: "Nome",
+                  hintText: "Ex: Padaria / João",
+                  labelStyle: TextStyle(
+                    color: Colors.black.withOpacity(0.6),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  floatingLabelStyle: const TextStyle(
+                    color: Color(0xFF2B2B2B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFAF7F1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: descCtrl,
-                decoration: const InputDecoration(labelText: "Descrição (opcional)"),
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: "Descrição (opcional)",
+                  hintText: "Ex: Responsável pelo freezer",
+                  labelStyle: TextStyle(
+                    color: Colors.black.withOpacity(0.6),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  floatingLabelStyle: const TextStyle(
+                    color: Color(0xFF2B2B2B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFAF7F1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
               ),
             ],
           ),
         ),
+
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF2B2B2B),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
           ElevatedButton(
             onPressed: () async {
-              final nome = nomeCtrl.text.trim();
+              final rawNome = nomeCtrl.text;
+              final nome = rawNome.trim().replaceAll(RegExp(r"\s+"), " ");
               final desc = descCtrl.text.trim();
 
               if (nome.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Informe o nome do setor.")),
+                );
+                return;
+              }
+
+              final nomeOk = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿÇç0-9 ]+$").hasMatch(nome);
+              if (!nomeOk) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Nome inválido. Use apenas letras, números e espaços.")),
                 );
                 return;
               }
@@ -211,8 +460,14 @@ class _SetoresScreenState extends State<SetoresScreen> {
 
               if (context.mounted) Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2B2B2B)),
-            child: Text(isEdit ? "Salvar" : "Criar"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF428e2e),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: Text(isEdit ? "Salvar" : "Criar", style: const TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
