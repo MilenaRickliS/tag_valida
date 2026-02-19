@@ -7,7 +7,7 @@ class AppDb {
   static final AppDb instance = AppDb._();
 
   static const _dbName = 'tag_valida.db';
-  static const _dbVersion = 8;
+  static const _dbVersion = 9;
 
   Database? _db;
 
@@ -107,6 +107,38 @@ class AppDb {
     );
   ''');
 
+    await db.execute('''
+      CREATE TABLE etiquetas_templates (
+        id TEXT NOT NULL,
+        uid TEXT NOT NULL,
+
+        tipoId TEXT NOT NULL,
+        tipoNome TEXT NOT NULL,
+
+        produtoNome TEXT NOT NULL,
+
+        categoriaId TEXT NOT NULL,
+        categoriaNome TEXT NOT NULL,
+
+        setorId TEXT NOT NULL,
+        setorNome TEXT NOT NULL,
+
+        camposCustomValoresJson TEXT NOT NULL,
+
+        quantidadePadrao REAL NOT NULL DEFAULT 1,
+
+        createdAt INTEGER,
+        updatedAt INTEGER,
+
+        PRIMARY KEY (uid, id)
+      );
+    ''');
+
+    await db.execute('CREATE INDEX idx_tpl_uid_updated ON etiquetas_templates(uid, updatedAt);');
+    await db.execute('CREATE INDEX idx_tpl_uid_produto ON etiquetas_templates(uid, produtoNome);');
+    await db.execute('CREATE INDEX idx_tpl_uid_tipo ON etiquetas_templates(uid, tipoId);');
+    await db.execute('CREATE INDEX idx_tpl_uid_categoria ON etiquetas_templates(uid, categoriaId);');
+    await db.execute('CREATE INDEX idx_tpl_uid_setor ON etiquetas_templates(uid, setorId);');
     await db.execute('CREATE INDEX idx_categorias_uid ON categorias(uid);');
     await db.execute('CREATE INDEX idx_categorias_uid_ativo ON categorias(uid, ativo);');
     await db.execute('CREATE INDEX idx_categorias_uid_nome ON categorias(uid, nome);');
@@ -315,6 +347,40 @@ class AppDb {
       if (!hasProdutoNome) {
         await db.execute("ALTER TABLE estoque_mov ADD COLUMN produtoNome TEXT;");
       }
+    }
+    if (oldVersion < 9) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS etiquetas_templates (
+          id TEXT NOT NULL,
+          uid TEXT NOT NULL,
+
+          tipoId TEXT NOT NULL,
+          tipoNome TEXT NOT NULL,
+
+          produtoNome TEXT NOT NULL,
+
+          categoriaId TEXT NOT NULL,
+          categoriaNome TEXT NOT NULL,
+
+          setorId TEXT NOT NULL,
+          setorNome TEXT NOT NULL,
+
+          camposCustomValoresJson TEXT NOT NULL,
+
+          quantidadePadrao REAL NOT NULL DEFAULT 1,
+
+          createdAt INTEGER,
+          updatedAt INTEGER,
+
+          PRIMARY KEY (uid, id)
+        );
+      ''');
+
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_updated ON etiquetas_templates(uid, updatedAt);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_produto ON etiquetas_templates(uid, produtoNome);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_tipo ON etiquetas_templates(uid, tipoId);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_categoria ON etiquetas_templates(uid, categoriaId);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_setor ON etiquetas_templates(uid, setorId);');
     }
   }
 }

@@ -17,12 +17,14 @@ import 'data/local/repos/setores_local_repo.dart';
 import 'data/local/repos/tipos_etiqueta_local_repo.dart';
 import 'data/local/repos/etiquetas_local_repo.dart';
 import 'data/local/repos/estoque_mov_local_repo.dart';
+import 'data/local/repos/etiqueta_template_local_repo.dart';
 
 import 'providers/categorias_local_provider.dart';
 import 'providers/setores_local_provider.dart';
 import 'providers/tipos_etiqueta_local_provider.dart';
 import 'providers/estoque_mov_local_provider.dart';
 import 'providers/gerar_etiqueta_local_provider.dart';
+import 'providers/templates_provider.dart';
 
 import 'data/sync/sync_service.dart';
 
@@ -36,11 +38,8 @@ import 'screens/scanner_etiqueta.dart';
 import 'screens/tipo_etiqueta.dart';
 import 'screens/criar_etiqueta.dart';
 import 'screens/etiquetas_ativas.dart';
-import 'screens/etiqueta_ativa_detalhes.dart';
 import 'screens/editar_etiqueta.dart';
 import 'screens/etiquetas_diarias.dart';
-import 'screens/etiqueta_diaria_detalhes.dart';
-import 'screens/criar_etiqueta_diaria.dart';
 import 'screens/configuracoes.dart';
 import 'screens/categorias.dart';
 import 'screens/setores.dart';
@@ -95,6 +94,11 @@ void main() async {
             repo: ctx.read<EstoqueMovLocalRepo>(),
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => TemplatesProvider(
+            repo: EtiquetasTemplatesLocalRepo(),
+          ),
+        ),
 
         ChangeNotifierProvider<GerarEtiquetaLocalProvider>(
           create: (ctx) => GerarEtiquetaLocalProvider(
@@ -137,11 +141,8 @@ class MyApp extends StatelessWidget {
         '/tipos-etiqueta': (_) => const TiposEtiquetaScreen(),
         '/criar-etiqueta': (context) => const CriarEtiquetaScreen(),
         '/etiquetas-ativas': (context) => const EtiquetasAtivasScreen(),
-        '/etiqueta-ativa-detalhes': (context) => const EtiquetaAtivaDetalhes(),
         '/editar-etiqueta': (context) => const EditarEtiquetaScreen(),
         '/etiquetas-diarias': (context) => const EtiquetasDiariasScreen(),
-        '/etiqueta-diaria-detalhes': (context) => const EtiquetaDiariaDetalhesScreen(),
-        '/criar-etiqueta-diaria': (context) => const CriarEtiquetaDiariaScreen(),
         '/configuracoes': (context) => const ConfiguracoesScreen(),
         '/categorias': (context) => const CategoriasScreen(),
         '/setores': (context) => const SetoresScreen(),

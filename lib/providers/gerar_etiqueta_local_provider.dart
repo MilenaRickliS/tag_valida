@@ -6,6 +6,8 @@ import '../models/etiqueta_model.dart';
 import '../data/local/repos/etiquetas_local_repo.dart';
 import '../providers/estoque_mov_local_provider.dart';
 import '../models/estoque_mov_model.dart';
+import '../models/etiqueta_template_model.dart';
+import './../data/local/repos/etiqueta_template_local_repo.dart';
 
 class GerarEtiquetaLocalProvider extends ChangeNotifier {
   final EtiquetasLocalRepo repo;
@@ -265,7 +267,23 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     );
 
     await repo.upsert(uid, etiqueta);
+    final templateRepo = EtiquetasTemplatesLocalRepo(); 
 
+    final template = EtiquetaTemplateModel(
+      id: "${DateTime.now().millisecondsSinceEpoch}",
+      tipoId: etiqueta.tipoId,
+      tipoNome: etiqueta.tipoNome,
+      produtoNome: etiqueta.produtoNome,
+      categoriaId: etiqueta.categoriaId,
+      categoriaNome: etiqueta.categoriaNome,
+      setorId: etiqueta.setorId,
+      setorNome: etiqueta.setorNome,
+      camposCustomValores: etiqueta.camposCustomValores,
+      quantidadePadrao: etiqueta.quantidade, // ou 1
+      createdAt: DateTime.now(),
+    );
+
+    await templateRepo.upsert(uid, template);
     await mov.registrarEntrada(
       uid: uid,
       etiquetaId: id,
