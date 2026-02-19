@@ -803,7 +803,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                       controller: labelCtrl,
                       textCapitalization: TextCapitalization.none,
                       inputFormatters: const [
-                        const TitleCaseEachWordFormatter(),
+                        TitleCaseEachWordFormatter(),
                       ],
                       decoration: InputDecoration(
                         labelText: "Nome do campo (Label)",

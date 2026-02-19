@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +19,48 @@ import '../data/local/repos/etiqueta_template_local_repo.dart';
 
 import '../widgets/menu.dart';
 import 'etiqueta_preview.dart';
+import 'package:flutter/services.dart';
+
+
+class TitleCaseFormatter extends TextInputFormatter {
+  TitleCaseFormatter({required this.allowed, required this.maxLen});
+  final RegExp allowed;
+  final int maxLen;
+
+  String _toTitleCase(String input) {
+    final cleaned = input.replaceAll(RegExp(r"\s+"), " ").trimLeft();
+    final words = cleaned.split(" ");
+    final fixed = words.map((w) {
+      if (w.isEmpty) return w;
+      final lower = w.toLowerCase();
+      final first = lower.substring(0, 1).toUpperCase();
+      final rest = lower.length > 1 ? lower.substring(1) : "";
+      return "$first$rest";
+    }).join(" ");
+    return fixed;
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var t = newValue.text;
+
+    if (t.length > maxLen) t = t.substring(0, maxLen);
+
+  
+    final buf = StringBuffer();
+    for (final ch in t.characters) {
+      if (allowed.hasMatch(ch) || ch == " ") buf.write(ch);
+    }
+    t = buf.toString();
+
+    t = _toTitleCase(t);
+
+    return TextEditingValue(
+      text: t,
+      selection: TextSelection.collapsed(offset: t.length),
+    );
+  }
+}
 
 class CriarEtiquetaScreen extends StatefulWidget {
   final String? editarEtiquetaId;
@@ -38,6 +80,41 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
   bool _loaded = false;
   bool _loadedEdit = false;
   bool _loadedTemplate = false;
+  final _formKey = GlobalKey<FormState>();
+  final _allowedBasic = RegExp(r"^[0-9A-Za-zÀ-ÿçÇ\s]+$");
+
+  String? _validateDates(DateTime? fab, DateTime? val) {
+    if (fab == null) return "Selecione a data de fabricação.";
+    if (val == null) return "Selecione a data de validade.";
+    if (val.isBefore(fab)) return "Validade deve ser igual ou após a fabricação.";
+    return null;
+  }
+
+  InputDecoration appInputDecoration(String label) {
+    const radius = 16.0;
+
+    OutlineInputBorder border(Color c) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide(color: c, width: 1.2),
+        );
+
+    return InputDecoration(
+      labelText: label,
+      border: border(Colors.black.withOpacity(0.18)),
+      enabledBorder: border(Colors.black.withOpacity(0.18)),
+      focusedBorder: border(const Color(0xFF2B2B2B)),
+      errorBorder: border(Colors.red.withOpacity(0.75)),
+      focusedErrorBorder: border(Colors.red),
+      labelStyle: TextStyle(
+        color: Colors.black.withOpacity(0.6),
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF2B2B2B),
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -186,6 +263,78 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
     _loadedTemplate = true;
   }
 
+  Future<bool> _confirmSaveWithWarning({
+    required BuildContext context,
+    required String title,
+    required String message,
+  }) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+          contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF2F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.red.withOpacity(0.15)),
+                ),
+                child: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(color: Colors.black.withOpacity(0.75)),
+          ),
+          actions: [
+            SizedBox(
+              height: 44,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  side: BorderSide(color: Colors.black.withOpacity(0.14)),
+                  foregroundColor: Colors.black.withOpacity(0.85),
+                ),
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w800)),
+              ),
+            ),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Salvar mesmo assim", style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return ok ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -294,7 +443,9 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Column(
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
@@ -307,6 +458,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                                 style: TextStyle(fontSize: 13, color: Colors.black.withOpacity(0.60)),
                               ),
                             ],
+                          ),
                           ),
                         ),
                         const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black54),
@@ -366,31 +518,47 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                             final novoTipo = tipos.firstWhere((t) => t.id == id);
                             context.read<GerarEtiquetaLocalProvider>().setTipoId(id, tipoAtual: novoTipo);
                           },
-                          decoration: const InputDecoration(
-                            labelText: "Tipo de etiqueta",
-                            border: OutlineInputBorder(),
+                          decoration: appInputDecoration(
+                             "Tipo de etiqueta",
+                           
                           ),
                         ),
 
                       const SizedBox(height: 12),
 
-                      TextField(
+                      TextFormField(
                         controller: gerar.produtoCtrl,
-                        decoration: const InputDecoration(
-                          labelText: "Nome do produto",
-                          border: OutlineInputBorder(),
-                        ),
+                        decoration: appInputDecoration("Nome do produto"),
+                        inputFormatters: [
+                          TitleCaseFormatter(allowed: RegExp(r"[0-9A-Za-zÀ-ÿçÇ]"), maxLen: 40),
+                        ],
+                        validator: (v) {
+                          final s = (v ?? "").trim();
+                          if (s.isEmpty) return "Informe o nome do produto.";
+                          if (!_allowedBasic.hasMatch(s)) return "Use apenas letras, números, espaços, acentos e ç.";
+                          if (s.length > 40) return "Máximo de 40 caracteres.";
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 12),
 
-                      TextField(
+                      TextFormField(
                         controller: gerar.quantidadeCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: "Quantidade",
-                          border: OutlineInputBorder(),
-                        ),
+                        keyboardType: TextInputType.number,
+                        decoration: appInputDecoration("Quantidade"),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                        ],
+                        validator: (v) {
+                          final s = (v ?? "").trim();
+                          if (s.isEmpty) return "Informe a quantidade.";
+                          final n = int.tryParse(s);
+                          if (n == null) return "Quantidade inválida.";
+                          if (n <= 0) return "Quantidade deve ser maior que 0.";
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 12),
@@ -422,10 +590,9 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                             DropdownMenuItem(value: "cancelado", child: Text("Cancelado")),
                           ],
                           onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setStatusEstoqueEdicao(v),
-                          decoration: const InputDecoration(
-                            labelText: "Status do estoque",
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: appInputDecoration(
+                            "Status do estoque",
+                            ),
                         ),
 
                       const SizedBox(height: 12),
@@ -505,6 +672,36 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                           onPressed: gerar.saving
                               ? null
                               : () async {
+                               
+                                final okForm = _formKey.currentState?.validate() ?? false;
+                                if (!okForm) return;
+
+                                
+                                final dateErr = _validateDates(gerar.fabricacao, gerar.validade);
+                                if (dateErr != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(dateErr)));
+                                  return;
+                                }
+
+                                final now = DateTime.now();
+                                final val = gerar.validade!;
+                                final days = val.difference(DateTime(now.year, now.month, now.day)).inDays;
+
+                                if (val.isBefore(DateTime(now.year, now.month, now.day))) {
+                                  final go = await _confirmSaveWithWarning(
+                                    context: context,
+                                    title: "Validade vencida",
+                                    message: "Essa etiqueta ficará com validade no passado. Deseja salvar mesmo assim?",
+                                  );
+                                  if (!go) return;
+                                } else if (days <= 1) {
+                                  final go = await _confirmSaveWithWarning(
+                                    context: context,
+                                    title: "Validade em alerta",
+                                    message: "A validade está muito próxima (até 1 dia). Deseja salvar mesmo assim?",
+                                  );
+                                  if (!go) return;
+                                }
                                   final prov = context.read<GerarEtiquetaLocalProvider>();
 
                                   final TipoEtiquetaModel? tipoParaSalvar = tipoAtual;
@@ -585,15 +782,17 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
           initial: (gerar.camposValores[campo.key]?["value"] ?? "").toString(),
         );
 
-        return TextField(
+        return TextFormField(
           controller: ctrl,
           maxLines: 3,
-          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+          decoration: appInputDecoration(label),
+          validator: (v) {
+            if (campo.obrigatorio && (v ?? "").trim().isEmpty) return "Campo obrigatório.";
+            return null;
+          },
           onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
-                key: campo.key,
-                label: campo.label,
-                value: v,
-              ),
+            key: campo.key, label: campo.label, value: v,
+          ),
         );
       }
 
@@ -604,35 +803,46 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
           initial: raw == null ? "" : raw.toString(),
         );
 
-        return TextField(
+        return TextFormField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+          decoration: appInputDecoration(label),
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10), 
+          ],
+          validator: (v) {
+            if (campo.obrigatorio && (v ?? "").trim().isEmpty) return "Campo obrigatório.";
+            final s = (v ?? "").trim();
+            if (s.isNotEmpty && int.tryParse(s) == null) return "Número inválido.";
+            return null;
+          },
           onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
-                key: campo.key,
-                label: campo.label,
-                value: num.tryParse(v),
-              ),
+            key: campo.key, label: campo.label, value: int.tryParse(v),
+          ),
         );
       }
 
       case CampoTipo.boolType:
         final obj = gerar.camposValores[campo.key];
-        final boolVal = (obj?["value"] as bool?) ?? false;
+        final bool boolVal = (obj?["value"] as bool?) ?? false;
 
         return Container(
           decoration: BoxDecoration(
             border: Border.all(color: Colors.black.withOpacity(0.12)),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: SwitchListTile(
-            title: Text(label),
+          child: CheckboxListTile(
             value: boolVal,
+            activeColor: const Color(0xFF428e2e),
+            checkColor: Colors.white,
+            title: Text(label),
+            controlAffinity: ListTileControlAffinity.leading,
             onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
-                  key: campo.key,
-                  label: campo.label,
-                  value: v,
-                ),
+              key: campo.key,
+              label: campo.label,
+              value: v ?? false,
+            ),
           ),
         );
 
@@ -658,14 +868,24 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
           initial: (gerar.camposValores[campo.key]?["value"] ?? "").toString(),
         );
 
-        return TextField(
+        return TextFormField(
           controller: ctrl,
-          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+          decoration: appInputDecoration(label),
+          inputFormatters: [
+            TitleCaseFormatter(allowed: RegExp(r"[0-9A-Za-zÀ-ÿçÇ]"), maxLen: 40),
+          ],
+          validator: (v) {
+            if (campo.obrigatorio && (v ?? "").trim().isEmpty) return "Campo obrigatório.";
+            final s = (v ?? "").trim();
+            if (s.isNotEmpty && !_allowedBasic.hasMatch(s)) {
+              return "Use apenas letras, números, espaços, acentos e ç.";
+            }
+            if (s.length > 40) return "Máximo de 40 caracteres.";
+            return null;
+          },
           onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
-                key: campo.key,
-                label: campo.label,
-                value: v,
-              ),
+            key: campo.key, label: campo.label, value: v,
+          ),
         );
       }
     }
@@ -683,28 +903,138 @@ class _DateField extends StatelessWidget {
     required this.onPick,
   });
 
+  InputDecoration _decoration(String label) {
+    const radius = 16.0;
+
+    OutlineInputBorder border(Color c) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide(color: c, width: 1.2),
+        );
+
+    return InputDecoration(
+      labelText: label,
+      border: border(Colors.black.withOpacity(0.18)),
+      enabledBorder: border(Colors.black.withOpacity(0.18)),
+      focusedBorder: border(const Color(0xFF2B2B2B)),
+      errorBorder: border(Colors.red.withOpacity(0.75)),
+      focusedErrorBorder: border(Colors.red),
+      labelStyle: TextStyle(
+        color: Colors.black.withOpacity(0.6),
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF2B2B2B),
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = (value == null)
         ? "Selecionar"
         : "${value!.day.toString().padLeft(2, "0")}/"
-            "${value!.month.toString().padLeft(2, "0")}/"
-            "${value!.year}";
+          "${value!.month.toString().padLeft(2, "0")}/"
+          "${value!.year}";
 
     return InkWell(
       onTap: () async {
+        final rootContext = Navigator.of(context, rootNavigator: true).context;
+
         final d = await showDatePicker(
-          context: context,
+          context: rootContext,
+          locale: const Locale('pt', 'BR'),
           firstDate: DateTime(2020),
           lastDate: DateTime(2100),
           initialDate: value ?? DateTime.now(),
+          builder: (context, child) {
+            final base = Theme.of(context);
+
+            const primary = Color(0xFFed7227);
+            const onPrimary = Colors.white;
+
+            final dialogShape = RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            );
+
+            return Theme(
+              data: base.copyWith(
+                useMaterial3: true,
+                colorScheme: base.colorScheme.copyWith(
+                  primary: primary,
+                  onPrimary: onPrimary,
+                  surface: Colors.white,
+                  onSurface: const Color(0xFF1E1E1E),
+                ),
+                dialogTheme: DialogTheme(shape: dialogShape),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: primary,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                datePickerTheme: DatePickerThemeData(
+                  shape: dialogShape,
+                  backgroundColor: Colors.white,
+
+                  headerBackgroundColor: primary,
+                  headerForegroundColor: onPrimary,
+                  headerHeadlineStyle: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  headerHelpStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: onPrimary.withOpacity(0.9),
+                  ),
+
+                  dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return onPrimary;
+                    return const Color(0xFF1E1E1E);
+                  }),
+                  dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return primary;
+                    return Colors.transparent;
+                  }),
+                 todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return onPrimary;
+                  return const Color(0xFF1E1E1E); 
+                }),
+                todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return primary; 
+                  return primary.withOpacity(0.14); 
+                }),
+                todayBorder: BorderSide(
+                  color: primary.withOpacity(0.45),
+                  width: 1.6,
+                ),
+
+                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return onPrimary;
+                    return const Color(0xFF1E1E1E);
+                  }),
+                  yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return primary;
+                    return Colors.transparent;
+                  }),
+
+                  weekdayStyle: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black.withOpacity(0.55),
+                  ),
+                  dayStyle: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              child: child!,
+            );
+          },
         );
+
         if (d != null) onPick(d);
       },
       child: InputDecorator(
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-        ).copyWith(labelText: label),
+        decoration: _decoration(label),
         child: Row(
           children: [
             Expanded(child: Text(text)),
@@ -732,6 +1062,32 @@ class _Dropdown<T> extends StatelessWidget {
     required this.onChanged,
     required this.emptyHint,
   });
+
+  InputDecoration appInputDecorationGlobal(String label) {
+    const radius = 16.0;
+
+    OutlineInputBorder border(Color c) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide(color: c, width: 1.2),
+        );
+
+    return InputDecoration(
+      labelText: label,
+      border: border(Colors.black.withOpacity(0.18)),
+      enabledBorder: border(Colors.black.withOpacity(0.18)),
+      focusedBorder: border(const Color(0xFF2B2B2B)),
+      errorBorder: border(Colors.red.withOpacity(0.75)),
+      focusedErrorBorder: border(Colors.red),
+      labelStyle: TextStyle(
+        color: Colors.black.withOpacity(0.6),
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF2B2B2B),
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -762,10 +1118,7 @@ class _Dropdown<T> extends StatelessWidget {
               ))
           .toList(),
       onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
+       decoration: appInputDecorationGlobal(label),
     );
   }
 }
