@@ -40,6 +40,26 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
 
   final Map<String, TextEditingController> customCtrls = {};
 
+  Map<String, Map<String, dynamic>> _sanitizeCamposValores(
+    Map<String, Map<String, dynamic>> input,
+  ) {
+    dynamic fix(dynamic v) {
+      if (v == null) return null;
+      if (v is DateTime) return v.millisecondsSinceEpoch;
+      if (v is Map) return v.map((k, val) => MapEntry(k.toString(), fix(val)));
+      if (v is List) return v.map(fix).toList();
+      return v; 
+    }
+
+    return input.map((k, v) {
+     
+      final map = Map<String, dynamic>.from(v);
+      map["label"] = (map["label"] ?? "").toString();
+      map["value"] = fix(map["value"]);
+      return MapEntry(k, map);
+    });
+  }
+
   void setQuantidadeText(String v) {
     quantidadeCtrl.text = v;
     notifyListeners();
@@ -245,6 +265,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     final now = DateTime.now();
     final id = now.millisecondsSinceEpoch.toString();
     final qtd = _parseQtdOrThrow();
+    final safeCampos = _sanitizeCamposValores(camposValores);
 
     final etiqueta = EtiquetaModel(
       id: id,
@@ -257,7 +278,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       setorNome: setor!.nome,
       dataFabricacao: fabricacao!,
       dataValidade: validade!,
-      camposCustomValores: camposValores,
+      camposCustomValores: safeCampos,
       status: "ativa",
       createdAt: now,   
       quantidade: qtd,
@@ -278,8 +299,8 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       categoriaNome: etiqueta.categoriaNome,
       setorId: etiqueta.setorId,
       setorNome: etiqueta.setorNome,
-      camposCustomValores: etiqueta.camposCustomValores,
-      quantidadePadrao: etiqueta.quantidade, // ou 1
+      camposCustomValores: safeCampos,
+      quantidadePadrao: etiqueta.quantidade, 
       createdAt: DateTime.now(),
     );
 
@@ -332,6 +353,8 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       current: statusWanted,
     );
 
+    final safeCampos = _sanitizeCamposValores(camposValores);
+
     final etiqueta = EtiquetaModel(
       id: editingEtiquetaId!,
       tipoId: tipoAtual.id,
@@ -343,7 +366,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       setorNome: setor!.nome,
       dataFabricacao: fabricacao!,
       dataValidade: validade!,
-      camposCustomValores: camposValores,
+      camposCustomValores: safeCampos,
       status: "ativa",
       createdAt: editingCreatedAt,
       quantidade: qtdNova,

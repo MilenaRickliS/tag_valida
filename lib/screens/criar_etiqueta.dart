@@ -856,10 +856,10 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
           label: label,
           value: dt,
           onPick: (d) => context.read<GerarEtiquetaLocalProvider>().setCampoValor(
-                key: campo.key,
-                label: campo.label,
-                value: d,
-              ),
+            key: campo.key,
+            label: campo.label,
+            value: d.millisecondsSinceEpoch,
+          ),
         );
 
       case CampoTipo.text: {
