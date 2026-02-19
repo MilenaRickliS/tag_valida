@@ -86,8 +86,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 child: SlideTransition(
                   position: _logoSlide,
                   child: Image.asset(
-                    'assets/logo1.png',
-                    height: 150,
+                    'assets/logo3.png',
+                    height: 200,
                   ),
                 ),
               ),

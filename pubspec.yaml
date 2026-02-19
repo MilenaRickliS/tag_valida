@@ -57,6 +57,7 @@ dependencies:
   sembast_web: ^2.4.2
   sqflite_common_ffi: ^2.3.6
   path_provider: ^2.1.5
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -115,9 +116,16 @@ flutter:
 
 flutter_native_splash:
   color: "#fdf7ed" 
-  image: assets/logo.png 
+  image: assets/logo3.png 
   android_gravity: center
   ios_content_mode: center
   fullscreen: true
   android: true
   ios: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/icon3.png"
+
+

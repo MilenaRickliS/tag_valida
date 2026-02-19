@@ -16,9 +16,25 @@ class HomeMenuCardV2 extends StatelessWidget {
     required this.onTap,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Material(
+@override
+Widget build(BuildContext context) {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(22),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.12),
+          blurRadius: 30,
+          offset: Offset(0, 15),
+        ),
+      ],
+    ),
+    child: Material(
       color: Colors.white.withOpacity(0.94),
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
@@ -28,19 +44,14 @@ class HomeMenuCardV2 extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.10),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            border: Border.all(
+              color: Colors.black.withOpacity(0.08),
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-           
               Text(
                 title,
                 maxLines: 1,
@@ -51,10 +62,7 @@ class HomeMenuCardV2 extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -89,10 +97,7 @@ class HomeMenuCardV2 extends StatelessWidget {
                   ),
                 ],
               ),
-
               const Spacer(),
-
-             
               Align(
                 alignment: Alignment.centerRight,
                 child: Icon(
@@ -105,6 +110,8 @@ class HomeMenuCardV2 extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

@@ -370,7 +370,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Image.asset(
-                  'assets/logo1.png',
+                  'assets/logo3.png',
                   height: 150,
                 ),
 
