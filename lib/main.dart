@@ -39,7 +39,6 @@ import 'screens/scanner_etiqueta.dart';
 import 'screens/tipo_etiqueta.dart';
 import 'screens/criar_etiqueta.dart';
 import 'screens/etiquetas_ativas.dart';
-import 'screens/editar_etiqueta.dart';
 import 'screens/etiquetas_diarias.dart';
 import 'screens/configuracoes.dart';
 import 'screens/categorias.dart';
@@ -118,12 +117,17 @@ void main() async {
   );
 }
 
+final RouteObserver<PageRoute<dynamic>> routeObserver =
+    RouteObserver<PageRoute<dynamic>>();
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+  
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: [routeObserver],
        locale: const Locale('pt', 'BR'),
         supportedLocales: const [Locale('pt', 'BR')],
         localizationsDelegates: const [
@@ -149,7 +153,6 @@ class MyApp extends StatelessWidget {
         '/tipos-etiqueta': (_) => const TiposEtiquetaScreen(),
         '/criar-etiqueta': (context) => const CriarEtiquetaScreen(),
         '/etiquetas-ativas': (context) => const EtiquetasAtivasScreen(),
-        '/editar-etiqueta': (context) => const EditarEtiquetaScreen(),
         '/etiquetas-diarias': (context) => const EtiquetasDiariasScreen(),
         '/configuracoes': (context) => const ConfiguracoesScreen(),
         '/categorias': (context) => const CategoriasScreen(),

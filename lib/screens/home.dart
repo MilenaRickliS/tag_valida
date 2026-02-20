@@ -12,6 +12,9 @@ import '../data/sync/sync_service.dart';
 import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
 
+final RouteObserver<PageRoute<dynamic>> routeObserver =
+    RouteObserver<PageRoute<dynamic>>();
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,7 +22,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware  {
+  
   bool _syncedOnce = false;
   bool _syncing = false;
 
@@ -28,34 +32,62 @@ class _HomeScreenState extends State<HomeScreen> {
   int _qtdAlerta = 0;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_syncedOnce) return;
-
-    final user = context.read<AuthProvider>().user;
-    if (user == null) return;
-
-    _syncedOnce = true;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-
-      setState(() => _syncing = true);
-
-      try {
-        await context.read<SyncService>().syncNow(user.uid);
-      } catch (_) {
-        
-      } finally {
-        if (mounted) setState(() => _syncing = false);
-      }
-
+  void initState() {
+    super.initState();
     
-      if (mounted) {
-        await _carregarIndicadores(user.uid);
-      }
-    });
   }
+
+   @override
+    void didChangeDependencies() {
+      super.didChangeDependencies();
+
+     
+      final route = ModalRoute.of(context);
+      if (route is PageRoute) {
+        routeObserver.subscribe(this, route);
+      }
+
+      
+      if (_syncedOnce) return;
+
+      final user = context.read<AuthProvider>().user;
+      if (user == null) return;
+
+      _syncedOnce = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+
+        setState(() => _syncing = true);
+
+        try {
+          await context.read<SyncService>().syncNow(user.uid);
+        } catch (_) {
+         
+        } finally {
+          if (mounted) setState(() => _syncing = false);
+        }
+
+        if (mounted) {
+          await _carregarIndicadores(user.uid);
+        }
+      });
+    }
+
+    @override
+    void dispose() {
+      routeObserver.unsubscribe(this);
+      super.dispose();
+    }
+
+  
+    @override
+    void didPopNext() {
+      final user = context.read<AuthProvider>().user;
+      if (user != null) {
+        _carregarIndicadores(user.uid);
+      }
+    }
 
   DateTime _hojeStart() {
     final now = DateTime.now();

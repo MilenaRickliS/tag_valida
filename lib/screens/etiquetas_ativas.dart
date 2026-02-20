@@ -26,6 +26,76 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
 
    String? _statusFiltro;
 
+  bool _showTop = true;
+  bool _showFooter = true;
+
+  Widget _viewToggles() {
+    Widget pill({
+      required IconData icon,
+      required String label,
+      required bool on,
+      required VoidCallback tap,
+    }) {
+      return Material(
+        color: on ? Colors.white : Colors.black,
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: tap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: on ? Colors.black.withOpacity(0.35) : Colors.white,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 6),
+                )
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: on ? Colors.black : Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: on ? Colors.black : Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        pill(
+          icon: _showTop ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+          label: _showTop ? "Esconder topo" : "Mostrar topo",
+          on: _showTop,
+          tap: () => setState(() => _showTop = !_showTop),
+        ),
+        const SizedBox(width: 10),
+        pill(
+          icon: _showFooter ? Icons.expand_more_rounded : Icons.expand_less_rounded,
+          label: _showFooter ? "Esconder estoque" : "Mostrar estoque",
+          on: _showFooter,
+          tap: () => setState(() => _showFooter = !_showFooter),
+        ),
+      ],
+    );
+  }
+  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -118,13 +188,17 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                         ),
                       ),
                     ),
+
+                   
+                    _viewToggles(),
+
+                    const SizedBox(width: 10),
+
                     IconButton(
                       tooltip: "Atualizar tipos",
                       onPressed: tiposProv.loading
                           ? null
-                          : () => context
-                              .read<TiposEtiquetaLocalProvider>()
-                              .fetch(uid),
+                          : () => context.read<TiposEtiquetaLocalProvider>().fetch(uid),
                       icon: tiposProv.loading
                           ? const SizedBox(
                               width: 18,
@@ -132,7 +206,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh),
-                    )
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -157,11 +231,16 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                               "Cadastre um tipo de etiqueta para começar.",
                         )
                       : _EtiquetasPorTipoList(
-                          uid: uid,
-                          tipoId: _tipoSelecionadoId!,
-                          tipo: tipoAtual,
-                          initialStatusFiltro: _statusFiltro,
-                        ),
+                        uid: uid,
+                        tipoId: _tipoSelecionadoId!,
+                        tipo: tipoAtual,
+                        initialStatusFiltro: _statusFiltro,
+
+                        showTop: _showTop,
+                        showFooter: _showFooter,
+                        onShowTopChanged: (v) => setState(() => _showTop = v),
+                        onShowFooterChanged: (v) => setState(() => _showFooter = v),
+                      ),
                 ),
               ],
             ),
@@ -218,9 +297,9 @@ class _TiposChips extends StatelessWidget {
               label: Text(t.nome),
               selected: selected,
               onSelected: (_) => onSelected(t.id),
-              selectedColor: Colors.black,
+              selectedColor: const Color(0xff428e2e),
               labelStyle: TextStyle(
-                color: selected ? Colors.white : Colors.black87,
+                color: selected ? Colors.white : const Color(0xff428e2e),
                 fontWeight: FontWeight.w700,
               ),
               backgroundColor: Colors.white,
@@ -239,13 +318,21 @@ class _EtiquetasPorTipoList extends StatefulWidget {
   final String uid;
   final String tipoId;
   final TipoEtiquetaModel? tipo;
-   final String? initialStatusFiltro; 
+  final String? initialStatusFiltro; 
+  final bool showTop;
+  final bool showFooter;
+  final ValueChanged<bool> onShowTopChanged;
+  final ValueChanged<bool> onShowFooterChanged;
 
   const _EtiquetasPorTipoList({
     required this.uid,
     required this.tipoId,
     required this.tipo,
-    this.initialStatusFiltro,
+    this.initialStatusFiltro, 
+    required this.showTop, 
+    required this.showFooter, 
+    required this.onShowTopChanged, 
+    required this.onShowFooterChanged,
   });
 
   @override
@@ -354,127 +441,191 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
   }
 
 
-  void _openFiltersModal({
-    required List<String> setores,
-    required List<String> categorias,
-    required Map<String, int> countBySetor,
-    required Map<String, int> countByCategoria,
-    required int countBom,
-    required int countAlerta,
-    required int countVencido,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return SafeArea(
-          child: DraggableScrollableSheet(
-            initialChildSize: 0.70,
-            minChildSize: 0.40,
-            maxChildSize: 0.92,
-            builder: (context, scrollCtrl) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDF7ED),
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(20)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
-                      blurRadius: 24,
-                      spreadRadius: 2,
-                      offset: const Offset(0, -8),
-                    ),
-                  ],
+ void _openFiltersModal({
+  required List<String> setores,
+  required List<String> categorias,
+  required Map<String, int> countBySetor,
+  required Map<String, int> countByCategoria,
+  required int countBom,
+  required int countAlerta,
+  required int countVencido,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.35),
+    builder: (_) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.70,
+        minChildSize: 0.45,
+        maxChildSize: 0.92,
+        builder: (context, scrollCtrl) {
+          return Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDF7ED),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: Colors.black.withOpacity(0.08)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.18),
+                  blurRadius: 26,
+                  spreadRadius: 2,
+                  offset: const Offset(0, -10),
                 ),
-                child: SingleChildScrollView(
-                  controller: scrollCtrl,
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+
+                
+                Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+              
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 12, 10),
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              "Filtros",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: "Fechar",
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
+                      const Expanded(
+                        child: Text(
+                          "Filtros",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-
-                      _FiltersBarPretty(
-                        fBom: _fBom,
-                        fAlerta: _fAlerta,
-                        fVencido: _fVencido,
-                        onToggleBom: () => setState(() => _fBom = !_fBom),
-                        onToggleAlerta: () =>
-                            setState(() => _fAlerta = !_fAlerta),
-                        onToggleVencido: () =>
-                            setState(() => _fVencido = !_fVencido),
-                        setores: setores,
-                        categorias: categorias,
-                        setorSelecionado: _setorFiltro,
-                        categoriaSelecionada: _categoriaFiltro,
-                        onSetorChanged: (v) => setState(() => _setorFiltro = v),
-                        onCategoriaChanged: (v) =>
-                            setState(() => _categoriaFiltro = v),
-                        onClearAll: _clearAll,
-                        countBySetor: countBySetor,
-                        countByCategoria: countByCategoria,
-                        countBom: countBom,
-                        countAlerta: countAlerta,
-                        countVencido: countVencido,
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                _clearAll();
-                                Navigator.pop(context);
-                              },
-                              icon: const Icon(Icons.restart_alt_rounded),
-                              label: const Text("Limpar e fechar"),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.check_rounded),
-                              label: const Text("Aplicar"),
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        tooltip: "Fechar",
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
 
+               
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _FiltersBarPretty(
+                          fBom: _fBom,
+                          fAlerta: _fAlerta,
+                          fVencido: _fVencido,
+                          onToggleBom: () => setState(() => _fBom = !_fBom),
+                          onToggleAlerta: () => setState(() => _fAlerta = !_fAlerta),
+                          onToggleVencido: () => setState(() => _fVencido = !_fVencido),
+                          setores: setores,
+                          categorias: categorias,
+                          setorSelecionado: _setorFiltro,
+                          categoriaSelecionada: _categoriaFiltro,
+                          onSetorChanged: (v) => setState(() => _setorFiltro = v),
+                          onCategoriaChanged: (v) => setState(() => _categoriaFiltro = v),
+                          onClearAll: _clearAll,
+                          countBySetor: countBySetor,
+                          countByCategoria: countByCategoria,
+                          countBom: countBom,
+                          countAlerta: countAlerta,
+                          countVencido: countVencido,
+                        ),
+
+                        const SizedBox(height: 14),
+
+                      
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.black.withOpacity(0.08)),
+                          ),
+                          child: Text(
+                            "Você pode combinar status + setor + categoria + busca.",
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.65),
+                              height: 1.35,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 90),  
+                      ],
+                    ),
+                  ),
+                ),
+
+              
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDF7ED),
+                    border: Border(
+                      top: BorderSide(color: Colors.black.withOpacity(0.08)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton.icon(
+                          onPressed: () {
+                            _clearAll();
+                            Navigator.pop(context);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF2B2B2B),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          icon: const Icon(Icons.restart_alt_rounded, size: 18, color: Colors.black,),
+                          label: const Text(
+                            "Limpar",
+                            style: TextStyle(fontWeight: FontWeight.w800, color: Colors.black),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff428e2e),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          icon: const Icon(Icons.check_rounded, size: 18, color: Colors.white,),
+                          label: const Text(
+                            "Aplicar",
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 
   Widget _topBar({
     required int activeCount,
@@ -741,52 +892,71 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
             return minA.compareTo(minB);
           });
 
-        return Column(
-          children: [
-            _topBar(
-              activeCount: activeCount,
-              onOpenFilters: () => _openFiltersModal(
-                setores: setores,
-                categorias: categorias,
-                countBySetor: countBySetor,
-                countByCategoria: countByCategoria,
-                countBom: countBom,
-                countAlerta: countAlerta,
-                countVencido: countVencido,
-              ),
-              onClearFilters: _clearAll,
-            ),
-            if (activeChips.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              _ActiveChipsRow(
-                chips: activeChips,
-                onClearAll: _clearAll,
-              ),
-            ],
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView(
-                children: [
-                  for (final setorEntry in setoresOrdenados) ...[
-                    _SetorSection(
-                      setorNome: setorEntry.key,
-                      categoriasMap: setorEntry.value,
-                      minValidadeOf: minValidadeOf,
-                      uid: widget.uid,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ],
-              ),
-            ),
+      return Column(
+        children: [
+          
 
-             EstoqueFooter(
-              entradas: entradasTotal,
-              saidas: saidasTotal,
-              total: geralTotal,
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            child: widget.showTop
+                ? Column(
+                    children: [
+                      _topBar(
+                        activeCount: activeCount,
+                        onOpenFilters: () => _openFiltersModal(
+                          setores: setores,
+                          categorias: categorias,
+                          countBySetor: countBySetor,
+                          countByCategoria: countByCategoria,
+                          countBom: countBom,
+                          countAlerta: countAlerta,
+                          countVencido: countVencido,
+                        ),
+                        onClearFilters: _clearAll,
+                      ),
+                      if (activeChips.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        _ActiveChipsRow(
+                          chips: activeChips,
+                          onClearAll: _clearAll,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+
+          Expanded(
+            child: ListView(
+              children: [
+                for (final setorEntry in setoresOrdenados) ...[
+                  _SetorSection(
+                    setorNome: setorEntry.key,
+                    categoriasMap: setorEntry.value,
+                    minValidadeOf: minValidadeOf,
+                    uid: widget.uid,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ],
             ),
-          ],
-        );
+          ),
+
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            child: widget.showFooter
+                ? EstoqueFooter(
+                    entradas: entradasTotal,
+                    saidas: saidasTotal,
+                    total: geralTotal,
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      );
       },
     );
   }
@@ -831,8 +1001,8 @@ class _ActiveChipsRow extends StatelessWidget {
         const SizedBox(width: 8),
         TextButton.icon(
           onPressed: onClearAll,
-          icon: const Icon(Icons.clear_all_rounded, size: 18),
-          label: const Text("Limpar"),
+          icon: const Icon(Icons.clear_all_rounded, size: 18, color: Colors.black),
+          label: const Text("Limpar", style: TextStyle(color: Colors.black),),
         ),
       ],
     );
@@ -1066,145 +1236,230 @@ class _FiltersBarPretty extends StatelessWidget {
     required this.countVencido,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    Widget statusChip({
-      required String label,
-      required bool selected,
-      required VoidCallback onTap,
-      required int count,
-      required IconData icon,
-    }) {
-      final bg = selected
-          ? Colors.black
-          : Colors.white;
-      final fg = selected
-          ? Colors.white
-          : Colors.black.withOpacity(0.80);
+@override
+Widget build(BuildContext context) {
 
-      return Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
+  Widget statusChip({
+  required String label,
+  required bool selected,
+  required VoidCallback onTap,
+  required int count,
+  required IconData icon,
+}) {
+
+  Color base;
+  Color lightBg;
+
+  switch (label) {
+    case "Vencido":
+      base = const Color(0xFFB00020);      
+      lightBg = const Color(0xFFFFEBEE);   
+      break;
+    case "Em alerta":
+      base = const Color(0xFFEF6C00);      
+      lightBg = const Color(0xFFFFF3E0);   
+      break;
+    default: 
+      base = const Color(0xff428e2e);      
+      lightBg = const Color(0xFFE8F5E9);   
+  }
+
+  final bg = selected ? lightBg : Colors.white;
+  final fg = selected ? base : const Color.fromARGB(255, 24, 44, 18);
+  final border = selected ? base.withOpacity(0.35) : Colors.black.withOpacity(0.10);
+
+  return Material(
+    color: bg,
+    borderRadius: BorderRadius.circular(999),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.black.withOpacity(0.12)),
+          border: Border.all(color: border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(selected ? 0.06 : 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(fontWeight: FontWeight.w900, color: fg),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: selected ? Colors.white.withOpacity(0.16) : Colors.black.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    "$count",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: fg,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: fg),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: fg,
+                letterSpacing: 0.1,
+              ),
             ),
+            const SizedBox(width: 8),
+
+          
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: selected ? base : base.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: selected ? base.withOpacity(0.20) : base.withOpacity(0.25),
+                ),
+              ),
+              child: Text(
+                "$count",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: selected ? Colors.white : base,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  Widget clearChip() {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onClearAll,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: Colors.black.withOpacity(0.10)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.restart_alt_rounded, size: 16, color: Colors.black.withOpacity(0.75)),
+              const SizedBox(width: 8),
+              Text(
+                "Limpar",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black.withOpacity(0.80),
+                ),
+              ),
+            ],
           ),
         ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              statusChip(
-                label: "Bom",
-                selected: fBom,
-                onTap: onToggleBom,
-                count: countBom,
-                icon: Icons.check_circle_outline_rounded,
-              ),
-              statusChip(
-                label: "Em alerta",
-                selected: fAlerta,
-                onTap: onToggleAlerta,
-                count: countAlerta,
-                icon: Icons.notification_important_outlined,
-              ),
-              statusChip(
-                label: "Vencido",
-                selected: fVencido,
-                onTap: onToggleVencido,
-                count: countVencido,
-                icon: Icons.warning_amber_rounded,
-              ),
-              const SizedBox(width: 6),
-              TextButton.icon(
-                onPressed: onClearAll,
-                icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                label: const Text("Limpar"),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _DropCount(
-                  label: "Setor",
-                  value: setorSelecionado,
-                  items: setores,
-                  onChanged: onSetorChanged,
-                  counts: countBySetor,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _DropCount(
-                  label: "Categoria",
-                  value: categoriaSelecionada,
-                  items: categorias,
-                  onChanged: onCategoriaChanged,
-                  counts: countByCategoria,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
+
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: Colors.black.withOpacity(0.08)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 8),
+        )
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Status",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.black.withOpacity(0.75),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            statusChip(
+              label: "Bom",
+              selected: fBom,
+              onTap: onToggleBom,
+              count: countBom,
+              icon: Icons.check_circle_outline_rounded,
+            ),
+            statusChip(
+              label: "Em alerta",
+              selected: fAlerta,
+              onTap: onToggleAlerta,
+              count: countAlerta,
+              icon: Icons.notification_important_outlined,
+            ),
+            statusChip(
+              label: "Vencido",
+              selected: fVencido,
+              onTap: onToggleVencido,
+              count: countVencido,
+              icon: Icons.warning_amber_rounded,
+            ),
+            clearChip(),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        Text(
+          "Refinar por",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.black.withOpacity(0.75),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        Row(
+          children: [
+            Expanded(
+              child: _DropCount(
+                label: "Setor",
+                value: setorSelecionado,
+                items: setores,
+                onChanged: onSetorChanged,
+                counts: countBySetor,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _DropCount(
+                label: "Categoria",
+                value: categoriaSelecionada,
+                items: categorias,
+                onChanged: onCategoriaChanged,
+                counts: countByCategoria,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 }
 
 class _DropCount extends StatelessWidget {
@@ -1224,20 +1479,90 @@ class _DropCount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const primary = Color(0xff428e2e);
+
+    final hasValue = value != null;
+
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
         isDense: true,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: hasValue ? primary.withOpacity(0.35) : Colors.black.withOpacity(0.10),
+            width: hasValue ? 1.4 : 1.0,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: primary.withOpacity(0.70), width: 1.8),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: hasValue ? const Color(0xFFE8F5E9) : Colors.white, 
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: value,
           isExpanded: true,
-          hint: const Text("Todos"),
+          dropdownColor: Colors.white,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: hasValue ? primary : Colors.black.withOpacity(0.65),
+          ),
+
+          selectedItemBuilder: (context) {
+            return [
+              Text(
+                "Todos",
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black.withOpacity(0.75),
+                ),
+              ),
+              ...items.map((s) {
+                final c = counts[s] ?? 0;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        s,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xff428e2e),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: primary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        "$c",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ];
+          },
+
+          hint: Text(
+            "Todos",
+            style: TextStyle(color: Colors.black.withOpacity(0.60)),
+          ),
+
           items: [
             const DropdownMenuItem<String?>(
               value: null,
@@ -1245,30 +1570,46 @@ class _DropCount extends StatelessWidget {
             ),
             ...items.map((s) {
               final c = counts[s] ?? 0;
+              final isSel = s == value;
+
               return DropdownMenuItem<String?>(
                 value: s,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(s, overflow: TextOverflow.ellipsis),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        "$c",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black.withOpacity(0.75),
-                          fontSize: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSel ? const Color(0xFFE8F5E9) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          s,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
+                            color: isSel ? primary : Colors.black.withOpacity(0.85),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isSel ? primary : Colors.black.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          "$c",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: isSel ? Colors.white : Colors.black.withOpacity(0.75),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }),
@@ -1279,7 +1620,6 @@ class _DropCount extends StatelessWidget {
     );
   }
 }
-
 
 class _SetorSection extends StatelessWidget {
   final String setorNome;
@@ -1321,7 +1661,7 @@ class _SetorSection extends StatelessWidget {
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
               ),
             ),
-            _Badge(text: "Mais antigo: ${_fmt(minSetor)}"),
+            _Badge(text: "Mais próximo a vencer: ${_fmt(minSetor)}"),
           ],
         ),
         children: [
@@ -1381,7 +1721,7 @@ class _CategoriaSection extends StatelessWidget {
                     fontSize: 14.5, fontWeight: FontWeight.w900),
               ),
             ),
-            _Badge(text: "Mais antigo: ${_fmt(minCat)}"),
+            _Badge(text: "Mais próximo a vencer: ${_fmt(minCat)}"),
           ],
         ),
         children: [
@@ -1408,27 +1748,86 @@ class _EtiquetaCard extends StatelessWidget {
 
   const _EtiquetaCard({required this.uid, required this.e});
 
-  Future<bool> _confirmDelete(BuildContext context, String nome) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Excluir etiqueta?"),
-        content: Text("Tem certeza que deseja excluir “$nome”?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancelar"),
+Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    barrierColor: Colors.black.withOpacity(0.35),
+    builder: (_) => AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+
+      title: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF2F2),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.red.withOpacity(0.15)),
+            ),
+            child: const Icon(Icons.delete_outline, color: Colors.red),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Excluir"),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              "Excluir etiqueta?",
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         ],
       ),
-    );
-    return ok ?? false;
-  }
+
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Produto:", style: TextStyle(color: Colors.black.withOpacity(0.65))),
+          const SizedBox(height: 4),
+          Text(
+            "“${produtoNome.isEmpty ? "Sem nome" : produtoNome}”",
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "A etiqueta será desativada (exclusão suave).\nEla pode continuar aparecendo em históricos.",
+            style: TextStyle(color: Colors.black.withOpacity(0.60), height: 1.4),
+          ),
+        ],
+      ),
+
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF2B2B2B),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFB00020),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          child: const Text("Excluir", style: TextStyle(fontWeight: FontWeight.w900)),
+        ),
+      ],
+    ),
+  );
+
+  return ok ?? false;
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1544,57 +1943,85 @@ class _EtiquetaCard extends StatelessWidget {
           ),
         ),
 
-        Positioned(
-          top: 6,
-          right: 6,
-          child: PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: 20),
-            onSelected: (v) async {
-              if (v == "edit") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        CriarEtiquetaScreen(editarEtiquetaId: e.id),
-                  ),
-                );
-              }
+       Positioned(
+        top: 6,
+        right: 6,
+        child: PopupMenuButton<String>(
+          tooltip: "Opções",
+          splashRadius: 22,
+          offset: const Offset(0, 44),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          color: Colors.white,
+          elevation: 10,
 
-              if (v == "delete") {
-                final ok = await _confirmDelete(context, produto);
-                if (!ok) return;
-
-                await repo.deleteSoft(uid, e.id);
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Etiqueta excluída.")),
-                  );
-                  (context as Element).markNeedsBuild();
-                }
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: "edit",
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.edit_outlined),
-                  title: Text("Editar"),
+          
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black.withOpacity(0.10)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-              PopupMenuItem(
-                value: "delete",
-                child: ListTile(
-                  dense: true,
-                  leading:
-                      Icon(Icons.delete_outline, color: Colors.red),
-                  title: Text("Excluir"),
-                ),
-              ),
-            ],
+              ],
+            ),
+            child: Icon(
+              Icons.more_vert,
+              size: 18,
+              color: Colors.black.withOpacity(0.75),
+            ),
           ),
+
+          onSelected: (v) async {
+            if (v == "edit") {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CriarEtiquetaScreen(editarEtiquetaId: e.id),
+                ),
+              );
+            }
+
+            if (v == "delete") {
+              final ok = await _confirmDeleteEtiqueta(context, produto);
+              if (!ok) return;
+
+              await repo.deleteSoft(uid, e.id);
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Etiqueta excluída.")),
+                );
+                (context as Element).markNeedsBuild();
+              }
+            }
+          },
+
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: "edit",
+              child: ListTile(
+                dense: true,
+                leading: Icon(Icons.edit_outlined),
+                title: Text("Editar"),
+              ),
+            ),
+            PopupMenuItem(
+              value: "delete",
+              child: ListTile(
+                dense: true,
+                leading: Icon(Icons.delete_outline, color: Colors.red),
+                title: Text("Excluir"),
+              ),
+            ),
+          ],
         ),
+      ),
       ],
     );
   }
