@@ -143,4 +143,61 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async => signOut();
+
+  Future<void> updateProfile({
+    required String nome,
+    required String razao,
+    required String telefone,
+    required String responsavel,
+    required String cep,
+    required String rua,
+    required String numero,
+    required String bairro,
+    required String complemento,
+    required String cidade,
+    required String estado,
+    String? logo,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw AuthFailure("Usuário não autenticado.");
+
+    final data = <String, dynamic>{
+      'nome': nome,
+      'razao': razao,
+      'telefone': telefone,
+      'responsavel': responsavel,
+      'cep': cep,
+      'rua': rua,
+      'numero': numero,
+      'bairro': bairro,
+      'complemento': complemento,
+      'cidade': cidade,
+      'estado': estado,
+    };
+
+    if (logo != null) data['logo'] = logo;
+
+    await _firestore.collection('usuarios').doc(uid).update(data);
+
+   
+    _user = UserModel(
+      uid: _user!.uid,
+      nome: nome,
+      razao: razao,
+      email: _user!.email,
+      cnpj: _user!.cnpj,
+      cep: cep,
+      rua: rua,
+      numero: numero,
+      bairro: bairro,
+      complemento: complemento,
+      cidade: cidade,
+      estado: estado,
+      telefone: telefone,
+      responsavel: responsavel,
+      logo: logo ?? _user!.logo,
+    );
+
+    notifyListeners();
+  }
 }
