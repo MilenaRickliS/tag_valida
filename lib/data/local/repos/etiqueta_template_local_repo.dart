@@ -4,6 +4,36 @@ import '../mappers/etiqueta_template_local.dart';
 import '../../../models/etiqueta_template_model.dart';
 
 class EtiquetasTemplatesLocalRepo {
+   String _norm(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r"\s+"), " ")
+      .trim();
+
+  Future<bool> existsSameKey({
+    required String uid,
+    required String produtoNome,
+    required String categoriaId,
+    required String setorId,
+  }) async {
+    final db = await AppDb.instance.db;
+
+
+    final rows = await db.query(
+      "etiquetas_templates",
+      columns: ["produtoNome"],
+      where: "uid = ? AND categoriaId = ? AND setorId = ?",
+      whereArgs: [uid, categoriaId, setorId],
+    );
+
+    final alvo = _norm(produtoNome);
+
+    for (final r in rows) {
+      final nomeRow = (r["produtoNome"] ?? "").toString();
+      if (_norm(nomeRow) == alvo) return true;
+    }
+    return false;
+  }
+
   Future<void> upsert(String uid, EtiquetaTemplateModel t) async {
     final db = await AppDb.instance.db;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -14,6 +44,7 @@ class EtiquetasTemplatesLocalRepo {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
 
   Future<List<EtiquetaTemplateModel>> listAll({required String uid}) async {
     final db = await AppDb.instance.db;

@@ -304,7 +304,16 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       createdAt: DateTime.now(),
     );
 
-    await templateRepo.upsert(uid, template);
+    final jaExiste = await templateRepo.existsSameKey(
+      uid: uid,
+      produtoNome: template.produtoNome,
+      categoriaId: template.categoriaId,
+      setorId: template.setorId,
+    );
+
+    if (!jaExiste) {
+      await templateRepo.upsert(uid, template);
+    }
     await mov.registrarEntrada(
       uid: uid,
       etiquetaId: id,
