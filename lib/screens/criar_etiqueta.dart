@@ -82,6 +82,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
   bool _loadedTemplate = false;
   final _formKey = GlobalKey<FormState>();
   final _allowedBasic = RegExp(r"^[0-9A-Za-zÀ-ÿçÇ\s]+$");
+  
 
   String? _validateDates(DateTime? fab, DateTime? val) {
     if (fab == null) return "Selecione a data de fabricação.";
@@ -337,6 +338,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("templateId: ${widget.templateId} | editarEtiquetaId: ${widget.editarEtiquetaId}");
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
 

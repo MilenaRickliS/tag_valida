@@ -20,4 +20,9 @@ class TemplatesProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> delete({required String uid, required String id}) async {
+    await repo.delete(uid: uid, id: id);
+    await fetch(uid); 
+  }
 }

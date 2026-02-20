@@ -78,7 +78,7 @@ void main() async {
         Provider<TiposEtiquetaLocalRepo>(create: (_) => TiposEtiquetaLocalRepo()),
         Provider<EtiquetasLocalRepo>(create: (_) => EtiquetasLocalRepo()),
         Provider<EstoqueMovLocalRepo>(create: (_) => EstoqueMovLocalRepo()),
-
+        Provider<EtiquetasTemplatesLocalRepo>(create: (_) => EtiquetasTemplatesLocalRepo()),
         ChangeNotifierProvider(
           create: (ctx) => CategoriasLocalProvider(repo: ctx.read<CategoriasLocalRepo>()),
         ),
@@ -95,8 +95,8 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (_) => TemplatesProvider(
-            repo: EtiquetasTemplatesLocalRepo(),
+          create: (ctx) => TemplatesProvider(
+            repo: ctx.read<EtiquetasTemplatesLocalRepo>(),
           ),
         ),
 
@@ -122,19 +122,18 @@ final RouteObserver<PageRoute<dynamic>> routeObserver =
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorObservers: [routeObserver],
-       locale: const Locale('pt', 'BR'),
-        supportedLocales: const [Locale('pt', 'BR')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       title: 'TagVálida',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -142,6 +141,8 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       initialRoute: '/',
+
+    
       routes: {
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
@@ -151,7 +152,9 @@ class MyApp extends StatelessWidget {
         '/ajuda': (context) => const AjudaScreen(),
         '/scanner': (_) => const ScannerEtiquetaScreen(),
         '/tipos-etiqueta': (_) => const TiposEtiquetaScreen(),
-        '/criar-etiqueta': (context) => const CriarEtiquetaScreen(),
+
+       
+
         '/etiquetas-ativas': (context) => const EtiquetasAtivasScreen(),
         '/etiquetas-diarias': (context) => const EtiquetasDiariasScreen(),
         '/configuracoes': (context) => const ConfiguracoesScreen(),
@@ -160,6 +163,23 @@ class MyApp extends StatelessWidget {
         '/relatorios': (context) => const RelatoriosScreen(),
         '/historico': (context) => const HistoricoScreen(),
         '/prever-validade': (context) => const PreverValidadeScreen(),
+      },
+
+      
+      onGenerateRoute: (settings) {
+        if (settings.name == '/criar-etiqueta') {
+          final args = (settings.arguments as Map?) ?? {};
+
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (_) => CriarEtiquetaScreen(
+              templateId: args['templateId'] as String?,
+              editarEtiquetaId: args['editarEtiquetaId'] as String?,
+            ),
+          );
+        }
+
+        return null;
       },
     );
   }
