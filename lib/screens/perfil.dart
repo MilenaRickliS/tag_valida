@@ -134,6 +134,7 @@ class PerfilScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Row(
           children: [
@@ -159,7 +160,7 @@ class PerfilScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
+            child: const Text("Cancelar", style: TextStyle(color: Colors.black),),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -376,7 +377,7 @@ class _HeaderButtons extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
-          icon: const Icon(Icons.edit_rounded, size: 18),
+          icon: const Icon(Icons.edit_rounded, size: 18, color: Colors.black,),
           label: const Text(
             "Editar",
             style: TextStyle(fontWeight: FontWeight.w900),
@@ -390,7 +391,7 @@ class _HeaderButtons extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
-          icon: const Icon(Icons.logout_rounded, size: 18),
+          icon: const Icon(Icons.logout_rounded, size: 18, color: Colors.white,),
           label: const Text(
             "Logout",
             style: TextStyle(fontWeight: FontWeight.w900),
