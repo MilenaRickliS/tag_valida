@@ -168,13 +168,18 @@ class PerfilScreen extends StatelessWidget {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-             
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Logout: conecte no seu AuthProvider.")),
-              );
+              try {
+                await context.read<AuthProvider>().logout();
+
+               
+              } catch (_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Erro ao sair. Tente novamente.")),
+                );
+              }
             },
             child: const Text("Sair"),
           ),
