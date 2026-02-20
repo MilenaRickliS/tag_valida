@@ -76,23 +76,28 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        pill(
-          icon: _showTop ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-          label: _showTop ? "Esconder topo" : "Mostrar topo",
-          on: _showTop,
-          tap: () => setState(() => _showTop = !_showTop),
-        ),
-        const SizedBox(width: 10),
-        pill(
-          icon: _showFooter ? Icons.expand_more_rounded : Icons.expand_less_rounded,
-          label: _showFooter ? "Esconder estoque" : "Mostrar estoque",
-          on: _showFooter,
-          tap: () => setState(() => _showFooter = !_showFooter),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, c) {
+        
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            pill(
+              icon: _showTop ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+              label: _showTop ? "Esconder topo" : "Mostrar topo",
+              on: _showTop,
+              tap: () => setState(() => _showTop = !_showTop),
+            ),
+            pill(
+              icon: _showFooter ? Icons.expand_more_rounded : Icons.expand_less_rounded,
+              label: _showFooter ? "Esconder estoque" : "Mostrar estoque",
+              on: _showFooter,
+              tap: () => setState(() => _showFooter = !_showFooter),
+            ),
+          ],
+        );
+      },
     );
   }
   
@@ -122,6 +127,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
+    
 
     final uid = context.watch<AuthProvider>().user?.uid;
     if (uid == null) {
@@ -173,28 +179,20 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _statusFiltro == "vencido"
-                            ? "Produtos vencidos"
-                            : _statusFiltro == "alerta"
-                                ? "Produtos em alerta"
-                                : "Etiquetas ativas",
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
+                LayoutBuilder(
+                  builder: (context, c) {
+                    final isNarrow = c.maxWidth < 600;
 
-                   
-                    _viewToggles(),
+                    final titleWidget = Text(
+                      _statusFiltro == "vencido"
+                          ? "Produtos vencidos"
+                          : _statusFiltro == "alerta"
+                              ? "Produtos em alerta"
+                              : "Etiquetas ativas",
+                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                    );
 
-                    const SizedBox(width: 10),
-
-                    IconButton(
+                    final refreshBtn = IconButton(
                       tooltip: "Atualizar tipos",
                       onPressed: tiposProv.loading
                           ? null
@@ -206,8 +204,34 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh),
-                    ),
-                  ],
+                    );
+
+                    if (!isNarrow) {
+                      return Row(
+                        children: [
+                          Expanded(child: titleWidget),
+                          _viewToggles(),
+                          const SizedBox(width: 10),
+                          refreshBtn,
+                        ],
+                      );
+                    }
+
+                    
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: titleWidget),
+                            refreshBtn,
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Align(alignment: Alignment.centerLeft, child: _viewToggles()),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -632,66 +656,92 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
     required VoidCallback onOpenFilters,
     required VoidCallback onClearFilters,
   }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withOpacity(0.08)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                )
-              ],
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.search, color: Colors.black.withOpacity(0.55)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _searchCtrl,
-                    decoration: InputDecoration(
-                      hintText: "Pesquisar por nome do produto...",
-                      border: InputBorder.none,
-                      isDense: true,
-                      hintStyle: TextStyle(color: Colors.black.withOpacity(0.45)),
-                    ),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final isNarrow = c.maxWidth < 600;
+
+        final searchBox = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withOpacity(0.08)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              )
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search, color: Colors.black.withOpacity(0.55)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _searchCtrl,
+                  decoration: InputDecoration(
+                    hintText: "Pesquisar por nome do produto...",
+                    border: InputBorder.none,
+                    isDense: true,
+                    hintStyle: TextStyle(color: Colors.black.withOpacity(0.45)),
                   ),
                 ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 160),
-                  child: (_q.trim().isNotEmpty)
-                      ? IconButton(
-                          key: const ValueKey("clearSearch"),
-                          tooltip: "Limpar busca",
-                          onPressed: () => _searchCtrl.clear(),
-                          icon: const Icon(Icons.close_rounded),
-                        )
-                      : const SizedBox(
-                          key: ValueKey("noClear"), width: 0, height: 0),
-                ),
-              ],
-            ),
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 160),
+                child: (_q.trim().isNotEmpty)
+                    ? IconButton(
+                        key: const ValueKey("clearSearch"),
+                        tooltip: "Limpar busca",
+                        onPressed: () => _searchCtrl.clear(),
+                        icon: const Icon(Icons.close_rounded),
+                      )
+                    : const SizedBox(key: ValueKey("noClear"), width: 0, height: 0),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 10),
-        _FilterButtonAnimated(
+        );
+
+        final filtersBtn = _FilterButtonAnimated(
           activeCount: activeCount,
           onPressed: onOpenFilters,
-        ),
-        const SizedBox(width: 8),
-        _IconSquareButton(
+        );
+
+        final clearBtn = _IconSquareButton(
           tooltip: "Limpar tudo",
           icon: Icons.restart_alt_rounded,
           onPressed: onClearFilters,
-        ),
-      ],
+        );
+
+        if (!isNarrow) {
+          return Row(
+            children: [
+              Expanded(child: searchBox),
+              const SizedBox(width: 10),
+              filtersBtn,
+              const SizedBox(width: 8),
+              clearBtn,
+            ],
+          );
+        }
+
+        
+        return Column(
+          children: [
+            searchBox,
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: filtersBtn),
+                const SizedBox(width: 10),
+                clearBtn,
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -738,22 +788,17 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
         }
 
         if (all.isEmpty) {
-          return Column(
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 14),
             children: [
-              _topBar(
-                activeCount: 0,
-                onOpenFilters: () {},
-                onClearFilters: _clearAll,
-              ),
+              _topBar(activeCount: 0, onOpenFilters: () {}, onClearFilters: _clearAll),
               const SizedBox(height: 12),
-              Expanded(
-                child: _EmptyBox(
-                  icon: Icons.inbox_outlined,
-                  title: "Nenhuma etiqueta ativa",
-                  subtitle: (widget.tipo == null)
-                      ? "Não há etiquetas ativas para este tipo."
-                      : "Não há etiquetas ativas para “${widget.tipo!.nome}”.",
-                ),
+              _EmptyBox(
+                icon: Icons.inbox_outlined,
+                title: "Nenhuma etiqueta ativa",
+                subtitle: (widget.tipo == null)
+                    ? "Não há etiquetas ativas para este tipo."
+                    : "Não há etiquetas ativas para “${widget.tipo!.nome}”.",
               ),
             ],
           );
@@ -892,71 +937,71 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
             return minA.compareTo(minB);
           });
 
-      return Column(
-        children: [
-          
-
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            child: widget.showTop
-                ? Column(
-                    children: [
-                      _topBar(
-                        activeCount: activeCount,
-                        onOpenFilters: () => _openFiltersModal(
-                          setores: setores,
-                          categorias: categorias,
-                          countBySetor: countBySetor,
-                          countByCategoria: countByCategoria,
-                          countBom: countBom,
-                          countAlerta: countAlerta,
-                          countVencido: countVencido,
+        return ListView(
+          padding: const EdgeInsets.only(bottom: 14),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          children: [
+           
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              child: widget.showTop
+                  ? Column(
+                      children: [
+                        _topBar(
+                          activeCount: activeCount,
+                          onOpenFilters: () => _openFiltersModal(
+                            setores: setores,
+                            categorias: categorias,
+                            countBySetor: countBySetor,
+                            countByCategoria: countByCategoria,
+                            countBom: countBom,
+                            countAlerta: countAlerta,
+                            countVencido: countVencido,
+                          ),
+                          onClearFilters: _clearAll,
                         ),
-                        onClearFilters: _clearAll,
-                      ),
-                      if (activeChips.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        _ActiveChipsRow(
-                          chips: activeChips,
-                          onClearAll: _clearAll,
-                        ),
+                        if (activeChips.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          _ActiveChipsRow(
+                            chips: activeChips,
+                            onClearAll: _clearAll,
+                          ),
+                        ],
+                        const SizedBox(height: 12),
                       ],
-                      const SizedBox(height: 12),
-                    ],
-                  )
-                : const SizedBox.shrink(),
-          ),
-
-          Expanded(
-            child: ListView(
-              children: [
-                for (final setorEntry in setoresOrdenados) ...[
-                  _SetorSection(
-                    setorNome: setorEntry.key,
-                    categoriasMap: setorEntry.value,
-                    minValidadeOf: minValidadeOf,
-                    uid: widget.uid,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ],
+                    )
+                  : const SizedBox.shrink(),
             ),
-          ),
 
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            child: widget.showFooter
-                ? EstoqueFooter(
-                    entradas: entradasTotal,
-                    saidas: saidasTotal,
-                    total: geralTotal,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      );
+          
+            for (final setorEntry in setoresOrdenados) ...[
+              _SetorSection(
+                setorNome: setorEntry.key,
+                categoriasMap: setorEntry.value,
+                minValidadeOf: minValidadeOf,
+                uid: widget.uid,
+              ),
+              const SizedBox(height: 12),
+            ],
+
+          
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              child: widget.showFooter
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: EstoqueFooter(
+                        entradas: entradasTotal,
+                        saidas: saidasTotal,
+                        total: geralTotal,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        );
       },
     );
   }
@@ -1433,28 +1478,57 @@ Widget build(BuildContext context) {
         ),
         const SizedBox(height: 10),
 
-        Row(
-          children: [
-            Expanded(
-              child: _DropCount(
-                label: "Setor",
-                value: setorSelecionado,
-                items: setores,
-                onChanged: onSetorChanged,
-                counts: countBySetor,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _DropCount(
-                label: "Categoria",
-                value: categoriaSelecionada,
-                items: categorias,
-                onChanged: onCategoriaChanged,
-                counts: countByCategoria,
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, c) {
+            final isNarrow = c.maxWidth < 600;
+
+            if (!isNarrow) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: _DropCount(
+                      label: "Setor",
+                      value: setorSelecionado,
+                      items: setores,
+                      onChanged: onSetorChanged,
+                      counts: countBySetor,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _DropCount(
+                      label: "Categoria",
+                      value: categoriaSelecionada,
+                      items: categorias,
+                      onChanged: onCategoriaChanged,
+                      counts: countByCategoria,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+           
+            return Column(
+              children: [
+                _DropCount(
+                  label: "Setor",
+                  value: setorSelecionado,
+                  items: setores,
+                  onChanged: onSetorChanged,
+                  counts: countBySetor,
+                ),
+                const SizedBox(height: 10),
+                _DropCount(
+                  label: "Categoria",
+                  value: categoriaSelecionada,
+                  items: categorias,
+                  onChanged: onCategoriaChanged,
+                  counts: countByCategoria,
+                ),
+              ],
+            );
+          },
         ),
       ],
     ),
