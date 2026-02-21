@@ -589,6 +589,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                           value: (gerar.editingStatusEstoque == null || gerar.editingStatusEstoque!.isEmpty) ? "ativo" : gerar.editingStatusEstoque,
                           items: const [
                             DropdownMenuItem(value: "ativo", child: Text("Ativo")),
+                            DropdownMenuItem(value: "vendido", child: Text("Vendido")),
                             DropdownMenuItem(value: "cancelado", child: Text("Cancelado")),
                           ],
                           onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setStatusEstoqueEdicao(v),

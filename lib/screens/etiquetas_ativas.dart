@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +12,8 @@ import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
 import '../widgets/estoque_footer.dart';
 import '../screens/criar_etiqueta.dart';
+import '../providers/estoque_mov_local_provider.dart';
+
 
 class EtiquetasAtivasScreen extends StatefulWidget {
   const EtiquetasAtivasScreen({super.key});
@@ -858,7 +860,13 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
 
        
         final q = _q.trim().toLowerCase();
-        var items = all.where((e) {
+          var items = all.where((e) {
+                  final st = (e.statusEstoque.trim().isEmpty)
+              ? "ativo"
+              : e.statusEstoque.trim().toLowerCase();
+
+        
+          if (st != "ativo") return false;
           final val = e.dataValidade;
 
           final okStatus = (_fVencido && _isVencida(val)) ||
@@ -1903,6 +1911,7 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
   return ok ?? false;
 }
 
+
   @override
   Widget build(BuildContext context) {
     final repo = context.read<EtiquetasLocalRepo>();
@@ -2065,7 +2074,35 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
               final ok = await _confirmDeleteEtiqueta(context, produto);
               if (!ok) return;
 
-              await repo.deleteSoft(uid, e.id);
+              final mov = context.read<EstoqueMovLocalProvider>();
+
+              final before = await repo.getById(uid: uid, id: e.id);
+              if (before == null) return;
+
+              final st = (before.statusEstoque.trim().isEmpty)
+                  ? "ativo"
+                  : before.statusEstoque.trim().toLowerCase();
+
+              final rest = before.quantidadeRestante;
+
+              if (st == "ativo" && rest > 0) {
+                await mov.registrarCancelamento(
+                  uid: uid,
+                  etiquetaId: before.id,
+                  quantidade: rest,
+                  produtoNome: before.produtoNome,
+                  motivo: "Exclusão da etiqueta (removeu do estoque)",
+                );
+              }
+
+              await mov.registrarExclusao(
+                uid: uid,
+                etiquetaId: before.id,
+                produtoNome: before.produtoNome,
+                motivo: "Exclusão suave (tela de ativas)",
+              );
+
+              await repo.deleteSoft(uid, before.id);
 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

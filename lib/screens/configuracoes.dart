@@ -93,6 +93,12 @@ class ConfiguracoesScreen extends StatelessWidget {
                               onTap: () => Navigator.pushNamed(context, "/setores"),
                             ),
                             _ConfigTile(
+                              icon: Icons.inventory_2_outlined,
+                              title: "Etiquetas finalizadas",
+                              subtitle: "Vendidas e canceladas",
+                              onTap: () => Navigator.pushNamed(context, "/etiquetas-finalizadas"),
+                            ),
+                            _ConfigTile(
                               icon: Icons.print_outlined,
                               title: "Configurações - Impressora",
                               subtitle: "Modelo, tamanho e ajustes",

@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +10,8 @@ import '../models/etiqueta_model.dart';
 import './criar_etiqueta.dart';
 import '../utils/etiqueta_qr.dart';
 import '../utils/formatar_lote.dart';
+import '../providers/estoque_mov_local_provider.dart';
+
 
 class EtiquetaPreviewScreen extends StatelessWidget {
   final String uid;
@@ -296,7 +298,40 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                     final ok = await _confirmDelete(context, e.produtoNome);
                     if (!ok) return;
 
-                    await repo.deleteSoft(uid, e.id);
+                    final mov = context.read<EstoqueMovLocalProvider>();
+
+                    
+                    final before = await repo.getById(uid: uid, id: e.id);
+                    if (before == null) return;
+
+                    final st = (before.statusEstoque.trim().isEmpty)
+                        ? "ativo"
+                        : before.statusEstoque.trim().toLowerCase();
+
+                    final rest = before.quantidadeRestante;
+
+                    
+                    if (st == "ativo" && rest > 0) {
+                      await mov.registrarCancelamento(
+                        uid: uid,
+                        etiquetaId: before.id,
+                        quantidade: rest,
+                        produtoNome: before.produtoNome,
+                        motivo: "Exclusão da etiqueta (removeu do estoque)",
+                      );
+                    }
+
+                   
+                    await mov.registrarExclusao(
+                      uid: uid,
+                      etiquetaId: before.id,
+                      produtoNome: before.produtoNome,
+                      motivo: "Exclusão suave",
+                    );
+
+                 
+                    await repo.deleteSoft(uid, before.id);
+
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

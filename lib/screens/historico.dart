@@ -86,12 +86,11 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
               var all = snap.data ?? [];
               all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-              // filtro por tipo
+            
               if (_tipoFiltro != null) {
                 all = all.where((m) => m.tipo == _tipoFiltro).toList();
               }
 
-              // filtro por busca (motivo / produtoNome / etiquetaId)
               final q = _q.trim().toLowerCase();
               if (q.isNotEmpty) {
                 all = all.where((m) {
@@ -272,6 +271,7 @@ class _TipoDrop extends StatelessWidget {
             DropdownMenuItem(value: EstoqueMovModel.tipoCancelamento, child: Text("Cancelamento")),
             DropdownMenuItem(value: EstoqueMovModel.tipoAjusteEntrada, child: Text("Ajuste +")),
             DropdownMenuItem(value: EstoqueMovModel.tipoAjusteSaida, child: Text("Ajuste -")),
+            DropdownMenuItem(value: EstoqueMovModel.tipoExclusao, child: Text("Exclusão")),
           ],
           onChanged: onChanged,
         ),
@@ -309,6 +309,10 @@ class _TipoChip extends StatelessWidget {
         fg = Colors.purple.shade800;
         bg = Colors.purple.withOpacity(0.10);
         break;
+      case EstoqueMovModel.tipoExclusao:
+        fg = Colors.red.shade900;
+        bg = Colors.red.withOpacity(0.08);
+      break;
       default:
         fg = Colors.black87;
         bg = Colors.black.withOpacity(0.06);

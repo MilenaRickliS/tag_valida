@@ -4,6 +4,7 @@ class EstoqueMovModel {
   static const tipoCancelamento = "cancelamento";
   static const tipoAjusteEntrada = "ajuste_entrada";
   static const tipoAjusteSaida = "ajuste_saida";
+  static const tipoExclusao = "exclusao";
 
   final String id;
   final String etiquetaId;

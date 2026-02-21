@@ -354,6 +354,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       uid: uid,
       etiquetaId: id,
       quantidade: qtd,
+      produtoNome: etiqueta.produtoNome,
       motivo: "Criação da etiqueta",
     );
 
@@ -377,31 +378,103 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     final now = DateTime.now();
     final qtdNova = _parseQtdOrThrow();
     final statusWanted = (editingStatusEstoque ?? "ativo").trim().toLowerCase();
-    final restAnterior = editingQuantidadeRestante ?? qtdNova;
-    final wasCancelado =
-        (editingStatusEstoque ?? "ativo").trim().toLowerCase() == "cancelado";
+    
+    
+    final before = await repo.getById(uid: uid, id: editingEtiquetaId!);
+    if (before == null) {
+      saving = false;
+      notifyListeners();
+      throw Exception("Etiqueta não encontrada para edição.");
+    }
 
-    if (!wasCancelado && statusWanted == "cancelado" && restAnterior > 0) {
+    final oldQtd = before.quantidade;
+    final oldRest = before.quantidadeRestante;
+    final oldStatus = (before.statusEstoque).trim().toLowerCase(); 
+    final oldCancelado = oldStatus == "cancelado";
+
+   
+    num restNovo;
+      if (statusWanted == "cancelado") {
+        restNovo = 0;
+      } else if (statusWanted == "vendido") {
+        restNovo = 0;
+      } else {
+        final saiuAntes = (oldQtd - oldRest);
+        restNovo = max<num>(0, qtdNova - saiuAntes);
+      }
+
+      if (oldCancelado && statusWanted != "cancelado") {
+      
+        final voltou = restNovo; 
+        if (voltou > 0) {
+          await mov.registrar(
+            uid: uid,
+            etiquetaId: before.id,
+            tipo: EstoqueMovModel.tipoAjusteEntrada,
+            quantidade: voltou,
+            produtoNome: before.produtoNome,
+            motivo: "Reativação (saindo de cancelado)",
+          );
+        }
+      }
+
+    
+    if (!oldCancelado && statusWanted == "cancelado" && oldRest > 0) {
       await mov.registrarCancelamento(
         uid: uid,
-        etiquetaId: editingEtiquetaId!,
-        quantidade: restAnterior,
+        etiquetaId: before.id,
+        quantidade: oldRest,
+        produtoNome: before.produtoNome,
         motivo: "Cancelado na edição",
       );
     }
 
+    if (statusWanted == "vendido") {
+      final vendeu = oldRest - restNovo; 
+      if (vendeu > 0) {
+        await mov.registrarVenda(
+          uid: uid,
+          etiquetaId: before.id,
+          quantidade: vendeu,
+          produtoNome: before.produtoNome,
+          motivo: "Venda (na edição)",
+        );
+      }
+    }
 
-    final restante = (statusWanted == "cancelado") ? 0 : restAnterior;
+   
+    if (statusWanted != "cancelado" && statusWanted != "vendido") {
+      final diff = restNovo - oldRest;
+      if (diff > 0) {
+        await mov.registrar(
+          uid: uid,
+          etiquetaId: before.id,
+          tipo: EstoqueMovModel.tipoAjusteEntrada,
+          quantidade: diff,
+          produtoNome: before.produtoNome,
+          motivo: "Ajuste na edição (entrada)",
+        );
+      } else if (diff < 0) {
+        await mov.registrar(
+          uid: uid,
+          etiquetaId: before.id,
+          tipo: EstoqueMovModel.tipoAjusteSaida,
+          quantidade: diff.abs(),
+          produtoNome: before.produtoNome,
+          motivo: "Ajuste na edição (saída)",
+        );
+      }
+    }
 
     final statusEstoque = EtiquetaModel.calcStatusEstoque(
-      restante: restante,
+      restante: restNovo,
       current: statusWanted,
     );
 
     final safeCampos = _sanitizeCamposValores(camposValores);
 
     final etiqueta = EtiquetaModel(
-      id: editingEtiquetaId!,
+      id: before.id,
       tipoId: tipoAtual.id,
       tipoNome: tipoAtual.nome,
       produtoNome: produtoCtrl.text.trim(),
@@ -413,14 +486,18 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       dataValidade: validade!,
       camposCustomValores: safeCampos,
       status: "ativa",
-      createdAt: editingCreatedAt,
+      createdAt: before.createdAt,
       quantidade: qtdNova,
-      quantidadeRestante: restante,
+      quantidadeRestante: restNovo,
       statusEstoque: statusEstoque,
-      soldAt: statusEstoque == "vendido" ? (editingSoldAt ?? now) : null,
+      soldAt: statusEstoque == "vendido" ? (before.soldAt ?? now) : null,
     );
 
     await repo.upsert(uid, etiqueta);
+
+   
+    editingQuantidade = qtdNova;
+    editingQuantidadeRestante = restNovo;
 
     saving = false;
     notifyListeners();

@@ -40,6 +40,7 @@ import 'screens/tipo_etiqueta.dart';
 import 'screens/criar_etiqueta.dart';
 import 'screens/etiquetas_ativas.dart';
 import 'screens/etiquetas_diarias.dart';
+import 'screens/etiquetas_finalizadas.dart';
 import 'screens/configuracoes.dart';
 import 'screens/categorias.dart';
 import 'screens/setores.dart';
@@ -152,11 +153,9 @@ class MyApp extends StatelessWidget {
         '/ajuda': (context) => const AjudaScreen(),
         '/scanner': (_) => const ScannerEtiquetaScreen(),
         '/tipos-etiqueta': (_) => const TiposEtiquetaScreen(),
-
-       
-
         '/etiquetas-ativas': (context) => const EtiquetasAtivasScreen(),
         '/etiquetas-diarias': (context) => const EtiquetasDiariasScreen(),
+        '/etiquetas-finalizadas': (context) => const EtiquetasFinalizadasScreen(),
         '/configuracoes': (context) => const ConfiguracoesScreen(),
         '/categorias': (context) => const CategoriasScreen(),
         '/setores': (context) => const SetoresScreen(),

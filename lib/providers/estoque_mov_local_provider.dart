@@ -105,4 +105,26 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
     await repo.insert(uid, mov);
     notifyListeners();
   }
+
+  Future<void> registrarExclusao({
+    required String uid,
+    required String etiquetaId,
+    num quantidade = 0,
+    String? produtoNome,
+    String? motivo,
+  }) async {
+    final now = DateTime.now();
+    final mov = EstoqueMovModel(
+      id: now.millisecondsSinceEpoch.toString(),
+      etiquetaId: etiquetaId,
+      produtoNome: produtoNome,
+      tipo: EstoqueMovModel.tipoExclusao,
+      quantidade: quantidade, 
+      motivo: motivo ?? "Exclusão (suave)",
+      createdAt: now,
+      updatedAt: now,
+    );
+    await repo.insert(uid, mov);
+    notifyListeners();
+  }
 }
