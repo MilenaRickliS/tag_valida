@@ -28,6 +28,7 @@ class TiposEtiquetaLocalProvider extends ChangeNotifier {
       nome: tipo.nome,
       descricao: tipo.descricao,
       usarRegraValidadeCategoria: tipo.usarRegraValidadeCategoria,
+      controlaLote: tipo.controlaLote,
       camposCustom: tipo.camposCustom,
     );
 

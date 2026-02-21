@@ -292,6 +292,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
     final nomeCtrl = TextEditingController(text: tipo?.nome ?? "");
     final descCtrl = TextEditingController(text: tipo?.descricao ?? "");
     bool usarRegra = tipo?.usarRegraValidadeCategoria ?? true;
+    bool controlaLote = tipo?.controlaLote ?? false;
 
     final List<CampoCustomModel> campos = [
       ...(tipo?.camposCustom ?? []),
@@ -467,8 +468,50 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
 
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: controlaLote
+                              ? const Color(0xFF428e2e).withOpacity(0.22)
+                              : Colors.black.withOpacity(0.10),
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        color: controlaLote
+                            ? const Color(0xFF428e2e).withOpacity(0.10)
+                            : const Color(0xFFFAF7F1),
+                      ),
+                      child: SwitchTheme(
+                        data: SwitchThemeData(
+                          thumbColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return const Color(0xFF428e2e);
+                            return null;
+                          }),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return const Color(0xFF428e2e).withOpacity(0.35);
+                            }
+                            return null;
+                          }),
+                        ),
+                        child: SwitchListTile(
+                          title: const Text(
+                            "Controlar lote",
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          subtitle: Text(
+                            "Se marcado, a etiqueta terá um campo de Lote obrigatório (pode gerar automático).",
+                            style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                          ),
+                          value: controlaLote,
+                          onChanged: (v) => setLocal(() => controlaLote = v),
+                        ),
+                      ),
+                    ),
+
+
+                    const SizedBox(height: 18),
                   
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -640,6 +683,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                     nome: nome,
                     descricao: desc.isEmpty ? null : desc,
                     usarRegraValidadeCategoria: usarRegra,
+                    controlaLote: controlaLote,
                     camposCustom: campos,
                   );
 
@@ -1161,8 +1205,10 @@ class _TipoCard extends StatelessWidget {
               children: [
                 Text(tipo.nome, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
+                
                 Text(
-                  "$count campo(s) • validade automática: ${tipo.usarRegraValidadeCategoria ? "sim" : "não"}",
+                  "$count campo(s) • validade automática: ${tipo.usarRegraValidadeCategoria ? "sim" : "não"}"
+                  " • lote: ${tipo.controlaLote ? "sim" : "não"}",
                   style: TextStyle(color: Colors.black.withOpacity(0.62)),
                 ),
               ],

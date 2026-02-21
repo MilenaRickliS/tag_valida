@@ -31,6 +31,7 @@ class TiposEtiquetaLocalRepo {
         "nome": tipo.nome,
         "descricao": tipo.descricao,
         "usarRegraValidadeCategoria": tipo.usarRegraValidadeCategoria,
+        "controlaLote": tipo.controlaLote,
         "camposCustom": tipo.camposCustom.map((c) => c.toMap()).toList(),
         "createdAtMs": nowMs,
         "updatedAtMs": nowMs,

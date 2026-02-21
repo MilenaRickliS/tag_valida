@@ -8,6 +8,7 @@ import '../providers/estoque_mov_local_provider.dart';
 import '../models/estoque_mov_model.dart';
 import '../models/etiqueta_template_model.dart';
 import './../data/local/repos/etiqueta_template_local_repo.dart';
+import 'dart:math';
 
 class GerarEtiquetaLocalProvider extends ChangeNotifier {
   final EtiquetasLocalRepo repo;
@@ -224,6 +225,39 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       validade = fabricacao!.add(Duration(days: categoria!.diasVencimento));
     }
   }
+  
+
+  
+
+  String _gerarLotePadrao() {
+   
+    final nowBr = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+
+    String two(int n) => n.toString().padLeft(2, "0");
+
+    final yy = two(nowBr.year % 100);
+    final mm = two(nowBr.month);
+    final dd = two(nowBr.day);
+
+    final random = Random().nextInt(1000).toString().padLeft(3, "0");
+
+    return "PV-$yy$mm$dd-$random";
+  }
+
+  void ensureLoteAuto({required TipoEtiquetaModel tipoAtual}) {
+    if (!tipoAtual.controlaLote) return;
+
+    final existing = camposValores["lote"]?["value"]?.toString().trim();
+    if (existing != null && existing.isNotEmpty) return;
+
+    final lote = _gerarLotePadrao();
+
+    setCampoValor(
+      key: "lote",
+      label: "Lote",
+      value: lote,
+    );
+  }
 
   void setStatusEstoqueEdicao(String? v) {
     editingStatusEstoque = v ?? "ativo";
@@ -258,6 +292,8 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
   }) async {
     final err = validar(tipoAtual);
     if (err != null) throw Exception(err);
+
+    ensureLoteAuto(tipoAtual: tipoAtual);
 
     saving = true;
     notifyListeners();

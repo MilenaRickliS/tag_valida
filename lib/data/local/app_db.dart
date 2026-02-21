@@ -7,7 +7,7 @@ class AppDb {
   static final AppDb instance = AppDb._();
 
   static const _dbName = 'tag_valida.db';
-  static const _dbVersion = 9;
+  static const _dbVersion = 10;
 
   Database? _db;
 
@@ -64,6 +64,7 @@ class AppDb {
         nome TEXT NOT NULL,
         descricao TEXT,
         usarRegraValidadeCategoria INTEGER NOT NULL,
+        controlaLote INTEGER NOT NULL DEFAULT 0,
         camposCustomJson TEXT NOT NULL,
         createdAt INTEGER,
         updatedAt INTEGER,
@@ -89,6 +90,8 @@ class AppDb {
 
       dataFabricacaoMs INTEGER NOT NULL,
       dataValidadeMs INTEGER NOT NULL,
+
+      lote TEXT,
 
       camposCustomValoresJson TEXT NOT NULL,
 
@@ -155,6 +158,7 @@ class AppDb {
     await db.execute('CREATE INDEX idx_etq_uid_tipo ON etiquetas(uid, tipoId);');
     await db.execute('CREATE INDEX idx_etq_uid_status_validade ON etiquetas(uid, status, dataValidadeMs);');
     await db.execute('CREATE INDEX idx_etq_uid_statusEstoque ON etiquetas(uid, statusEstoque);');
+    await db.execute('CREATE INDEX idx_etq_uid_lote ON etiquetas(uid, lote);');
 
     await db.execute('''
       CREATE TABLE outbox (
@@ -381,6 +385,25 @@ class AppDb {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_tipo ON etiquetas_templates(uid, tipoId);');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_categoria ON etiquetas_templates(uid, categoriaId);');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_tpl_uid_setor ON etiquetas_templates(uid, setorId);');
+    }
+    if (oldVersion < 10) {
+    
+      final colsTipo = await db.rawQuery("PRAGMA table_info(tipos_etiqueta)");
+      bool hasTipoCol(String name) => colsTipo.any((c) => (c["name"]?.toString() == name));
+
+      if (!hasTipoCol("controlaLote")) {
+        await db.execute("ALTER TABLE tipos_etiqueta ADD COLUMN controlaLote INTEGER NOT NULL DEFAULT 0;");
+      }
+
+     
+      final colsEtq = await db.rawQuery("PRAGMA table_info(etiquetas)");
+      bool hasEtqCol(String name) => colsEtq.any((c) => (c["name"]?.toString() == name));
+
+      if (!hasEtqCol("lote")) {
+        await db.execute("ALTER TABLE etiquetas ADD COLUMN lote TEXT;");
+      }
+
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_etq_uid_lote ON etiquetas(uid, lote);');
     }
   }
 }

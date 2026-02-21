@@ -649,6 +649,25 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                         ),
                       ],
 
+                      const SizedBox(height: 12),
+
+                      if (tipoAtual?.controlaLote == true) ...[
+                        const SizedBox(height: 12),
+                        _LoteReadOnlyCard(
+                          lote: (gerar.camposValores["lote"]?["value"] ?? "").toString(),
+                          onRegenerate: () {
+                           
+                            context.read<GerarEtiquetaLocalProvider>().setCampoValor(
+                              key: "lote",
+                              label: "Lote",
+                              value: "", 
+                            );
+                            context.read<GerarEtiquetaLocalProvider>().ensureLoteAuto(tipoAtual: tipoAtual!);
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+
                       const SizedBox(height: 18),
 
                       if (tipoAtual != null) ...[
@@ -1121,6 +1140,66 @@ class _Dropdown<T> extends StatelessWidget {
           .toList(),
       onChanged: onChanged,
        decoration: appInputDecorationGlobal(label),
+    );
+  }
+}
+class _LoteReadOnlyCard extends StatelessWidget {
+  final String lote;
+  final VoidCallback? onRegenerate;
+
+  const _LoteReadOnlyCard({
+    required this.lote,
+    this.onRegenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF428e2e).withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF428e2e).withOpacity(0.25)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF428e2e),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.confirmation_number_outlined, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Lote (automático)", style: TextStyle(fontWeight: FontWeight.w900)),
+                const SizedBox(height: 4),
+                Text(
+                  lote.isEmpty ? "Gerando..." : lote,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Gerado automaticamente pelo tipo de etiqueta.",
+                  style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          if (onRegenerate != null)
+            IconButton(
+              tooltip: "Gerar novo lote",
+              onPressed: onRegenerate,
+              icon: const Icon(Icons.refresh),
+            ),
+        ],
+      ),
     );
   }
 }

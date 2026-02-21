@@ -16,36 +16,55 @@ class TiposEtiquetaProvider extends ChangeNotifier {
     loading = true;
     notifyListeners();
 
-    final snap = await paths.tiposEtiqueta(empresaId)
-        .orderBy("nome")
-        .get();
+    final snap = await paths.tiposEtiqueta(empresaId).orderBy("nome").get();
 
     _items = snap.docs.map((d) => TipoEtiquetaModel.fromDoc(d)).toList();
+
     loading = false;
     notifyListeners();
   }
 
+  String? _trimOrNull(String? s) {
+    final t = s?.trim();
+    if (t == null || t.isEmpty) return null;
+    return t;
+  }
+
   Future<void> create(String empresaId, TipoEtiquetaModel tipo) async {
     final ref = paths.tiposEtiqueta(empresaId).doc();
+
     await ref.set({
+
+      "id": ref.id,
+
       "nome": tipo.nome.trim(),
-      "descricao": tipo.descricao?.trim(),
+      "descricao": _trimOrNull(tipo.descricao),
+
       "usarRegraValidadeCategoria": tipo.usarRegraValidadeCategoria,
+      "controlaLote": tipo.controlaLote, 
+
       "camposCustom": tipo.camposCustom.map((c) => c.toMap()).toList(),
+
       "createdAt": FieldValue.serverTimestamp(),
       "updatedAt": FieldValue.serverTimestamp(),
     });
+
     await fetch(empresaId);
   }
 
   Future<void> update(String empresaId, TipoEtiquetaModel tipo) async {
     await paths.tiposEtiqueta(empresaId).doc(tipo.id).update({
       "nome": tipo.nome.trim(),
-      "descricao": tipo.descricao?.trim(),
+      "descricao": _trimOrNull(tipo.descricao),
+
       "usarRegraValidadeCategoria": tipo.usarRegraValidadeCategoria,
+      "controlaLote": tipo.controlaLote, 
+
       "camposCustom": tipo.camposCustom.map((c) => c.toMap()).toList(),
+
       "updatedAt": FieldValue.serverTimestamp(),
     });
+
     await fetch(empresaId);
   }
 

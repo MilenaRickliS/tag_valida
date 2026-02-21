@@ -14,6 +14,7 @@ extension TipoEtiquetaLocalMapper on TipoEtiquetaModel {
       'nome': nome,
       'descricao': descricao,
       'usarRegraValidadeCategoria': usarRegraValidadeCategoria ? 1 : 0,
+      'controlaLote': controlaLote ? 1 : 0,
       'camposCustomJson': camposJson,
       'createdAt': nowMs,
       'updatedAt': nowMs,
@@ -33,6 +34,7 @@ extension TipoEtiquetaLocalMapper on TipoEtiquetaModel {
       descricao: m['descricao']?.toString(),
       usarRegraValidadeCategoria: (m['usarRegraValidadeCategoria'] ?? 1) == 1,
       camposCustom: campos,
+      controlaLote: (m['controlaLote'] ?? 0) == 1,
     );
   }
 }

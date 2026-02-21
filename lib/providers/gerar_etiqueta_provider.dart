@@ -1,10 +1,13 @@
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import '../models/categoria_model.dart';
 import '../models/setor_model.dart';
 import '../models/tipo_etiqueta_model.dart';
 import '../models/etiqueta_model.dart';
 import '../services/firestore_paths.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GerarEtiquetaProvider extends ChangeNotifier {
   final FirestorePaths paths;
@@ -23,12 +26,61 @@ class GerarEtiquetaProvider extends ChangeNotifier {
   final Map<String, Map<String, dynamic>> camposValores = {};
   bool saving = false;
 
+
+  String _gerarLotePadraoPV() {
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, "0");
+
+    final yy = two(now.year % 100);
+    final mm = two(now.month);
+    final dd = two(now.day);
+
+    final rnd = Random().nextInt(1000).toString().padLeft(3, "0"); // 000-999
+    return "PV-$yy$mm$dd-$rnd";
+  }
+
+  void ensureLoteAuto({required TipoEtiquetaModel tipoAtual}) {
+    if (!tipoAtual.controlaLote) return;
+
+    final existing = camposValores["lote"]?["value"]?.toString().trim();
+    if (existing != null && existing.isNotEmpty) return;
+
+    setCampoValor(
+      key: "lote",
+      label: "Lote",
+      value: _gerarLotePadraoPV(),
+    );
+  }
+
+
+  Map<String, Map<String, dynamic>> _sanitizeCamposValoresFirestore(
+    Map<String, Map<String, dynamic>> input,
+  ) {
+    dynamic fix(dynamic v) {
+      if (v == null) return null;
+      if (v is DateTime) return Timestamp.fromDate(v);
+      if (v is Timestamp) return v;
+      if (v is int) return v; 
+      if (v is Map) return v.map((k, val) => MapEntry(k.toString(), fix(val)));
+      if (v is List) return v.map(fix).toList();
+      return v;
+    }
+
+    return input.map((k, v) {
+      final map = Map<String, dynamic>.from(v);
+      map["label"] = (map["label"] ?? "").toString();
+      map["value"] = fix(map["value"]);
+      return MapEntry(k, map);
+    });
+  }
+
   num _parseQtdOrThrow() {
     final raw = quantidadeCtrl.text.trim().replaceAll(",", ".");
     final v = num.tryParse(raw);
     if (v == null || v <= 0) throw Exception("Quantidade inválida.");
     return v;
   }
+
 
   void setTipoId(String? id, {TipoEtiquetaModel? tipoAtual}) {
     tipoId = id;
@@ -104,34 +156,49 @@ class GerarEtiquetaProvider extends ChangeNotifier {
     final err = validar(tipoAtual);
     if (err != null) throw Exception(err);
 
+    
+    ensureLoteAuto(tipoAtual: tipoAtual);
+
     saving = true;
     notifyListeners();
 
     final ref = paths.etiquetas(uid).doc();
     final qtd = _parseQtdOrThrow();
 
-    final etiqueta = EtiquetaModel(
-      id: ref.id,
-      tipoId: tipoAtual.id,
-      tipoNome: tipoAtual.nome,
-      produtoNome: produtoCtrl.text.trim(),
-      categoriaId: categoria!.id,
-      categoriaNome: categoria!.nome,
-      setorId: setor!.id,
-      setorNome: setor!.nome,
-      dataFabricacao: fabricacao!,
-      dataValidade: validade!,
-      camposCustomValores: camposValores,
-      status: "ativa",
+    final safeCampos = _sanitizeCamposValoresFirestore(camposValores);
 
-  
-      quantidade: qtd,
-      quantidadeRestante: qtd,
-      statusEstoque: "ativo",
-      soldAt: null,
-    );
 
-    await ref.set(etiqueta.toMap());
+    final payload = {
+      "id": ref.id,
+
+      "tipoId": tipoAtual.id,
+      "tipoNome": tipoAtual.nome,
+
+      "produtoNome": produtoCtrl.text.trim(),
+
+      "categoriaId": categoria!.id,
+      "categoriaNome": categoria!.nome,
+
+      "setorId": setor!.id,
+      "setorNome": setor!.nome,
+
+      "dataFabricacao": Timestamp.fromDate(fabricacao!),
+      "dataValidade": Timestamp.fromDate(validade!),
+
+      "camposCustomValores": safeCampos,
+
+      "status": "ativa",
+
+      "quantidade": qtd,
+      "quantidadeRestante": qtd,
+      "statusEstoque": "ativo",
+      "soldAt": null,
+
+      "createdAt": FieldValue.serverTimestamp(),
+      "updatedAt": FieldValue.serverTimestamp(),
+    };
+
+    await ref.set(payload);
 
     saving = false;
     notifyListeners();
@@ -139,7 +206,7 @@ class GerarEtiquetaProvider extends ChangeNotifier {
     return ref.id;
   }
 
-
+  
   Future<void> vender({
     required String uid,
     required String etiquetaId,
@@ -154,7 +221,9 @@ class GerarEtiquetaProvider extends ChangeNotifier {
       if (!snap.exists) throw Exception("Etiqueta não encontrada.");
 
       final data = snap.data() as Map<String, dynamic>;
-      final rest = (data["quantidadeRestante"] as num?) ?? (data["quantidade"] as num?) ?? 1;
+      final rest = (data["quantidadeRestante"] as num?) ??
+          (data["quantidade"] as num?) ??
+          1;
 
       final novoRest = rest - qtdVendida;
       if (novoRest < 0) throw Exception("Venda maior que o restante.");

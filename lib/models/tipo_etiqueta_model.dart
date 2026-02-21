@@ -66,12 +66,14 @@ class TipoEtiquetaModel {
   final String? descricao;
   final bool usarRegraValidadeCategoria;
   final List<CampoCustomModel> camposCustom;
+  final bool controlaLote;
 
   TipoEtiquetaModel({
     required this.id,
     required this.nome,
     this.descricao,
     required this.usarRegraValidadeCategoria,
+    required this.controlaLote,
     required this.camposCustom,
   });
 
@@ -79,6 +81,7 @@ class TipoEtiquetaModel {
         "nome": nome,
         "descricao": descricao,
         "usarRegraValidadeCategoria": usarRegraValidadeCategoria,
+        "controlaLote": controlaLote,
         "camposCustom": camposCustom.map((c) => c.toMap()).toList(),
         "updatedAt": FieldValue.serverTimestamp(),
         "createdAt": FieldValue.serverTimestamp(),
@@ -96,6 +99,7 @@ class TipoEtiquetaModel {
       descricao: data["descricao"]?.toString(),
       usarRegraValidadeCategoria: data["usarRegraValidadeCategoria"] ?? true,
       camposCustom: list,
+      controlaLote: data["controlaLote"] ?? false,
     );
   }
 }

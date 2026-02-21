@@ -790,6 +790,7 @@ class PerfilScreen extends StatelessWidget {
 
                
               } catch (_) {
+                // ignore: use_build_context_synchronously
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Erro ao sair. Tente novamente.")),
                 );

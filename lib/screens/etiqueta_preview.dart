@@ -9,6 +9,7 @@ import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
 import './criar_etiqueta.dart';
 import '../utils/etiqueta_qr.dart';
+import '../utils/formatar_lote.dart';
 
 class EtiquetaPreviewScreen extends StatelessWidget {
   final String uid;
@@ -366,6 +367,32 @@ class EtiquetaPreviewScreen extends StatelessWidget {
 
           final custom = Map<String, dynamic>.from(e.camposCustomValores);
 
+          String? loteValue;
+          String loteLabel = "Lote";
+
+          final loteRaw = custom["lote"];
+          if (loteRaw is Map) {
+            final m = Map<String, dynamic>.from(loteRaw);
+            loteLabel = (m["label"] ?? "Lote").toString();
+            final v = m["value"];
+            final s = v?.toString().trim();
+            if (s != null && s.isNotEmpty) loteValue = s;
+          }
+
+          
+          final customSemLote = Map<String, dynamic>.from(custom);
+          customSemLote.remove("lote");
+
+          final hasLote = loteValue != null && loteValue.trim().isNotEmpty;
+
+          final loteFormatado = hasLote
+              ? formatarLote(loteValue.trim(), formato: LoteFormato.dataHora)
+              : null;
+
+          final lotePrefixo = hasLote
+              ? formatarLote(loteValue.trim(), formato: LoteFormato.prefixoL)
+              : null;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
             child: Center(
@@ -446,7 +473,38 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           _linha("Setor/Responsável", setorNome),
                           _linha("Fabricação", _fmtDate(fabricacao)),
                           _linhaColor("Validade", _fmtDate(validade), _validadeColor(validade)),
-
+                          if (hasLote) ...[
+                            _linha(loteLabel, loteFormatado!),
+                            const SizedBox(height: 6),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFAF7F1),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.black.withOpacity(0.06)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.confirmation_number_outlined, size: 18, color: _text),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "$loteLabel: ",
+                                    style: TextStyle(
+                                      color: Colors.black.withOpacity(0.55),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      lotePrefixo!,
+                                      style: const TextStyle(fontWeight: FontWeight.w900, color: _text),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 8),
                           Row(
                             children: [
@@ -458,7 +516,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                             ],
                           ),
 
-                          if (custom.isNotEmpty) ...[
+                          if (customSemLote.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Divider(color: Colors.black.withOpacity(0.06), height: 1),
                             const SizedBox(height: 12),
@@ -467,7 +525,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _text),
                             ),
                             const SizedBox(height: 10),
-                            ...custom.entries.map((entry) {
+                            ...customSemLote.entries.map((entry) {
                               final obj = Map<String, dynamic>.from(entry.value as Map);
                               final label = (obj["label"] ?? entry.key).toString();
                               final val = obj["value"];
