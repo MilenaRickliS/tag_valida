@@ -44,6 +44,7 @@ class CategoriasProvider extends ChangeNotifier {
       "nome": cat.nome.trim(),
       "diasVencimento": cat.diasVencimento,
       "ativo": cat.ativo,
+      "createdAt": FieldValue.serverTimestamp(),
       "updatedAt": FieldValue.serverTimestamp(),
     });
     await fetch(empresaId);

@@ -28,24 +28,40 @@ class SetoresProvider extends ChangeNotifier {
 
   Future<void> create(String empresaId, {required String nome, String? descricao}) async {
     final ref = paths.setores(empresaId).doc();
-    final model = SetorModel(
-      id: ref.id,
-      nome: nome.trim(),
-      descricao: descricao?.trim(),
-      ativo: true,
-    );
 
-    await ref.set(model.toMap());
+    final desc = (descricao ?? '').trim();
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    final payload = {
+      "id": ref.id,
+      "nome": nome.trim(),
+      "descricao": desc.isEmpty ? null : desc,
+      "ativo": true,
+
+      
+      "createdAt": FieldValue.serverTimestamp(),
+      "updatedAt": FieldValue.serverTimestamp(),
+
+     
+      "createdAtMs": nowMs,
+      "updatedAtMs": nowMs,
+    };
+
+    await ref.set(payload);
     await fetch(empresaId);
   }
 
   Future<void> update(String empresaId, SetorModel s) async {
+    final desc = (s.descricao ?? '').trim();
+
     await paths.setores(empresaId).doc(s.id).update({
       "nome": s.nome.trim(),
-      "descricao": s.descricao?.trim(),
+      "descricao": desc.isEmpty ? null : desc,
       "ativo": s.ativo,
       "updatedAt": FieldValue.serverTimestamp(),
+      "updatedAtMs": DateTime.now().millisecondsSinceEpoch,
     });
+
     await fetch(empresaId);
   }
 

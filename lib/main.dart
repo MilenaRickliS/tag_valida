@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:tag_valida/providers/estoque_mov_provider.dart';
 
 import 'firebase_options.dart';
 import 'services/firestore_paths.dart';
@@ -72,6 +73,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (ctx) => GerarEtiquetaProvider(paths: ctx.read<FirestorePaths>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => EstoqueMovProvider(paths: ctx.read<FirestorePaths>()),
         ),
 
         Provider<CategoriasLocalRepo>(create: (_) => CategoriasLocalRepo()),

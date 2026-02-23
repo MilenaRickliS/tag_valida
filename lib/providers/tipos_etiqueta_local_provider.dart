@@ -21,12 +21,18 @@ class TiposEtiquetaLocalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+ String? _trimOrNull(String? s) {
+    final t = s?.trim();
+    if (t == null || t.isEmpty) return null;
+    return t;
+  }
+
   Future<void> create(String uid, TipoEtiquetaModel tipo) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final novo = TipoEtiquetaModel(
       id: id,
-      nome: tipo.nome,
-      descricao: tipo.descricao,
+      nome: tipo.nome.trim(),
+      descricao: _trimOrNull(tipo.descricao),
       usarRegraValidadeCategoria: tipo.usarRegraValidadeCategoria,
       controlaLote: tipo.controlaLote,
       camposCustom: tipo.camposCustom,
@@ -37,7 +43,16 @@ class TiposEtiquetaLocalProvider extends ChangeNotifier {
   }
 
   Future<void> update(String uid, TipoEtiquetaModel tipo) async {
-    await repo.upsert(uid, tipo);
+    final atualizado = TipoEtiquetaModel(
+      id: tipo.id,
+      nome: tipo.nome.trim(),
+      descricao: _trimOrNull(tipo.descricao),
+      usarRegraValidadeCategoria: tipo.usarRegraValidadeCategoria,
+      controlaLote: tipo.controlaLote,
+      camposCustom: tipo.camposCustom,
+    );
+
+    await repo.upsert(uid, atualizado);
     await fetch(uid);
   }
 

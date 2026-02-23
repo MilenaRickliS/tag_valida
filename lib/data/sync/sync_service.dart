@@ -37,8 +37,6 @@ class SyncService {
         } else {
           final payload = payloadJson == null ? <String, dynamic>{} : jsonDecode(payloadJson);
           final map = Map<String, dynamic>.from(payload as Map);
-
-     
           if (map.containsKey("createdAtMs")) {
             map["createdAt"] = Timestamp.fromMillisecondsSinceEpoch(map["createdAtMs"]);
             map.remove("createdAtMs");
@@ -49,6 +47,27 @@ class SyncService {
           } else {
             map["updatedAt"] = FieldValue.serverTimestamp();
           }
+          if (entity == "tipos_etiqueta") {
+          if (map.containsKey("camposCustomJson")) {
+            final str = (map["camposCustomJson"] ?? "[]").toString();
+            try {
+              map["camposCustom"] = jsonDecode(str);
+            } catch (_) {
+              map["camposCustom"] = [];
+            }
+            map.remove("camposCustomJson");
+          }
+          if (map.containsKey("controlaLote")) {
+            final v = map["controlaLote"];
+            if (v is int) map["controlaLote"] = v == 1;
+            if (v is num) map["controlaLote"] = v.toInt() == 1;
+          }
+          if (map.containsKey("usarRegraValidadeCategoria")) {
+            final v = map["usarRegraValidadeCategoria"];
+            if (v is int) map["usarRegraValidadeCategoria"] = v == 1;
+            if (v is num) map["usarRegraValidadeCategoria"] = v.toInt() == 1;
+          }
+        }
           if (entity == "etiquetas") {
             if (map.containsKey("dataFabricacaoMs")) {
               map["dataFabricacao"] = Timestamp.fromMillisecondsSinceEpoch(map["dataFabricacaoMs"]);
@@ -57,6 +76,18 @@ class SyncService {
             if (map.containsKey("dataValidadeMs")) {
               map["dataValidade"] = Timestamp.fromMillisecondsSinceEpoch(map["dataValidadeMs"]);
               map.remove("dataValidadeMs");
+            }
+          }
+
+          if (entity == "etiquetas_templates") {
+            if (map.containsKey("camposCustomValoresJson")) {
+              final str = (map["camposCustomValoresJson"] ?? "{}").toString();
+              try {
+                map["camposCustomValores"] = jsonDecode(str);
+              } catch (_) {
+                map["camposCustomValores"] = {};
+              }
+              map.remove("camposCustomValoresJson");
             }
           }
 
@@ -117,6 +148,7 @@ class SyncService {
         "nome": (d["nome"] ?? "").toString(),
         "descricao": d["descricao"]?.toString(),
         "usarRegraValidadeCategoria": (d["usarRegraValidadeCategoria"] ?? true) ? 1 : 0,
+        "controlaLote": (d["controlaLote"] ?? false) ? 1 : 0,
         "camposCustomJson": jsonEncode(campos),
         "createdAt": (d["createdAt"] as Timestamp?)?.millisecondsSinceEpoch,
         "updatedAt": (d["updatedAt"] as Timestamp?)?.millisecondsSinceEpoch,
@@ -125,22 +157,97 @@ class SyncService {
 
     await _pullCollection(uid, "etiquetas", table: "etiquetas", mapToLocal: (doc) {
       final d = doc.data();
+
+      Timestamp? ts(dynamic v) => v is Timestamp ? v : null;
+
       return {
         "id": doc.id,
         "uid": uid,
+
         "tipoId": (d["tipoId"] ?? "").toString(),
         "tipoNome": (d["tipoNome"] ?? "").toString(),
+
         "produtoNome": (d["produtoNome"] ?? "").toString(),
+
         "categoriaId": (d["categoriaId"] ?? "").toString(),
         "categoriaNome": (d["categoriaNome"] ?? "").toString(),
+
         "setorId": (d["setorId"] ?? "").toString(),
         "setorNome": (d["setorNome"] ?? "").toString(),
-        "dataFabricacaoMs": (d["dataFabricacao"] as Timestamp).millisecondsSinceEpoch,
-        "dataValidadeMs": (d["dataValidade"] as Timestamp).millisecondsSinceEpoch,
+
+        "dataFabricacaoMs": ts(d["dataFabricacao"])?.millisecondsSinceEpoch ?? 0,
+        "dataValidadeMs": ts(d["dataValidade"])?.millisecondsSinceEpoch ?? 0,
+
+        "quantidade": (d["quantidade"] as num?) ?? 1,
+        "quantidadeRestante": (d["quantidadeRestante"] as num?) ?? (d["quantidade"] as num?) ?? 1,
+        "statusEstoque": (d["statusEstoque"] ?? "ativo").toString(),
+        "soldAtMs": ts(d["soldAt"])?.millisecondsSinceEpoch,
+
+        "lote": d["lote"]?.toString(),
+
         "camposCustomValoresJson": jsonEncode(d["camposCustomValores"] ?? {}),
+
         "status": (d["status"] ?? "ativa").toString(),
-        "createdAt": (d["createdAt"] as Timestamp?)?.millisecondsSinceEpoch,
-        "updatedAt": (d["updatedAt"] as Timestamp?)?.millisecondsSinceEpoch,
+
+        "createdAt": ts(d["createdAt"])?.millisecondsSinceEpoch,
+        "updatedAt": ts(d["updatedAt"])?.millisecondsSinceEpoch,
+      };
+    });
+
+    await _pullCollection(uid, "estoque_mov", table: "estoque_mov", mapToLocal: (doc) {
+      final d = doc.data();
+
+      int? ms(dynamic v) {
+        if (v is Timestamp) return v.millisecondsSinceEpoch;
+        if (v is int) return v;
+        if (v is num) return v.toInt();
+        return null;
+      }
+
+      return {
+        "id": doc.id,
+        "uid": uid,
+        "etiquetaId": (d["etiquetaId"] ?? "").toString(),
+        "tipo": (d["tipo"] ?? "").toString(),
+        "quantidade": (d["quantidade"] as num?) ?? 0,
+        "motivo": d["motivo"]?.toString(),
+        "produtoNome": d["produtoNome"]?.toString(),
+        "createdAt": ms(d["createdAt"]) ?? ms(d["createdAtMs"]) ?? 0,
+        "updatedAt": ms(d["updatedAt"]) ?? ms(d["updatedAtMs"]) ?? 0,
+      };
+    });
+
+    await _pullCollection(uid, "etiquetas_templates", table: "etiquetas_templates", mapToLocal: (doc) {
+      final d = doc.data();
+
+      int? ms(dynamic v) {
+        if (v is Timestamp) return v.millisecondsSinceEpoch;
+        if (v is int) return v;
+        if (v is num) return v.toInt();
+        return null;
+      }
+
+      return {
+        "id": doc.id,
+        "uid": uid,
+
+        "tipoId": (d["tipoId"] ?? "").toString(),
+        "tipoNome": (d["tipoNome"] ?? "").toString(),
+
+        "produtoNome": (d["produtoNome"] ?? "").toString(),
+
+        "categoriaId": (d["categoriaId"] ?? "").toString(),
+        "categoriaNome": (d["categoriaNome"] ?? "").toString(),
+
+        "setorId": (d["setorId"] ?? "").toString(),
+        "setorNome": (d["setorNome"] ?? "").toString(),
+
+        "camposCustomValoresJson": jsonEncode(d["camposCustomValores"] ?? {}),
+
+        "quantidadePadrao": (d["quantidadePadrao"] as num?) ?? 1,
+
+        "createdAt": ms(d["createdAt"]) ?? ms(d["createdAtMs"]),
+        "updatedAt": ms(d["updatedAt"]) ?? ms(d["updatedAtMs"]),
       };
     });
   }
@@ -170,9 +277,7 @@ class SyncService {
 
 
   Future<void> syncNow(String uid) async {
-
-    await pullAll(uid);
-
     await pushOutbox(uid, limit: 200);
+    await pullAll(uid);
   }
 }
