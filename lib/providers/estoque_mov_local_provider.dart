@@ -36,7 +36,8 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
       updatedAt: now,
     );
 
-    await repo.insert(uid, mov);
+    
+    await repo.insertAndEnqueue(uid, mov);
     notifyListeners();
   }
 
@@ -48,6 +49,7 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
     String? motivo,
   }) async {
     final now = DateTime.now();
+
     final mov = EstoqueMovModel(
       id: now.millisecondsSinceEpoch.toString(),
       etiquetaId: etiquetaId,
@@ -58,7 +60,8 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
       createdAt: now,
       updatedAt: now,
     );
-    await repo.insert(uid, mov);
+
+    await repo.insertAndEnqueue(uid, mov);
     notifyListeners();
   }
 
@@ -70,6 +73,7 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
     String? motivo,
   }) async {
     final now = DateTime.now();
+
     final mov = EstoqueMovModel(
       id: now.millisecondsSinceEpoch.toString(),
       etiquetaId: etiquetaId,
@@ -80,7 +84,8 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
       createdAt: now,
       updatedAt: now,
     );
-    await repo.insert(uid, mov);
+
+    await repo.insertAndEnqueue(uid, mov);
     notifyListeners();
   }
 
@@ -92,6 +97,7 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
     String? motivo,
   }) async {
     final now = DateTime.now();
+
     final mov = EstoqueMovModel(
       id: now.millisecondsSinceEpoch.toString(),
       etiquetaId: etiquetaId,
@@ -102,7 +108,8 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
       createdAt: now,
       updatedAt: now,
     );
-    await repo.insert(uid, mov);
+
+    await repo.insertAndEnqueue(uid, mov);
     notifyListeners();
   }
 
@@ -114,17 +121,19 @@ class EstoqueMovLocalProvider extends ChangeNotifier {
     String? motivo,
   }) async {
     final now = DateTime.now();
+
     final mov = EstoqueMovModel(
       id: now.millisecondsSinceEpoch.toString(),
       etiquetaId: etiquetaId,
       produtoNome: produtoNome,
       tipo: EstoqueMovModel.tipoExclusao,
-      quantidade: quantidade, 
+      quantidade: quantidade,
       motivo: motivo ?? "Exclusão (suave)",
       createdAt: now,
       updatedAt: now,
     );
-    await repo.insert(uid, mov);
+
+    await repo.insertAndEnqueue(uid, mov);
     notifyListeners();
   }
 }

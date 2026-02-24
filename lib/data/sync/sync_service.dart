@@ -47,27 +47,43 @@ class SyncService {
           } else {
             map["updatedAt"] = FieldValue.serverTimestamp();
           }
-          if (entity == "tipos_etiqueta") {
-          if (map.containsKey("camposCustomJson")) {
-            final str = (map["camposCustomJson"] ?? "[]").toString();
-            try {
-              map["camposCustom"] = jsonDecode(str);
-            } catch (_) {
-              map["camposCustom"] = [];
+          if (entity == "categorias" || entity == "setores") {
+            if (map.containsKey("ativo")) {
+              final v = map["ativo"];
+              if (v is bool) {
+               
+              } else if (v is int) {
+                map["ativo"] = v == 1;
+              } else if (v is num) {
+                map["ativo"] = v.toInt() == 1;
+              } else if (v is String) {
+                map["ativo"] = (v.toLowerCase().trim() == "true" || v == "1");
+              }
             }
-            map.remove("camposCustomJson");
           }
-          if (map.containsKey("controlaLote")) {
-            final v = map["controlaLote"];
-            if (v is int) map["controlaLote"] = v == 1;
-            if (v is num) map["controlaLote"] = v.toInt() == 1;
+         if (entity == "tipos_etiqueta") {
+          
+            if (map["camposCustom"] is String) {
+              final str = (map["camposCustom"] ?? "[]").toString();
+              try {
+                map["camposCustom"] = jsonDecode(str);
+              } catch (_) {
+                map["camposCustom"] = [];
+              }
+            }
+
+    
+            if (map.containsKey("controlaLote")) {
+              final v = map["controlaLote"];
+              if (v is int) map["controlaLote"] = v == 1;
+              if (v is num) map["controlaLote"] = v.toInt() == 1;
+            }
+            if (map.containsKey("usarRegraValidadeCategoria")) {
+              final v = map["usarRegraValidadeCategoria"];
+              if (v is int) map["usarRegraValidadeCategoria"] = v == 1;
+              if (v is num) map["usarRegraValidadeCategoria"] = v.toInt() == 1;
+            }
           }
-          if (map.containsKey("usarRegraValidadeCategoria")) {
-            final v = map["usarRegraValidadeCategoria"];
-            if (v is int) map["usarRegraValidadeCategoria"] = v == 1;
-            if (v is num) map["usarRegraValidadeCategoria"] = v.toInt() == 1;
-          }
-        }
           if (entity == "etiquetas") {
             if (map.containsKey("dataFabricacaoMs")) {
               map["dataFabricacao"] = Timestamp.fromMillisecondsSinceEpoch(map["dataFabricacaoMs"]);
@@ -77,17 +93,41 @@ class SyncService {
               map["dataValidade"] = Timestamp.fromMillisecondsSinceEpoch(map["dataValidadeMs"]);
               map.remove("dataValidadeMs");
             }
+
+       
+            if (map.containsKey("camposCustomValores")) {
+                final v = map["camposCustomValores"];
+                if (v is String) {
+                  try {
+                    map["camposCustomValores"] = jsonDecode(v);
+                  } catch (_) {
+                    map["camposCustomValores"] = {};
+                  }
+                }
+              }
+
+            if (map.containsKey("soldAtMs")) {
+              final v = map["soldAtMs"];
+              if (v == null) {
+                map["soldAt"] = null;
+              } else if (v is int) {
+                map["soldAt"] = Timestamp.fromMillisecondsSinceEpoch(v);
+              } else if (v is num) {
+                map["soldAt"] = Timestamp.fromMillisecondsSinceEpoch(v.toInt());
+              }
+              map.remove("soldAtMs");
+            }
           }
 
           if (entity == "etiquetas_templates") {
-            if (map.containsKey("camposCustomValoresJson")) {
-              final str = (map["camposCustomValoresJson"] ?? "{}").toString();
-              try {
-                map["camposCustomValores"] = jsonDecode(str);
-              } catch (_) {
-                map["camposCustomValores"] = {};
-              }
-              map.remove("camposCustomValoresJson");
+            final v = map["camposCustomValores"];
+            if (v is String) {
+              try { map["camposCustomValores"] = jsonDecode(v); }
+              catch (_) { map["camposCustomValores"] = {}; }
+            } else if (v is Map) {
+              map["camposCustomValores"] = Map<String, dynamic>.from(v);
+            } else {
+              map["camposCustomValores"] = {};
             }
           }
 
@@ -111,6 +151,14 @@ class SyncService {
     }
   }
 
+  dynamic _jsonSafe(dynamic v) {
+    if (v == null) return null;
+    if (v is Timestamp) return v.millisecondsSinceEpoch;
+    if (v is DateTime) return v.millisecondsSinceEpoch;
+    if (v is Map) return v.map((k, val) => MapEntry(k.toString(), _jsonSafe(val)));
+    if (v is List) return v.map(_jsonSafe).toList();
+    return v;
+  }
  
   Future<void> pullAll(String uid) async {
     await _pullCollection(uid, "categorias", table: "categorias", mapToLocal: (doc) {
@@ -159,6 +207,7 @@ class SyncService {
       final d = doc.data();
 
       Timestamp? ts(dynamic v) => v is Timestamp ? v : null;
+      final safeCampos = _jsonSafe(d["camposCustomValores"] ?? {});
 
       return {
         "id": doc.id,
@@ -185,7 +234,8 @@ class SyncService {
 
         "lote": d["lote"]?.toString(),
 
-        "camposCustomValoresJson": jsonEncode(d["camposCustomValores"] ?? {}),
+       
+        "camposCustomValoresJson": jsonEncode(safeCampos),
 
         "status": (d["status"] ?? "ativa").toString(),
 

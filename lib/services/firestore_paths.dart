@@ -17,8 +17,8 @@ class FirestorePaths {
       _db.collection("usuarios").doc(uid).collection("etiquetas");
 
   CollectionReference<Map<String, dynamic>> etiquetasTemplates(String uid) =>
-      _db.collection("empresas").doc(uid).collection("etiquetas_templates");
+      _db.collection("usuarios").doc(uid).collection("etiquetas_templates");
 
   CollectionReference<Map<String, dynamic>> estoqueMov(String uid) =>
-      _db.collection("empresas").doc(uid).collection("estoque_mov");
+      _db.collection("usuarios").doc(uid).collection("estoque_mov");
 }

@@ -53,6 +53,7 @@ extension EtiquetaTemplateLocalMapper on EtiquetaTemplateModel {
       camposCustomValores: valores,
       quantidadePadrao: asNum(m["quantidadePadrao"], def: 1),
       createdAt: dt(m["createdAt"]),
+      updatedAt: dt(m["updatedAt"]),
     );
   }
 }

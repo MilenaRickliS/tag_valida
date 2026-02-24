@@ -32,6 +32,7 @@ class EtiquetaFirebaseService {
       dataValidade: dt(data["dataValidade"]),
       camposCustomValores: Map<String, dynamic>.from(data["camposCustomValores"] ?? {}),
       status: (data["status"] ?? "").toString(),
+       lote: data["lote"]?.toString(),
       quantidade: (data["quantidade"] ?? 0) as num,
       quantidadeRestante: (data["quantidadeRestante"] ?? 0) as num,
       statusEstoque: (data["statusEstoque"] ?? "").toString(),

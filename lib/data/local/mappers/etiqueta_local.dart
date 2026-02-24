@@ -19,15 +19,12 @@ extension EtiquetaLocalMapper on EtiquetaModel {
       'dataFabricacaoMs': dataFabricacao.millisecondsSinceEpoch,
       'dataValidadeMs': dataValidade.millisecondsSinceEpoch,
       'camposCustomValoresJson': jsonEncode(camposCustomValores),
-
       'status': status,
-
-
+      'lote': lote,
       'quantidade': quantidade,
       'quantidadeRestante': quantidadeRestante,
       'statusEstoque': statusEstoque,
       'soldAtMs': soldAt?.millisecondsSinceEpoch,
-
       'createdAt': createdAt?.millisecondsSinceEpoch ?? nowMs,
       'updatedAt': nowMs,
     };
@@ -80,8 +77,7 @@ extension EtiquetaLocalMapper on EtiquetaModel {
       dataValidade: dtMs(m['dataValidadeMs']),
       camposCustomValores: valores,
       status: (m['status'] ?? 'ativa').toString(),
-
-   
+      lote: (m['lote'] ?? '').toString().trim().isEmpty ? null : (m['lote'] ?? '').toString(),
       quantidade: qtd,
       quantidadeRestante: rest,
       statusEstoque: statusEstoque,

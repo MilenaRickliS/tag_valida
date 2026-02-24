@@ -233,6 +233,15 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
     final now = DateTime.now();
 
+    final Map<String, dynamic> safeCampos =
+        Map<String, dynamic>.from(t.camposCustomValores);
+
+    safeCampos.putIfAbsent("lote", () => {"label": "Lote", "value": ""});
+
+    final loteStr = (safeCampos["lote"]?["value"] ?? "").toString().trim();
+    final String? loteFinal = loteStr.isEmpty ? null : loteStr;
+
+
     final fake = EtiquetaModel(
       id: "temp",
       tipoId: t.tipoId,
@@ -245,6 +254,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       dataFabricacao: now,
       dataValidade: now, 
       camposCustomValores: t.camposCustomValores,
+      lote: loteFinal,
       status: "ativa",
       quantidade: t.quantidadePadrao,
       quantidadeRestante: t.quantidadePadrao,
@@ -260,6 +270,10 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       setorObj: setorObj,
       tipoAtual: tipoAtual,
     );
+
+    if (tipoAtual?.controlaLote == true) {
+      gerar.ensureLoteAuto(tipoAtual: tipoAtual!);
+    }
 
     _loadedTemplate = true;
   }

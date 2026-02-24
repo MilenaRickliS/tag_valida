@@ -39,6 +39,7 @@ class EtiquetasLocalRepo {
         "quantidadeRestante": e.quantidadeRestante,
         "statusEstoque": e.statusEstoque,
         "soldAtMs": e.soldAt?.millisecondsSinceEpoch,
+        "lote": e.lote ?? (e.camposCustomValores["lote"]?["value"]?.toString()),
 
       
         "createdAtMs": (e.createdAt?.millisecondsSinceEpoch ?? nowMs),
@@ -86,6 +87,7 @@ class EtiquetasLocalRepo {
       statusEstoque: "cancelado", 
       soldAt: current.soldAt,
       status: "excluida",
+      lote: current.lote,
       createdAt: current.createdAt,
     );
 
@@ -108,6 +110,11 @@ class EtiquetasLocalRepo {
         "dataValidadeMs": updated.dataValidade.millisecondsSinceEpoch,
         "camposCustomValores": updated.camposCustomValores,
         "status": updated.status,
+        "lote": updated.lote ?? (updated.camposCustomValores["lote"]?["value"]?.toString()),
+        "quantidade": updated.quantidade,
+        "quantidadeRestante": updated.quantidadeRestante,
+        "statusEstoque": updated.statusEstoque,
+        "soldAtMs": updated.soldAt?.millisecondsSinceEpoch,
         "createdAtMs": (updated.createdAt?.millisecondsSinceEpoch ?? nowMs),
         "updatedAtMs": nowMs,
       };
@@ -309,9 +316,8 @@ class EtiquetasLocalRepo {
       dataValidade: current.dataValidade,
       camposCustomValores: current.camposCustomValores,
       status: current.status,
+      lote: current.lote,
       createdAt: current.createdAt,
-
-     
       quantidade: current.quantidade,
       quantidadeRestante: novoRestante,
       statusEstoque: novoStatusEstoque,
@@ -336,14 +342,12 @@ class EtiquetasLocalRepo {
         "dataFabricacaoMs": updated.dataFabricacao.millisecondsSinceEpoch,
         "dataValidadeMs": updated.dataValidade.millisecondsSinceEpoch,
         "camposCustomValores": updated.camposCustomValores,
-        "status": updated.status,
-
-       
+        "status": updated.status,       
         "quantidade": updated.quantidade,
         "quantidadeRestante": updated.quantidadeRestante,
         "statusEstoque": updated.statusEstoque,
         "soldAtMs": updated.soldAt?.millisecondsSinceEpoch,
-
+        "lote": updated.lote ?? (updated.camposCustomValores["lote"]?["value"]?.toString()),
         "createdAtMs": (updated.createdAt?.millisecondsSinceEpoch ?? nowMs),
         "updatedAtMs": nowMs,
       };
@@ -399,8 +403,8 @@ class EtiquetasLocalRepo {
       dataValidade: current.dataValidade,
       camposCustomValores: current.camposCustomValores,
       status: current.status,
+      lote: current.lote,
       createdAt: current.createdAt,
-
       quantidade: current.quantidade,
       quantidadeRestante: novoRestante,
       statusEstoque: statusEstoque,
@@ -426,13 +430,11 @@ class EtiquetasLocalRepo {
         "dataValidadeMs": updated.dataValidade.millisecondsSinceEpoch,
         "camposCustomValores": updated.camposCustomValores,
         "status": updated.status,
-
-       
         "quantidade": updated.quantidade,
         "quantidadeRestante": updated.quantidadeRestante,
         "statusEstoque": updated.statusEstoque,
         "soldAtMs": updated.soldAt?.millisecondsSinceEpoch,
-
+        "lote": updated.lote ?? (updated.camposCustomValores["lote"]?["value"]?.toString()),
         "createdAtMs": (updated.createdAt?.millisecondsSinceEpoch ?? nowMs),
         "updatedAtMs": nowMs,
       };

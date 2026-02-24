@@ -13,7 +13,8 @@ import 'dart:math';
 class GerarEtiquetaLocalProvider extends ChangeNotifier {
   final EtiquetasLocalRepo repo;
   final EstoqueMovLocalProvider mov; 
-  GerarEtiquetaLocalProvider({required this.repo, required this.mov});
+  final EtiquetasTemplatesLocalRepo templateRepo;
+  GerarEtiquetaLocalProvider({required this.repo, required this.mov, required this.templateRepo,});
 
   String? tipoId;
   CategoriaModel? categoria;
@@ -302,6 +303,8 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     final id = now.millisecondsSinceEpoch.toString();
     final qtd = _parseQtdOrThrow();
     final safeCampos = _sanitizeCamposValores(camposValores);
+    final lote = (safeCampos["lote"]?["value"] ?? "").toString().trim();
+    final loteFinal = lote.isEmpty ? null : lote;
 
     final etiqueta = EtiquetaModel(
       id: id,
@@ -315,8 +318,9 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       dataFabricacao: fabricacao!,
       dataValidade: validade!,
       camposCustomValores: safeCampos,
+      lote: loteFinal,
       status: "ativa",
-      createdAt: now,   
+      createdAt: now,
       quantidade: qtd,
       quantidadeRestante: qtd,
       statusEstoque: "ativo",
@@ -324,10 +328,20 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     );
 
     await repo.upsert(uid, etiqueta);
-    final templateRepo = EtiquetasTemplatesLocalRepo(); 
+    
+    final existing = await templateRepo.findByKey(
+      uid: uid,
+      produtoNome: etiqueta.produtoNome,
+      categoriaId: etiqueta.categoriaId,
+      setorId: etiqueta.setorId,
+    );
+
+  
+    final templateId =
+        existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
     final template = EtiquetaTemplateModel(
-      id: "${DateTime.now().millisecondsSinceEpoch}",
+      id: templateId,
       tipoId: etiqueta.tipoId,
       tipoNome: etiqueta.tipoNome,
       produtoNome: etiqueta.produtoNome,
@@ -336,20 +350,13 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       setorId: etiqueta.setorId,
       setorNome: etiqueta.setorNome,
       camposCustomValores: safeCampos,
-      quantidadePadrao: etiqueta.quantidade, 
-      createdAt: DateTime.now(),
+      quantidadePadrao: etiqueta.quantidade,
+      createdAt: existing?.createdAt ?? DateTime.now(),
     );
 
-    final jaExiste = await templateRepo.existsSameKey(
-      uid: uid,
-      produtoNome: template.produtoNome,
-      categoriaId: template.categoriaId,
-      setorId: template.setorId,
-    );
 
-    if (!jaExiste) {
-      await templateRepo.upsert(uid, template);
-    }
+    await templateRepo.upsert(uid, template);
+
     await mov.registrarEntrada(
       uid: uid,
       etiquetaId: id,
@@ -472,6 +479,8 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
     );
 
     final safeCampos = _sanitizeCamposValores(camposValores);
+    final lote = (safeCampos["lote"]?["value"] ?? "").toString().trim();
+    final loteFinal = lote.isEmpty ? null : lote;
 
     final etiqueta = EtiquetaModel(
       id: before.id,
@@ -485,6 +494,7 @@ class GerarEtiquetaLocalProvider extends ChangeNotifier {
       dataFabricacao: fabricacao!,
       dataValidade: validade!,
       camposCustomValores: safeCampos,
+      lote: loteFinal,
       status: "ativa",
       createdAt: before.createdAt,
       quantidade: qtdNova,

@@ -16,6 +16,7 @@ class EtiquetaTemplateModel {
   final num quantidadePadrao;
 
   final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   EtiquetaTemplateModel({
     required this.id,
@@ -29,5 +30,6 @@ class EtiquetaTemplateModel {
     required this.camposCustomValores,
     required this.quantidadePadrao,
     this.createdAt,
+    this.updatedAt,
   });
 }
