@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 import 'services/firestore_paths.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 import 'providers/auth_provider.dart';
 
@@ -144,7 +145,11 @@ class MyApp extends StatelessWidget {
         '/configuracoes': (context) => const ConfiguracoesScreen(),
         '/categorias': (context) => const CategoriasScreen(),
         '/setores': (context) => const SetoresScreen(),
-        '/relatorios': (context) => const RelatoriosScreen(),
+        '/relatorios': (_) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const LoginScreen(); 
+            return RelatoriosScreen(uid: user.uid);
+          }, 
         '/historico': (context) => const HistoricoScreen(),
         '/prever-validade': (context) => const PreverValidadeScreen(),
       },
