@@ -8,7 +8,7 @@ import '../data/local/repos/etiquetas_local_repo.dart';
 import '../models/etiqueta_model.dart';
 import '../widgets/menu.dart';
 import '../screens/etiqueta_preview.dart';
-import '../screens/criar_etiqueta.dart';
+
 
 class EtiquetasFinalizadasScreen extends StatefulWidget {
   const EtiquetasFinalizadasScreen({super.key});
@@ -413,24 +413,7 @@ class _EtiquetaFinalizadaCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => CriarEtiquetaScreen(editarEtiquetaId: e.id)),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2B2B2B),
-                            side: BorderSide(color: Colors.black.withOpacity(0.14)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                          ),
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          label: const Text("Editar", style: TextStyle(fontWeight: FontWeight.w900)),
-                        ),
-                      ),
+                     
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
@@ -447,7 +430,7 @@ class _EtiquetaFinalizadaCard extends StatelessWidget {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
                           ),
-                          icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                          icon: const Icon(Icons.restart_alt_rounded, size: 18, color: Colors.white,),
                           label: const Text("Reabrir", style: TextStyle(fontWeight: FontWeight.w900)),
                         ),
                       ),
