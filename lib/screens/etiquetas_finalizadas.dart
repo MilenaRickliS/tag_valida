@@ -85,14 +85,14 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset('assets/logo5.png', height: 64),
+                  Image.asset('assets/logo6.png', height: 64),
                   const SizedBox(height: 8),
                   const TopMenu(),
                 ],
               )
             : Row(
                 children: [
-                  Image.asset('assets/logo5.png', height: 72),
+                  Image.asset('assets/logo6.png', height: 72),
                   const Spacer(),
                   const TopMenu(),
                 ],

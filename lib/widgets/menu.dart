@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'menu_icon.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class TopMenu extends StatelessWidget {
   const TopMenu({super.key});
@@ -14,6 +16,8 @@ class TopMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
 
@@ -63,26 +67,29 @@ class TopMenu extends StatelessWidget {
                   borderW: mBorderW,
                 ),
               ),
-              itemBuilder: (context) => const [
-                PopupMenuItem(
+              itemBuilder: (context) => [
+                const PopupMenuItem(
                   value: _MenuItem.home,
                   child: _MenuRow(Icons.home_outlined, "Home"),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: _MenuItem.perfil,
                   child: _MenuRow(Icons.person_outline, "Perfil"),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: _MenuItem.ajuda,
                   child: _MenuRow(Icons.help_outline, "Ajuda"),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: _MenuItem.scanner,
                   child: _MenuRow(Icons.qr_code_scanner, "Ler etiqueta"),
                 ),
                 PopupMenuItem(
                   value: _MenuItem.tema,
-                  child: _MenuRow(Icons.dark_mode_outlined, "Modo escuro"),
+                  child: _MenuRow(
+                    isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                    isDark ? "Modo claro" : "Modo escuro",
+                  ),
                 ),
               ],
               onSelected: (item) {
@@ -100,7 +107,7 @@ class TopMenu extends StatelessWidget {
                   _go(context, '/scanner');
                   break;
                   case _MenuItem.tema:
-                   
+                    context.read<ThemeProvider>().toggleTheme();
                     break;
                 }
               },
@@ -145,10 +152,10 @@ class TopMenu extends StatelessWidget {
                 ),
                 SizedBox(width: gap),
                 MenuIcon(
-                  tooltip: "Modo escuro",
-                  icon: Icons.dark_mode_outlined,
+                  tooltip: isDark ? "Modo claro" : "Modo escuro",
+                  icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
                   onPressed: () {
-                   
+                    context.read<ThemeProvider>().toggleTheme();
                   },
                   size: btnSize,
                   iconSize: iconSize,

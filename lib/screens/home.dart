@@ -322,9 +322,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
     final compact = w < 835;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7ED),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7ED),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -332,14 +332,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset('assets/logo5.png', height: 78),
+                  Image.asset('assets/logo6.png', height: 78),
                   const SizedBox(height: 10),
                   const TopMenu(),
                 ],
               )
             : Row(
                 children: [
-                  Image.asset('assets/logo5.png', height: 92),
+                  Image.asset('assets/logo6.png', height: 92),
                   const Spacer(),
                   const TopMenu(),
                 ],
@@ -369,7 +369,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(28),
                    
-                      color: Colors.white.withOpacity(0.25),
+                      color: Theme.of(context).cardColor.withOpacity(
+                        Theme.of(context).brightness == Brightness.dark ? 0.35 : 0.25,
+                      ),
                       border: Border.all(color: Colors.black.withOpacity(0.08)),
                     ),
                     child: Column(

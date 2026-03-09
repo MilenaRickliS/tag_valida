@@ -103,14 +103,14 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset('assets/logo5.png', height: 78),
+                  Image.asset('assets/logo6.png', height: 78),
                   const SizedBox(height: 10),
                   const TopMenu(),
                 ],
               )
             : Row(
                 children: [
-                  Image.asset('assets/logo5.png', height: 92),
+                  Image.asset('assets/logo6.png', height: 92),
                   const Spacer(),
                   const TopMenu(),
                 ],

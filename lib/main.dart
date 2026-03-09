@@ -23,6 +23,8 @@ import 'providers/tipos_etiqueta_local_provider.dart';
 import 'providers/estoque_mov_local_provider.dart';
 import 'providers/gerar_etiqueta_local_provider.dart';
 import 'providers/templates_provider.dart';
+import 'providers/theme_provider.dart';
+import 'theme/app_theme.dart';
 
 import 'data/sync/sync_service.dart';
 
@@ -98,6 +100,7 @@ void main() async {
         Provider(
           create: (_) => SyncService(FirebaseFirestore.instance),
         ),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -109,9 +112,11 @@ final RouteObserver<PageRoute<dynamic>> routeObserver =
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+  
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
     return MaterialApp(
       navigatorObservers: [routeObserver],
       locale: const Locale('pt', 'BR'),
@@ -123,10 +128,9 @@ class MyApp extends StatelessWidget {
       ],
       title: 'TagVálida',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFFFDF7ED),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: AppThemes.lightTheme,
+      darkTheme: AppThemes.darkTheme,
+      themeMode: themeProvider.themeMode,
       initialRoute: '/',
 
     

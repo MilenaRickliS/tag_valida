@@ -83,7 +83,7 @@ class _EtiquetasDiariasScreenState extends State<EtiquetasDiariasScreen> {
         titleSpacing: 12,
         title: Row(
           children: [
-            Image.asset('assets/logo5.png', height: compact ? 56 : 72),
+            Image.asset('assets/logo6.png', height: compact ? 56 : 72),
             const Spacer(),
            
             const TopMenu(),
