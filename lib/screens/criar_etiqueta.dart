@@ -793,6 +793,7 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                           ),
                         ),
                       ),
+                       const SizedBox(height: 18),
                     ],
                   ),
                 ),

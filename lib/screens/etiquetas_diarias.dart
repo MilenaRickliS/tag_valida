@@ -687,7 +687,7 @@ class _TemplateCardState extends State<_TemplateCard> {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.all(widget.dense ? 12 : 14),
+            padding: EdgeInsets.all(widget.dense ? 12: 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
