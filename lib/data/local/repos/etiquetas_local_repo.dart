@@ -155,7 +155,7 @@ class EtiquetasLocalRepo {
 
 
 
-  Future<List<EtiquetaModel>> listByPeriodo({
+ Future<List<EtiquetaModel>> listByPeriodo({
     required String uid,
     required DateTime inicio,
     required DateTime fim,
@@ -163,20 +163,42 @@ class EtiquetasLocalRepo {
     String? categoriaId,
     String? setorId,
     String? tipoId,
+    String? statusEstoque,
   }) async {
     final db = await AppDb.instance.db;
 
-    final where = <String>['uid = ?', 'createdAt >= ?', 'createdAt <= ?'];
+    final where = <String>[
+      'uid = ?',
+      'createdAt >= ?',
+      'createdAt <= ?',
+    ];
+
     final args = <Object>[
       uid,
       inicio.millisecondsSinceEpoch,
       fim.millisecondsSinceEpoch,
     ];
 
-    if (status != null) { where.add('status = ?'); args.add(status); }
-    if (categoriaId != null) { where.add('categoriaId = ?'); args.add(categoriaId); }
-    if (setorId != null) { where.add('setorId = ?'); args.add(setorId); }
-    if (tipoId != null) { where.add('tipoId = ?'); args.add(tipoId); }
+    if (status != null) {
+      where.add('status = ?');
+      args.add(status);
+    }
+    if (categoriaId != null) {
+      where.add('categoriaId = ?');
+      args.add(categoriaId);
+    }
+    if (setorId != null) {
+      where.add('setorId = ?');
+      args.add(setorId);
+    }
+    if (tipoId != null) {
+      where.add('tipoId = ?');
+      args.add(tipoId);
+    }
+    if (statusEstoque != null) {
+      where.add('statusEstoque = ?');
+      args.add(statusEstoque);
+    }
 
     final rows = await db.query(
       'etiquetas',
@@ -187,6 +209,29 @@ class EtiquetasLocalRepo {
 
     return rows.map(EtiquetaLocalMapper.fromLocalMap).toList();
   }
+
+  // Future<void> debugPrintEtiquetas(String uid) async {
+  //   final db = await AppDb.instance.db;
+
+  //   final rows = await db.query(
+  //     'etiquetas',
+  //     where: 'uid = ?',
+  //     whereArgs: [uid],
+  //     orderBy: 'createdAt DESC',
+  //   );
+
+  //   print('====== ETIQUETAS ======');
+  //   print('Total: ${rows.length}');
+
+  //   for (final row in rows) {
+  //     print('-------------------------------');
+  //     row.forEach((key, value) {
+  //       print('$key: $value');
+  //     });
+  //   }
+
+  //   print('======================================');
+  // }
 
   Future<List<Map<String, Object?>>> countPorCategoria({
     required String uid,

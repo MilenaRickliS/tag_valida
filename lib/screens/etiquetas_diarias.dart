@@ -592,7 +592,7 @@ class _TemplateCardState extends State<_TemplateCard> {
     return ok ?? false;
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     final scale = _pressed ? 0.985 : (_hover ? 1.01 : 1.0);
     final dy = _hover ? -2.0 : 0.0;
@@ -600,52 +600,58 @@ class _TemplateCardState extends State<_TemplateCard> {
     final parts = widget.linha2.split("•").map((e) => e.trim()).toList();
     final tipo = parts.isNotEmpty ? parts.first : widget.linha2;
     final categoria = parts.length > 1 ? parts[1] : "";
+    final setor = widget.linha3;
 
-    Widget chip(String text, {IconData? icon}) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFAF7F1),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.black.withOpacity(0.08)),
-        ),
+    Widget infoRow({
+      required IconData icon,
+      required String label,
+      required String value,
+    }) {
+      if (value.trim().isEmpty) return const SizedBox.shrink();
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: const Color(0xFF2B2B2B)),
-              const SizedBox(width: 6),
-            ],
-            Flexible(
-              child: Text(
-                text,
-                maxLines: 1,
+            Icon(
+              icon,
+              size: 15,
+              color: Colors.black.withOpacity(0.55),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: RichText(
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5),
+                text: TextSpan(
+                  style: TextStyle(
+                    color: Colors.black.withOpacity(0.75),
+                    fontSize: 13.5,
+                    height: 1.3,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: "$label: ",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF2B2B2B),
+                      ),
+                    ),
+                    TextSpan(
+                      text: value,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       );
     }
-
-    final iconBox = Container(
-      width: widget.dense ? 42 : 46,
-      height: widget.dense ? 42 : 46,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFFAF7F1),
-            const Color(0xFFFAF7F1).withOpacity(0.75),
-          ],
-        ),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
-      ),
-      child: const Icon(Icons.local_offer_outlined, color: Color(0xFF2B2B2B)),
-    );
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -667,7 +673,9 @@ class _TemplateCardState extends State<_TemplateCard> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: _hover ? Colors.black.withOpacity(0.10) : Colors.black.withOpacity(0.06),
+              color: _hover
+                  ? Colors.black.withOpacity(0.10)
+                  : Colors.black.withOpacity(0.06),
               width: _hover ? 1.2 : 1.0,
             ),
             boxShadow: [
@@ -680,106 +688,111 @@ class _TemplateCardState extends State<_TemplateCard> {
           ),
           child: Padding(
             padding: EdgeInsets.all(widget.dense ? 12 : 14),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-               
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    iconBox,
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        widget.produtoNome,
-                        maxLines: widget.dense ? 2 : 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: widget.dense ? 15.5 : 16.5,
-                          height: 1.15,
-                        ),
+                
+                Container(
+                  width: widget.dense ? 46 : 52,
+                  height: widget.dense ? 46 : 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF428E2E),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF428E2E).withOpacity(0.22),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFAF7F1),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.black.withOpacity(0.08)),
-                      ),
-                      child: PopupMenuButton<String>(
-                        tooltip: "Opções",
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: EdgeInsets.zero,
-                        iconSize: 20,
-                        icon: const Icon(Icons.more_horiz, color: Color(0xFF2B2B2B)),
-                        onSelected: (v) async {
-                          if (v == "delete") {
-                            final ok = await _confirmDelete(context);
-                            if (ok) widget.onDelete();
-                          }
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem<String>(
-                            value: "delete",
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_outline, color: Colors.red),
-                                SizedBox(width: 10),
-                                Text("Excluir"),
-                              ],
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.produtoNome,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: widget.dense ? 15.5 : 16.8,
+                                height: 1.15,
+                                color: const Color(0xFF2B2B2B),
+                              ),
                             ),
+                          ),
+                          const SizedBox(width: 8),
+                          PopupMenuButton<String>(
+                            tooltip: "Opções",
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: EdgeInsets.zero,
+                            splashRadius: 20,
+                            iconSize: 20,
+                            icon: const Icon(
+                              Icons.more_horiz,
+                              color: Color(0xFF2B2B2B),
+                            ),
+                            onSelected: (v) async {
+                              if (v == "delete") {
+                                final ok = await _confirmDelete(context);
+                                if (ok) widget.onDelete();
+                              }
+                            },
+                            itemBuilder: (_) => const [
+                              PopupMenuItem<String>(
+                                value: "delete",
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline, color: Colors.red),
+                                    SizedBox(width: 10),
+                                    Text("Excluir"),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
-               
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (tipo.isNotEmpty) chip(tipo, icon: Icons.local_offer_outlined),
-                    if (categoria.isNotEmpty) chip(categoria, icon: Icons.category_outlined),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-               
-                Row(
-                  children: [
-                    Icon(Icons.storefront_outlined, size: 15, color: Colors.black.withOpacity(0.55)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        widget.linha3,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.black.withOpacity(0.62),
-                          fontWeight: FontWeight.w700,
-                        ),
+                      infoRow(
+                        icon: Icons.local_offer_outlined,
+                        label: "Tipo",
+                        value: tipo,
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF428E2E),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.black.withOpacity(0.08)),
+
+                      infoRow(
+                        icon: Icons.category_outlined,
+                        label: "Categoria",
+                        value: categoria,
                       ),
-                      child: const Icon(Icons.add, size: 18, color: Colors.white),
-                    ),
-                  ],
+
+                      infoRow(
+                        icon: Icons.storefront_outlined,
+                        label: "Setor",
+                        value: setor,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

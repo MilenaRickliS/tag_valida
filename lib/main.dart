@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:tag_valida/screens/configuracoes_impressora_screen.dart';
 
 import 'firebase_options.dart';
 import 'services/firestore_paths.dart';
@@ -16,6 +17,7 @@ import 'data/local/repos/tipos_etiqueta_local_repo.dart';
 import 'data/local/repos/etiquetas_local_repo.dart';
 import 'data/local/repos/estoque_mov_local_repo.dart';
 import 'data/local/repos/etiqueta_template_local_repo.dart';
+import 'data/local/repos/printer_config_local_repo.dart';
 
 import 'providers/categorias_local_provider.dart';
 import 'providers/setores_local_provider.dart';
@@ -24,6 +26,8 @@ import 'providers/estoque_mov_local_provider.dart';
 import 'providers/gerar_etiqueta_local_provider.dart';
 import 'providers/templates_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/printer_config_provider.dart';
+
 import 'theme/app_theme.dart';
 
 import 'data/sync/sync_service.dart';
@@ -101,6 +105,16 @@ void main() async {
           create: (_) => SyncService(FirebaseFirestore.instance),
         ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+
+        Provider<PrinterConfigLocalRepo>(
+          create: (_) => PrinterConfigLocalRepo(),
+        ),
+
+        ChangeNotifierProvider<PrinterConfigProvider>(
+          create: (context) => PrinterConfigProvider(
+            context.read<PrinterConfigLocalRepo>(),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -147,6 +161,7 @@ class MyApp extends StatelessWidget {
         '/etiquetas-diarias': (context) => const EtiquetasDiariasScreen(),
         '/etiquetas-finalizadas': (context) => const EtiquetasFinalizadasScreen(),
         '/configuracoes': (context) => const ConfiguracoesScreen(),
+        '/configuracoes-impressora': (_) => const ConfiguracoesImpressoraScreen(),
         '/categorias': (context) => const CategoriasScreen(),
         '/setores': (context) => const SetoresScreen(),
         '/relatorios': (_) {

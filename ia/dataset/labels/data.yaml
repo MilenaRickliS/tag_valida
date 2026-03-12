@@ -1,8 +1,0 @@
-path: C:\Users\Usuario\Documents\FACULDADE\8P\TCC\tag_valida\ia\dataset
-train: images/train
-val: images/val
-
-names:
-  0: bom
-  1: alerta
-  2: vencido

@@ -18,33 +18,39 @@ class _ScannerEtiquetaScreenState extends State<ScannerEtiquetaScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Ler QR da etiqueta")),
       body: MobileScanner(
-        onDetect: (capture) async {
-          if (_handled) return;
+       onDetect: (capture) async {
+        if (_handled) return;
 
-          final barcode = capture.barcodes.firstOrNull;
-          final raw = barcode?.rawValue;
-          if (raw == null || raw.isEmpty) return;
+        final barcode = capture.barcodes.firstOrNull;
+        final raw = barcode?.rawValue;
+        if (raw == null || raw.isEmpty) return;
 
-          try {
-            _handled = true;
+        debugPrint('QR LIDO: $raw');
 
-            final parsed = parseEtiquetaQrPayload(raw);
+        try {
+          _handled = true;
 
-            await openEtiquetaPdfFlow(
-              context,
-              uid: parsed.uid,
-              etiquetaId: parsed.id,
-            );
+          final parsed = parseEtiquetaQrPayload(raw);
 
-            if (context.mounted) Navigator.pop(context);
-          } catch (e) {
-            _handled = false;
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("QR inválido ou não é do Tag Valida.")),
-            );
-          }
-        },
+          await openEtiquetaPdfFlow(
+            context,
+            uid: parsed.uid,
+            etiquetaId: parsed.id,
+          );
+
+          if (context.mounted) Navigator.pop(context);
+        } catch (e, s) {
+          debugPrint('ERRO AO LER QR: $e');
+          debugPrint('$s');
+
+          _handled = false;
+          if (!context.mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("QR inválido: $raw")),
+          );
+        }
+      },
       ),
     );
   }

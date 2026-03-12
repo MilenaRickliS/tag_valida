@@ -1,0 +1,18 @@
+# Caminho base do dataset
+path: ./dataset/detection
+
+# Pastas das imagens
+train: images/train
+val: images/val
+test: images/test
+
+# Número de classes
+nc: 5
+
+# Lista das classes
+names:
+  0: pao_frances
+  1: pao_forma
+  2: croissant_presunto_queijo
+  3: schneck_coco
+  4: mini_pao_queijo

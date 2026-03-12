@@ -102,7 +102,7 @@ class ConfiguracoesScreen extends StatelessWidget {
                               icon: Icons.print_outlined,
                               title: "Configurações - Impressora",
                               subtitle: "Modelo, tamanho e ajustes",
-                              onTap: () => _soon(context),
+                              onTap: () =>  Navigator.pushNamed(context, "/configuracoes-impressora"),
                             ),
                             _ConfigTile(
                               icon: Icons.cloud_upload_outlined,

@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
   }
 
    @override
-    void didChangeDependencies() {
+    Future<void> didChangeDependencies() async {
       super.didChangeDependencies();
 
      
@@ -52,6 +52,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
 
       final user = context.read<AuthProvider>().user;
       if (user == null) return;
+     
+      // if (user != null) {
+      //   await context.read<EtiquetasLocalRepo>().debugPrintEtiquetas(user.uid);
+      // }
 
       _syncedOnce = true;
 
@@ -115,12 +119,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
         inicio: DateTime(2000, 1, 1),
         fim: DateTime(2100, 1, 1),
         status: "ativa",
+        statusEstoque: "ativo",
       );
 
       int vencidas = 0;
       int alerta = 0;
 
       for (final e in itens) {
+        if (e.quantidadeRestante <= 0) continue;
+
         final val = e.dataValidade;
         if (_isVencida(val)) {
           vencidas++;
@@ -135,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
         _qtdAlerta = alerta;
       });
     } catch (_) {
-    
     } finally {
       if (mounted) setState(() => _loadingIndicadores = false);
     }
@@ -158,6 +164,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
     late final Color tituloColor;
     late final VoidCallback onTap;
     late final Widget? badge;
+    late final IconData icone;
 
     if (hasVencidas) {
       titulo = "Produtos vencidos";
@@ -168,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
         Color(0xFFD32F2F),
       ];
       tituloColor = const Color(0xFFB71C1C);
+      icone = Icons.error_rounded;
 
       badge = _MiniCountBadge(
         text: "$_qtdVencidas vencido(s)",
@@ -189,6 +197,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
         Color(0xFFF9A825),
       ];
       tituloColor = const Color(0xFF8D6E00);
+      icone = Icons.warning_amber_rounded;
 
       badge = _MiniCountBadge(
         text: "$_qtdAlerta em alerta",
@@ -210,6 +219,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
         Color(0xFF40916C),
       ];
       tituloColor = const Color(0xFF2E8B73);
+      icone = Icons.check_circle_rounded;
 
       badge = null;
 
@@ -245,23 +255,37 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
 
             if (_loadingIndicadores) const SizedBox(height: 12),
 
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    titulo,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w900,
+             Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.22),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icone,
+                      size: 26,
                       color: tituloColor,
-                      height: 1.12,
                     ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      titulo,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w900,
+                        color: tituloColor,
+                        height: 1.12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
             if (badge != null) ...[
               const SizedBox(height: 10),
@@ -306,6 +330,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
     return 1180;
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -320,6 +346,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware  {
 
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
+    
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

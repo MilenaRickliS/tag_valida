@@ -130,7 +130,25 @@ class SyncService {
               map["camposCustomValores"] = {};
             }
           }
+          if (entity == "printer_configs") {
+            if (map.containsKey("ativo")) {
+              final v = map["ativo"];
+              if (v is int) map["ativo"] = v == 1;
+              if (v is num) map["ativo"] = v.toInt() == 1;
+              if (v is String) {
+                map["ativo"] = (v.toLowerCase().trim() == "true" || v == "1");
+              }
+            }
 
+            if (map.containsKey("padrao")) {
+              final v = map["padrao"];
+              if (v is int) map["padrao"] = v == 1;
+              if (v is num) map["padrao"] = v.toInt() == 1;
+              if (v is String) {
+                map["padrao"] = (v.toLowerCase().trim() == "true" || v == "1");
+              }
+            }
+          }
           await _col(uid, entity).doc(entityId).set(map, SetOptions(merge: true));
         }
 
@@ -296,6 +314,43 @@ class SyncService {
 
         "quantidadePadrao": (d["quantidadePadrao"] as num?) ?? 1,
 
+        "createdAt": ms(d["createdAt"]) ?? ms(d["createdAtMs"]),
+        "updatedAt": ms(d["updatedAt"]) ?? ms(d["updatedAtMs"]),
+      };
+    });
+    
+    await _pullCollection(uid, "printer_configs", table: "printer_configs", mapToLocal: (doc) {
+      final d = doc.data();
+
+      int? ms(dynamic v) {
+        if (v is Timestamp) return v.millisecondsSinceEpoch;
+        if (v is int) return v;
+        if (v is num) return v.toInt();
+        return null;
+      }
+
+      bool toBool(dynamic v, {bool defaultValue = false}) {
+        if (v == null) return defaultValue;
+        if (v is bool) return v;
+        if (v is int) return v == 1;
+        if (v is num) return v.toInt() == 1;
+        final s = v.toString().trim().toLowerCase();
+        if (s == 'true' || s == '1') return true;
+        if (s == 'false' || s == '0') return false;
+        return defaultValue;
+      }
+
+      return {
+        "id": doc.id,
+        "uid": uid,
+        "nome": (d["nome"] ?? "").toString(),
+        "modelo": (d["modelo"] ?? "Elgin L42 Pro").toString(),
+        "tipoConexao": (d["tipoConexao"] ?? "network").toString(),
+        "ip": (d["ip"] ?? "").toString(),
+        "porta": (d["porta"] as num?)?.toInt() ?? 9100,
+        "tamanhoEtiqueta": (d["tamanhoEtiqueta"] ?? "60x40").toString(),
+        "ativo": toBool(d["ativo"], defaultValue: true) ? 1 : 0,
+        "padrao": toBool(d["padrao"], defaultValue: false) ? 1 : 0,
         "createdAt": ms(d["createdAt"]) ?? ms(d["createdAtMs"]),
         "updatedAt": ms(d["updatedAt"]) ?? ms(d["updatedAtMs"]),
       };

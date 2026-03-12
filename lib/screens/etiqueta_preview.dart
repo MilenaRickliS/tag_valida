@@ -11,6 +11,12 @@ import './criar_etiqueta.dart';
 import '../utils/etiqueta_qr.dart';
 import '../utils/formatar_lote.dart';
 import '../providers/estoque_mov_local_provider.dart';
+import 'dart:typed_data';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import '../providers/printer_config_provider.dart';
+import '../services/printer_app_service.dart';
 
 
 class EtiquetaPreviewScreen extends StatelessWidget {
@@ -262,6 +268,474 @@ class EtiquetaPreviewScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<Uint8List> _buildPdf({
+    required EtiquetaModel e,
+    required String qrData,
+    required String status,
+    required String categoriaNome,
+    required String setorNome,
+    required String tipoNome,
+    required String produtoNome,
+    required DateTime fabricacao,
+    required DateTime validade,
+    required num qtd,
+    required num saidas,
+    required num restanteView,
+    required String? loteLabel,
+    required String? loteFormatado,
+    required String? lotePrefixo,
+    required Map<String, dynamic> customSemLote,
+  }) async {
+    final pdf = pw.Document();
+
+    PdfColor validadePdfColor;
+    final validadeColor = _validadeColor(validade);
+    if (validadeColor == Colors.red) {
+      validadePdfColor = PdfColors.red;
+    } else if (validadeColor == Colors.orange) {
+      validadePdfColor = PdfColors.orange;
+    } else {
+      validadePdfColor = PdfColors.green;
+    }
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) {
+          return pw.Container(
+            padding: const pw.EdgeInsets.all(18),
+            decoration: pw.BoxDecoration(
+              color: PdfColor.fromHex('#FFFFFF'),
+              borderRadius: pw.BorderRadius.circular(16),
+              border: pw.Border.all(
+                color: PdfColor.fromHex('#E8E2D9'),
+                width: 1,
+              ),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            tipoNome,
+                            style: pw.TextStyle(
+                              fontSize: 18,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Text(
+                            produtoNome,
+                            style: pw.TextStyle(
+                              fontSize: 13,
+                              color: PdfColors.grey700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: pw.BoxDecoration(
+                            color: PdfColor.fromHex('#F3F4F6'),
+                            borderRadius: pw.BorderRadius.circular(20),
+                          ),
+                          child: pw.Text(
+                            _statusLabel(status),
+                            style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: pw.BoxDecoration(
+                            color: validadePdfColor.shade(0.15),
+                            borderRadius: pw.BorderRadius.circular(20),
+                            border: pw.Border.all(color: validadePdfColor),
+                          ),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                _validadeLabel(validade),
+                                style: pw.TextStyle(
+                                  color: validadePdfColor,
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              pw.SizedBox(height: 2),
+                              pw.Text(
+                                _validadeHint(validade),
+                                style: pw.TextStyle(
+                                  color: validadePdfColor,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                pw.SizedBox(height: 18),
+                pw.Divider(),
+                pw.SizedBox(height: 12),
+
+                _pdfLinha("Categoria", categoriaNome),
+                _pdfLinha("Setor/Responsável", setorNome),
+                _pdfLinha("Fabricação", _fmtDate(fabricacao)),
+                _pdfLinha("Validade", _fmtDate(validade), color: validadePdfColor),
+
+                if (loteFormatado != null) _pdfLinha(loteLabel ?? "Lote", loteFormatado),
+                if (lotePrefixo != null) _pdfLinha("${loteLabel ?? "Lote"} (prefixo)", lotePrefixo),
+
+                pw.SizedBox(height: 14),
+
+                pw.Row(
+                  children: [
+                    pw.Expanded(child: _pdfMetric("Quantidade", _fmtNum(qtd))),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(child: _pdfMetric("Saídas", _fmtNum(saidas))),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(child: _pdfMetric("Restante", _fmtNum(restanteView))),
+                  ],
+                ),
+
+                if (customSemLote.isNotEmpty) ...[
+                  pw.SizedBox(height: 18),
+                  pw.Text(
+                    "Campos adicionais",
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  ...customSemLote.entries.map((entry) {
+                    final obj = Map<String, dynamic>.from(entry.value as Map);
+                    final label = (obj["label"] ?? entry.key).toString();
+                    final val = obj["value"];
+
+                    String texto;
+                    if (val is int) {
+                      final dt = DateTime.fromMillisecondsSinceEpoch(val);
+                      texto = _fmtDate(dt);
+                    } else if (val is bool) {
+                      texto = val ? "Sim" : "Não";
+                    } else {
+                      texto = val?.toString() ?? "";
+                    }
+
+                    return _pdfLinha(label, texto);
+                  }),
+                ],
+
+                pw.SizedBox(height: 22),
+                pw.Center(
+                  child: pw.Column(
+                    children: [
+                      pw.BarcodeWidget(
+                        barcode: pw.Barcode.qrCode(),
+                        data: qrData,
+                        width: 150,
+                        height: 150,
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Text(
+                        "Escaneie para abrir a etiqueta",
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  pw.Widget _pdfLinha(String label, String value, {PdfColor? color}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 8),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: 140,
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                color: PdfColors.grey700,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 8),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 11.5,
+                fontWeight: pw.FontWeight.bold,
+                color: color ?? PdfColors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfMetric(String label, String value) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#FAF7F1'),
+        borderRadius: pw.BorderRadius.circular(12),
+        border: pw.Border.all(color: PdfColor.fromHex('#E8E2D9')),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.grey700,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            value,
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _salvarPdf(
+    BuildContext context, {
+    required EtiquetaModel e,
+    required String qrData,
+    required String status,
+    required String categoriaNome,
+    required String setorNome,
+    required String tipoNome,
+    required String produtoNome,
+    required DateTime fabricacao,
+    required DateTime validade,
+    required num qtd,
+    required num saidas,
+    required num restanteView,
+    required String? loteLabel,
+    required String? loteFormatado,
+    required String? lotePrefixo,
+    required Map<String, dynamic> customSemLote,
+  }) async {
+    try {
+      final bytes = await _buildPdf(
+        e: e,
+        qrData: qrData,
+        status: status,
+        categoriaNome: categoriaNome,
+        setorNome: setorNome,
+        tipoNome: tipoNome,
+        produtoNome: produtoNome,
+        fabricacao: fabricacao,
+        validade: validade,
+        qtd: qtd,
+        saidas: saidas,
+        restanteView: restanteView,
+        loteLabel: loteLabel,
+        loteFormatado: loteFormatado,
+        lotePrefixo: lotePrefixo,
+        customSemLote: customSemLote,
+      );
+
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'etiqueta_${e.produtoNome}_${_fmtDate(validade).replaceAll("/", "-")}.pdf',
+      );
+    } catch (err) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar PDF: $err')),
+      );
+    }
+  }
+
+ Future<void> _imprimirComConfigSalva(
+    BuildContext context, {
+    required String uid,
+    required String produtoNome,
+    required DateTime validade,
+    required String qrData,
+    required String lote,
+    required String quantidade,
+  }) async {
+    try {
+      final printerProvider = context.read<PrinterConfigProvider>();
+
+      if (printerProvider.defaultPrinter == null) {
+        await printerProvider.load(uid);
+      }
+
+      final printer = printerProvider.defaultPrinter;
+        if (printer == null) {
+          throw Exception('Nenhuma impressora padrão configurada.');
+        }
+        if (!printer.ativo) {
+          throw Exception('A impressora padrão está inativa.');
+        }
+        if (!printer.isValida) {
+          throw Exception('A configuração da impressora está incompleta.');
+        }
+        if (!printer.isNetwork) {
+          throw Exception('A impressão disponível no momento é apenas via rede.');
+        }
+
+      final appService = PrinterAppService();
+
+      await appService.imprimirEtiquetaCompacta(
+        printer: printer,
+        produto: produtoNome,
+        validade: DateFormat('dd/MM/yyyy').format(validade),
+        lote: lote,
+        quantidade: quantidade,
+        qrData: qrData,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Etiqueta enviada para impressão com sucesso.'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao imprimir: $e'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _abrirPreviewImpressao(
+  BuildContext context, {
+  required String produto,
+  required DateTime validade,
+  required String lote,
+  required String quantidade,
+  required String qrData,
+}) {
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Pré-visualização da etiqueta',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: _text,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Visualização ampliada da etiqueta 60x40 mm',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black.withOpacity(0.58),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 18),
+              EtiquetaPrintPreview(
+                produto: produto,
+                validade: DateFormat('dd/MM/yyyy').format(validade),
+                lote: lote,
+                quantidade: quantidade,
+                qrData: qrData,
+              ),
+              const SizedBox(height: 18),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.check, color: Colors.black),
+                  label: const Text('Fechar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF4D58D),
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -643,32 +1117,93 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                     const SizedBox(height: 14),
 
                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text("Em breve: imprimir / gerar PDF"),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.print_outlined, color: Colors.black,),
-                            label: const Text("Imprimir / PDF"),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              backgroundColor: const Color(0xff88be8e),
-                              foregroundColor: Colors.black,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                   Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _salvarPdf(
+                            context,
+                            e: e,
+                            qrData: qrData,
+                            status: status,
+                            categoriaNome: categoriaNome,
+                            setorNome: setorNome,
+                            tipoNome: tipoNome,
+                            produtoNome: produtoNome,
+                            fabricacao: fabricacao,
+                            validade: validade,
+                            qtd: qtd,
+                            saidas: saidas,
+                            restanteView: restanteView,
+                            loteLabel: hasLote ? loteLabel : null,
+                            loteFormatado: loteFormatado,
+                            lotePrefixo: lotePrefixo,
+                            customSemLote: customSemLote,
+                          ),
+                          icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.black),
+                          label: const Text("Salvar PDF"),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: const Color(0xff88be8e),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _abrirPreviewImpressao(
+                            context,
+                            produto: produtoNome,
+                            validade: validade,
+                            lote: lotePrefixo ?? loteFormatado ?? '-',
+                            quantidade: _fmtNum(restanteView),
+                            qrData: qrData,
+                          ),
+                          icon: const Icon(Icons.remove_red_eye_outlined),
+                          label: const Text("Pré-visualização"),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            foregroundColor: _text,
+                            backgroundColor: Colors.white,
+                            side: BorderSide(color: Colors.black.withOpacity(0.12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _imprimirComConfigSalva(
+                            context,
+                            uid: uid,
+                            produtoNome: produtoNome,
+                            validade: validade,
+                            qrData: qrData,
+                            lote: lotePrefixo ?? loteFormatado ?? '-',
+                            quantidade: _fmtNum(restanteView),
+                          ),
+                          icon: const Icon(Icons.print_outlined, color: Colors.black),
+                          label: const Text("Imprimir"),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: const Color(0xffF4D58D),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                     const SizedBox(height: 10),
 
                     TextButton(
@@ -681,6 +1216,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       child: const Text("Voltar", style: TextStyle(fontWeight: FontWeight.w800)),
                     ),
                   ],
+                  
                 ),
               ),
             ),
@@ -871,6 +1407,109 @@ class _BadgeChip extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class EtiquetaPrintPreview extends StatelessWidget {
+  final String produto;
+  final String validade;
+  final String lote;
+  final String quantidade;
+  final String qrData;
+
+  const EtiquetaPrintPreview({
+    super.key,
+    required this.produto,
+    required this.validade,
+    required this.lote,
+    required this.quantidade,
+    required this.qrData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const previewWidth = 420.0;
+    const ratio = 60 / 40;
+    final previewHeight = previewWidth / ratio;
+
+    return Center(
+      child: Container(
+        width: previewWidth,
+        height: previewHeight,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.black.withOpacity(0.10)),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    produto,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      height: 1.05,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Val: $validade',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Lote: $lote',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Qtd: $quantidade',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              flex: 4,
+              child: Center(
+                child: QrImageView(
+                  data: qrData,
+                  size: 125,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

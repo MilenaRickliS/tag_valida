@@ -7,7 +7,7 @@ class AppDb {
   static final AppDb instance = AppDb._();
 
   static const _dbName = 'tag_valida.db';
-  static const _dbVersion = 10;
+  static const _dbVersion = 11;
 
   Database? _db;
 
@@ -198,6 +198,25 @@ class AppDb {
     await db.execute('CREATE INDEX idx_mov_uid_created ON estoque_mov(uid, createdAt);');
     await db.execute('CREATE INDEX idx_mov_uid_etiqueta ON estoque_mov(uid, etiquetaId);');
     await db.execute('CREATE INDEX idx_mov_uid_tipo ON estoque_mov(uid, tipo);');
+
+    await db.execute('''
+      CREATE TABLE printer_configs (
+        id TEXT NOT NULL PRIMARY KEY,
+        uid TEXT NOT NULL,
+        nome TEXT NOT NULL,
+        modelo TEXT NOT NULL,
+        tipoConexao TEXT NOT NULL,
+        ip TEXT,
+        porta INTEGER NOT NULL DEFAULT 9100,
+        tamanhoEtiqueta TEXT NOT NULL DEFAULT '60x40',
+        ativo INTEGER NOT NULL DEFAULT 1,
+        padrao INTEGER NOT NULL DEFAULT 1,
+        createdAt INTEGER,
+        updatedAt INTEGER
+      )
+    ''');
+
+    await db.execute('CREATE INDEX idx_printer_configs_uid ON printer_configs(uid)');
   
   }
 
@@ -404,6 +423,28 @@ class AppDb {
       }
 
       await db.execute('CREATE INDEX IF NOT EXISTS idx_etq_uid_lote ON etiquetas(uid, lote);');
+    }
+    if (oldVersion < 11) {
+      await db.execute('''
+        CREATE TABLE printer_configs (
+          id TEXT NOT NULL PRIMARY KEY,
+          uid TEXT NOT NULL,
+          nome TEXT NOT NULL,
+          modelo TEXT NOT NULL,
+          tipoConexao TEXT NOT NULL,
+          ip TEXT,
+          porta INTEGER NOT NULL DEFAULT 9100,
+          tamanhoEtiqueta TEXT NOT NULL DEFAULT '60x40',
+          ativo INTEGER NOT NULL DEFAULT 1,
+          padrao INTEGER NOT NULL DEFAULT 1,
+          createdAt INTEGER,
+          updatedAt INTEGER
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX idx_printer_configs_uid ON printer_configs(uid)',
+      );
     }
   }
 }
