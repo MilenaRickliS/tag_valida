@@ -6,20 +6,29 @@ import '../widgets/menu.dart';
 class PreverValidadeScreen extends StatelessWidget {
   const PreverValidadeScreen({super.key});
 
-  static const _bg = Color(0xFFFDF7ED);
-  static const _green = Color(0xFF428E2E);
-  static const _text = Color(0xFF2B2B2B);
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bg = theme.scaffoldBackgroundColor;
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+    final fabBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final fabFg = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final fabBorder = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.18)
+        : Colors.black.withOpacity(0.08);
+
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
     final mobile = w < 640;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: bg,
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -45,15 +54,15 @@ class PreverValidadeScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.10),
+              color: Colors.black.withOpacity(isDark ? 0.28 : 0.10),
               blurRadius: 18,
               offset: const Offset(0, 10),
             ),
           ],
         ),
         child: FloatingActionButton.extended(
-          backgroundColor: Colors.white,
-          foregroundColor: _green,
+          backgroundColor: fabBg,
+          foregroundColor: fabFg,
           elevation: 0,
           onPressed: () {
             // TODO: abrir câmera / selecionar imagem
@@ -62,21 +71,28 @@ class PreverValidadeScreen extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: _green,
+              color: brand,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+            child: Icon(
+              Icons.camera_alt,
+              color: isDark ? Colors.black : Colors.white,
+              size: 20,
+            ),
           ),
-          label: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
+          label: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
             child: Text(
               "Tirar foto",
-              style: TextStyle(fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: fabFg,
+              ),
             ),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: Colors.black.withOpacity(0.08)),
+            side: BorderSide(color: fabBorder),
           ),
         ),
       ),
@@ -145,19 +161,19 @@ class PreverValidadeScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                const Text(
+                Text(
                   "Orientações para tirar a foto",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: _text,
+                    color: text,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Siga estas recomendações para melhorar a precisão da análise da validade.",
                   style: TextStyle(
-                    color: Colors.black.withOpacity(0.60),
+                    color: muted,
                     fontSize: 15,
                   ),
                 ),
@@ -240,19 +256,19 @@ class PreverValidadeScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                const Text(
+                Text(
                   "Exemplos de fotos",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: _text,
+                    color: text,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Abaixo estão exemplos visuais de como a foto deve ser tirada.",
                   style: TextStyle(
-                    color: Colors.black.withOpacity(0.60),
+                    color: muted,
                     fontSize: 15,
                   ),
                 ),
@@ -297,50 +313,7 @@ class PreverValidadeScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.black.withOpacity(0.05)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: _green.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: _green,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          "Após tirar a foto, a inteligência artificial poderá classificar o alimento como bom, em alerta ou vencido, conforme os padrões visuais aprendidos durante o treinamento.",
-                          style: TextStyle(
-                            height: 1.5,
-                            fontSize: 14.5,
-                            color: Colors.black.withOpacity(0.75),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _InfoBox(),
               ],
             ),
           ),
@@ -357,23 +330,36 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final cardGradient = isDark
+        ? const [
+            Color(0xFF1E1E1E),
+            Color(0xFF151515),
+          ]
+        : const [
+            Color(0xFFFFFFFF),
+            Color(0xFFF7F3EA),
+          ];
+
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.05);
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 18 : 24),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFFFFF),
-            Color(0xFFF7F3EA),
-          ],
+        gradient: LinearGradient(
+          colors: cardGradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.24 : 0.05),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -382,9 +368,9 @@ class _HeroCard extends StatelessWidget {
       child: compact
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: const [
                 _HeroText(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _HeroIcon(),
               ],
             )
@@ -404,30 +390,39 @@ class _HeroText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.68);
+    final pillBg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : const Color(0xFF428E2E).withOpacity(0.10);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: const Color(0xFF428E2E).withOpacity(0.10),
+            color: pillBg,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Text(
+          child: Text(
             "Visão computacional",
             style: TextStyle(
-              color: Color(0xFF428E2E),
+              color: brand,
               fontWeight: FontWeight.w700,
             ),
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
+        Text(
           "Prever validade por imagem",
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF2B2B2B),
+            color: text,
             height: 1.15,
           ),
         ),
@@ -437,7 +432,7 @@ class _HeroText extends StatelessWidget {
           style: TextStyle(
             fontSize: 15,
             height: 1.5,
-            color: Colors.black.withOpacity(0.68),
+            color: muted,
           ),
         ),
       ],
@@ -450,17 +445,23 @@ class _HeroIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final bg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : const Color(0xFF428E2E).withOpacity(0.10);
+
     return Container(
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: const Color(0xFF428E2E).withOpacity(0.10),
+        color: bg,
         borderRadius: BorderRadius.circular(28),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.document_scanner_outlined,
         size: 52,
-        color: Color(0xFF428E2E),
+        color: brand,
       ),
     );
   }
@@ -479,15 +480,30 @@ class _InfoStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final card = isDark
+        ? const Color(0xFF1E1E1E).withOpacity(0.96)
+        : Colors.white.withOpacity(0.92);
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.05);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final iconBg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : const Color(0xFF428E2E).withOpacity(0.12);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.62);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: card,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.24 : 0.04),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -499,10 +515,10 @@ class _InfoStatCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFF428E2E).withOpacity(0.12),
+              color: iconBg,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: const Color(0xFF428E2E)),
+            child: Icon(icon, color: brand),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -511,17 +527,17 @@ class _InfoStatCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
-                    color: Color(0xFF2B2B2B),
+                    color: text,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.black.withOpacity(0.62),
+                    color: muted,
                     height: 1.4,
                   ),
                 ),
@@ -547,15 +563,28 @@ class _TipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.05);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final iconBg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : const Color(0xFF428E2E).withOpacity(0.12);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.65);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.24 : 0.04),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -568,10 +597,10 @@ class _TipCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFF428E2E).withOpacity(0.12),
+              color: iconBg,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: const Color(0xFF428E2E)),
+            child: Icon(icon, color: brand),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -580,10 +609,10 @@ class _TipCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF2B2B2B),
+                    color: text,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -592,7 +621,7 @@ class _TipCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: Colors.black.withOpacity(0.65),
+                    color: muted,
                   ),
                 ),
               ],
@@ -619,17 +648,29 @@ class _ExampleImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = isGood ? const Color(0xFF428E2E) : const Color(0xFFC94B41);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final goodColor = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final badColor = const Color(0xFFC94B41);
+    final statusColor = isGood ? goodColor : badColor;
     final statusText = isGood ? "Recomendado" : "Não recomendado";
+
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.05);
+    final imageBg = isDark ? const Color(0xFF141414) : const Color(0xFFF4EFE5);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.62);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.24 : 0.04),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -643,7 +684,7 @@ class _ExampleImageCard extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: const Color(0xFFF4EFE5),
+                color: imageBg,
                 child: Image.asset(
                   assetPath,
                   fit: BoxFit.cover,
@@ -652,7 +693,9 @@ class _ExampleImageCard extends StatelessWidget {
                       child: Icon(
                         Icons.image_outlined,
                         size: 52,
-                        color: Colors.black.withOpacity(0.25),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.22)
+                            : Colors.black.withOpacity(0.25),
                       ),
                     );
                   },
@@ -683,17 +726,17 @@ class _ExampleImageCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
-                      color: Color(0xFF2B2B2B),
+                      color: text,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: Colors.black.withOpacity(0.62),
+                      color: muted,
                       height: 1.4,
                     ),
                   ),
@@ -702,6 +745,70 @@ class _ExampleImageCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final card = isDark
+        ? const Color(0xFF1E1E1E).withOpacity(0.96)
+        : Colors.white.withOpacity(0.92);
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.05);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final iconBg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : const Color(0xFF428E2E).withOpacity(0.12);
+    final text = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.75);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.24 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              Icons.info_outline,
+              color: brand,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              "Após tirar a foto, a inteligência artificial poderá classificar o alimento como bom, em alerta ou vencido, conforme os padrões visuais aprendidos durante o treinamento.",
+              style: TextStyle(
+                height: 1.5,
+                fontSize: 14.5,
+                color: text,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
