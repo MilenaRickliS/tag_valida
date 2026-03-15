@@ -13,6 +13,10 @@ final _nomeDeny = FilteringTextInputFormatter.deny(
   RegExp(r"[^0-9A-Za-zÀ-ÖØ-öø-ÿÇç ]"),
 );
 
+final _keyDeny = FilteringTextInputFormatter.deny(
+  RegExp(r"[^a-zA-Z0-9_]"),
+);
+
 class TitleCaseEachWordFormatter extends TextInputFormatter {
   const TitleCaseEachWordFormatter();
 
@@ -82,20 +86,42 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bg = theme.scaffoldBackgroundColor;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+
+    final fabBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final fabFg = brand;
+    final fabBorder = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.18)
+        : Colors.black.withOpacity(0.08);
+
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
 
     final uid = context.watch<AuthProvider>().user?.uid;
     if (uid == null) {
-      return const Scaffold(body: Center(child: Text("Faça login novamente.")));
+      return Scaffold(
+        backgroundColor: bg,
+        body: Center(
+          child: Text(
+            "Faça login novamente.",
+            style: TextStyle(color: text),
+          ),
+        ),
+      );
     }
 
     final prov = context.watch<TiposEtiquetaLocalProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7ED),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7ED),
+        backgroundColor: bg,
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -116,44 +142,51 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                 ],
               ),
       ),
-
-     
       floatingActionButton: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.10),
+              color: Colors.black.withOpacity(isDark ? 0.28 : 0.10),
               blurRadius: 18,
               offset: const Offset(0, 10),
             ),
           ],
         ),
         child: FloatingActionButton.extended(
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF428e2e),
+          backgroundColor: fabBg,
+          foregroundColor: fabFg,
           elevation: 0,
           onPressed: () => _openTipoDialog(context, uid),
           icon: Container(
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: const Color(0xFF428e2e),
+              color: brand,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.add, color: Colors.white, size: 20),
+            child: Icon(
+              Icons.add,
+              color: isDark ? Colors.black : Colors.white,
+              size: 20,
+            ),
           ),
-          label: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Text("Novo tipo", style: TextStyle(fontWeight: FontWeight.w800)),
+          label: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Text(
+              "Novo tipo",
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: fabFg,
+              ),
+            ),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: Colors.black.withOpacity(0.08)),
+            side: BorderSide(color: fabBorder),
           ),
         ),
       ),
-
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 980),
@@ -162,25 +195,31 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Tipos de etiqueta",
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: text,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Crie modelos com campos personalizados para gerar etiquetas rapidamente.",
-                  style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                  style: TextStyle(color: muted),
                 ),
                 const SizedBox(height: 16),
                 if (prov.loading)
-                  const Expanded(child: Center(child: CircularProgressIndicator()))
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
                 else if (prov.items.isEmpty)
                   Expanded(
                     child: Center(
                       child: Text(
                         "Nenhum tipo cadastrado ainda.\nClique em “Novo tipo”.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.black.withOpacity(0.6)),
+                        style: TextStyle(color: muted),
                       ),
                     ),
                   )
@@ -207,13 +246,18 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
     );
   }
 
-
   Future<void> _confirmDelete(BuildContext context, String uid, TipoEtiquetaModel t) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+
     final ok = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: dialogBg,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -226,15 +270,21 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF2F2),
+                color: Colors.red.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.red.withOpacity(0.15)),
+                border: Border.all(color: Colors.red.withOpacity(0.18)),
               ),
               child: const Icon(Icons.delete_outline, color: Colors.red),
             ),
             const SizedBox(width: 12),
-            const Expanded(
-              child: Text("Excluir tipo?", style: TextStyle(fontWeight: FontWeight.w900)),
+            Expanded(
+              child: Text(
+                "Excluir tipo?",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: text,
+                ),
+              ),
             ),
           ],
         ),
@@ -242,16 +292,20 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("O tipo:", style: TextStyle(color: Colors.black.withOpacity(0.65))),
+            Text("O tipo:", style: TextStyle(color: muted)),
             const SizedBox(height: 4),
             Text(
               "“${t.nome}”",
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                color: text,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               "Será removido da sua lista de tipos.",
-              style: TextStyle(color: Colors.black.withOpacity(0.60), height: 1.4),
+              style: TextStyle(color: muted, height: 1.4),
             ),
           ],
         ),
@@ -259,11 +313,14 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF2B2B2B),
+              foregroundColor: isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              "Cancelar",
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -274,7 +331,10 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text("Excluir", style: TextStyle(fontWeight: FontWeight.w900)),
+            child: const Text(
+              "Excluir",
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         ],
       ),
@@ -285,9 +345,20 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
     }
   }
 
-
   Future<void> _openTipoDialog(BuildContext context, String uid, {TipoEtiquetaModel? tipo}) async {
     final isEdit = tipo != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final sectionBg = isDark ? const Color(0xFF181818) : Colors.white;
+    final fieldBg = isDark ? const Color(0xFF141414) : const Color(0xFFFAF7F1);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final onBrand = isDark ? Colors.black : Colors.white;
 
     final nomeCtrl = TextEditingController(text: tipo?.nome ?? "");
     final descCtrl = TextEditingController(text: tipo?.descricao ?? "");
@@ -307,7 +378,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
       builder: (_) => StatefulBuilder(
         builder: (context, setLocal) {
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: dialogBg,
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
             insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
@@ -320,17 +391,20 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF6F2EA),
+                    color: brand.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black.withOpacity(0.06)),
+                    border: Border.all(color: border),
                   ),
-                  child: const Icon(Icons.layers_outlined, color: Color(0xFF2B2B2B)),
+                  child: Icon(Icons.layers_outlined, color: brand),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     isEdit ? "Editar tipo" : "Novo tipo",
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: text,
+                    ),
                   ),
                 ),
               ],
@@ -352,200 +426,181 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                         ),
                         child: Text(
                           erro!,
-                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
                     ],
-
                     TextField(
                       controller: nomeCtrl,
+                      style: TextStyle(color: text),
                       textCapitalization: TextCapitalization.none,
                       inputFormatters: [
                         const TitleCaseEachWordFormatter(),
                         _nomeDeny,
                         LengthLimitingTextInputFormatter(60),
                       ],
-                      decoration: InputDecoration(
+                      decoration: _inputDecoration(
+                        isDark: isDark,
+                        text: text,
+                        border: border,
+                        fill: fieldBg,
+                        brand: brand,
                         labelText: "Nome",
                         hintText: "Ex: Etiqueta Freezer",
-                        labelStyle: TextStyle(
-                          color: Colors.black.withOpacity(0.6),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF2B2B2B),
-                          fontWeight: FontWeight.w800,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFAF7F1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     TextField(
                       controller: descCtrl,
+                      style: TextStyle(color: text),
                       textCapitalization: TextCapitalization.sentences,
                       maxLines: 2,
-                      decoration: InputDecoration(
+                      decoration: _inputDecoration(
+                        isDark: isDark,
+                        text: text,
+                        border: border,
+                        fill: fieldBg,
+                        brand: brand,
                         labelText: "Descrição (opcional)",
                         hintText: "Ex: Modelo para produtos congelados",
-                        labelStyle: TextStyle(
-                          color: Colors.black.withOpacity(0.6),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF2B2B2B),
-                          fontWeight: FontWeight.w800,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFAF7F1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: usarRegra
-                              ? const Color(0xFF428e2e).withOpacity(0.22)
-                              : Colors.black.withOpacity(0.10),
+                              ? brand.withOpacity(0.22)
+                              : border,
                         ),
                         borderRadius: BorderRadius.circular(14),
                         color: usarRegra
-                            ? const Color(0xFF428e2e).withOpacity(0.10) 
-                            : const Color(0xFFFAF7F1),
+                            ? brand.withOpacity(0.10)
+                            : fieldBg,
                       ),
                       child: SwitchTheme(
                         data: SwitchThemeData(
                           thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return const Color(0xFF428e2e);
+                            if (states.contains(WidgetState.selected)) return brand;
                             return null;
                           }),
                           trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return const Color(0xFF428e2e).withOpacity(0.35);
+                            if (states.contains(WidgetState.selected)) {
+                              return brand.withOpacity(0.35);
+                            }
                             return null;
                           }),
                         ),
                         child: SwitchListTile(
-                          title: const Text(
+                          title: Text(
                             "Usar regra de validade da categoria",
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: text,
+                            ),
                           ),
                           subtitle: Text(
                             "Se marcado, a validade será calculada com base na categoria.",
-                            style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                            style: TextStyle(
+                              color: muted,
+                              fontSize: 12,
+                            ),
                           ),
                           value: usarRegra,
                           onChanged: (v) => setLocal(() => usarRegra = v),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: controlaLote
-                              ? const Color(0xFF428e2e).withOpacity(0.22)
-                              : Colors.black.withOpacity(0.10),
+                              ? brand.withOpacity(0.22)
+                              : border,
                         ),
                         borderRadius: BorderRadius.circular(14),
                         color: controlaLote
-                            ? const Color(0xFF428e2e).withOpacity(0.10)
-                            : const Color(0xFFFAF7F1),
+                            ? brand.withOpacity(0.10)
+                            : fieldBg,
                       ),
                       child: SwitchTheme(
                         data: SwitchThemeData(
                           thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return const Color(0xFF428e2e);
+                            if (states.contains(WidgetState.selected)) return brand;
                             return null;
                           }),
                           trackColor: WidgetStateProperty.resolveWith((states) {
                             if (states.contains(WidgetState.selected)) {
-                              return const Color(0xFF428e2e).withOpacity(0.35);
+                              return brand.withOpacity(0.35);
                             }
                             return null;
                           }),
                         ),
                         child: SwitchListTile(
-                          title: const Text(
+                          title: Text(
                             "Controlar lote",
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: text,
+                            ),
                           ),
                           subtitle: Text(
                             "Se marcado, a etiqueta terá um campo de Lote obrigatório (pode gerar automático).",
-                            style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                            style: TextStyle(
+                              color: muted,
+                              fontSize: 12,
+                            ),
                           ),
                           value: controlaLote,
                           onChanged: (v) => setLocal(() => controlaLote = v),
                         ),
                       ),
                     ),
-
-
                     const SizedBox(height: 18),
-                  
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: sectionBg,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black.withOpacity(0.08)),
+                        border: Border.all(color: border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   "Campos personalizados",
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: text,
+                                  ),
                                 ),
                               ),
                               ElevatedButton.icon(
                                 onPressed: () async {
-                                  final novo = await _openCampoDialog(context);
+                                  final novo = await _openCampoDialog(context, campo: null);
                                   if (novo != null) {
                                     setLocal(() => campos.add(novo));
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF428e2e),
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: brand,
+                                  foregroundColor: onBrand,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                 ),
-                                icon: const Icon(Icons.add, color: Colors.white),
+                                icon: Icon(Icons.add, color: onBrand),
                                 label: const Text(
                                   "Adicionar",
                                   style: TextStyle(fontWeight: FontWeight.w900),
@@ -556,22 +611,21 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                           const SizedBox(height: 8),
                           Text(
                             "Adicione campos que você quer preencher ao criar etiquetas (ex: Lote, Peso, Observações).",
-                            style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                            style: TextStyle(color: muted),
                           ),
                           const SizedBox(height: 12),
-
                           if (campos.isEmpty)
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFDF7ED),
+                                color: fieldBg,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.black.withOpacity(0.10)),
+                                border: Border.all(color: border),
                               ),
                               child: Text(
                                 "Nenhum campo adicional.\nToque em “Adicionar” para criar o primeiro.",
-                                style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                                style: TextStyle(color: muted),
                               ),
                             )
                           else
@@ -593,13 +647,16 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                                   margin: const EdgeInsets.only(bottom: 10),
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: fieldBg,
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: Colors.black.withOpacity(0.10)),
+                                    border: Border.all(color: border),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.drag_handle),
+                                      Icon(
+                                        Icons.drag_handle,
+                                        color: muted,
+                                      ),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
@@ -607,17 +664,23 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                                           children: [
                                             Text(
                                               "${c.label}${c.obrigatorio ? " *" : ""}",
-                                              style: const TextStyle(fontWeight: FontWeight.w900),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w900,
+                                                color: text,
+                                              ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               "Chave: ${c.key} • Tipo: ${_campoTipoLabel(c.tipo)}",
-                                              style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                                              style: TextStyle(color: muted),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               _campoTipoHint(c.tipo),
-                                              style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                                              style: TextStyle(
+                                                color: muted,
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -630,12 +693,18 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                                             setLocal(() => campos[i] = editado);
                                           }
                                         },
-                                        icon: const Icon(Icons.edit_outlined),
+                                        icon: Icon(
+                                          Icons.edit_outlined,
+                                          color: isDark ? brand : null,
+                                        ),
                                       ),
                                       IconButton(
                                         tooltip: "Remover campo",
                                         onPressed: () => setLocal(() => campos.removeAt(i)),
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -653,16 +722,19 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF2B2B2B),
+                  foregroundColor: isDark ? brand : const Color(0xFF2B2B2B),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF428e2e),
-                  foregroundColor: Colors.white,
+                  backgroundColor: brand,
+                  foregroundColor: onBrand,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -697,7 +769,10 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
 
                   if (context.mounted) Navigator.pop(context);
                 },
-                child: Text(isEdit ? "Salvar" : "Criar", style: const TextStyle(fontWeight: FontWeight.w900)),
+                child: Text(
+                  isEdit ? "Salvar" : "Criar",
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ],
           );
@@ -706,7 +781,6 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
     );
   }
 
-  
   String? _validarTipo(String nome, List<CampoCustomModel> campos) {
     if (nome.isEmpty) return "Informe o nome do tipo.";
 
@@ -737,21 +811,26 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
   String _makeKeyFromLabel(String label) {
     var s = label.trim().toLowerCase();
     s = _removeDiacritics(s);
-
     s = s.replaceAll(RegExp(r'[^a-z0-9_\s]'), '');
-
     s = s.replaceAll(RegExp(r'\s+'), '_');
-
     s = s.replaceAll(RegExp(r'_+'), '_');
-
     s = s.replaceAll(RegExp(r'^_+|_+$'), '');
-
     return s;
   }
 
- 
   Future<CampoCustomModel?> _openCampoDialog(BuildContext context, {CampoCustomModel? campo}) async {
     final isEdit = campo != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final fieldBg = isDark ? const Color(0xFF141414) : const Color(0xFFFAF7F1);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final onBrand = isDark ? Colors.black : Colors.white;
 
     final labelCtrl = TextEditingController(text: campo?.label ?? "");
     final keyCtrl = TextEditingController(text: campo?.key ?? "");
@@ -763,20 +842,18 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
     CampoCustomModel? result;
 
     final bool keyLocked = isEdit;
+    bool userEditedKey = isEdit;
 
-    bool userEditedKey = isEdit; 
     void syncKeyFromLabel() {
       if (keyLocked) return;
       if (userEditedKey) return;
 
       final generated = _makeKeyFromLabel(labelCtrl.text);
-
       if (keyCtrl.text != generated) {
         keyCtrl.text = generated;
       }
     }
 
-   
     void labelListener() => syncKeyFromLabel();
     labelCtrl.addListener(labelListener);
 
@@ -785,40 +862,40 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
       barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => StatefulBuilder(
         builder: (context, setLocal) {
-        
           final previewKey = _makeKeyFromLabel(labelCtrl.text);
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: dialogBg,
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
             insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
             titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
             contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
             actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-
             title: Row(
               children: [
                 Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF6F2EA),
+                    color: brand.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black.withOpacity(0.06)),
+                    border: Border.all(color: border),
                   ),
-                  child: const Icon(Icons.tune, color: Color(0xFF2B2B2B)),
+                  child: Icon(Icons.tune, color: brand),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     isEdit ? "Editar campo" : "Adicionar campo",
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: text,
+                    ),
                   ),
                 ),
               ],
             ),
-
             content: SizedBox(
               width: 520,
               child: SingleChildScrollView(
@@ -836,86 +913,58 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                         ),
                         child: Text(
                           erro!,
-                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
                     ],
-
-                 
                     TextField(
                       controller: labelCtrl,
+                      style: TextStyle(color: text),
                       textCapitalization: TextCapitalization.none,
                       inputFormatters: const [
                         TitleCaseEachWordFormatter(),
                       ],
-                      decoration: InputDecoration(
+                      decoration: _inputDecoration(
+                        isDark: isDark,
+                        text: text,
+                        border: border,
+                        fill: fieldBg,
+                        brand: brand,
                         labelText: "Nome do campo (Label)",
                         hintText: "Ex: Lote",
-                        labelStyle: TextStyle(
-                          color: Colors.black.withOpacity(0.6),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF2B2B2B),
-                          fontWeight: FontWeight.w800,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFAF7F1),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Label é o nome que aparece na etiqueta.",
-                        style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12.5),
+                        style: TextStyle(color: muted, fontSize: 12.5),
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
-                 
                     TextField(
                       controller: keyCtrl,
+                      style: TextStyle(color: text),
                       readOnly: keyLocked,
-                      onTap: () {
-                      
-                        if (!keyLocked) {
-                          
-                        }
-                      },
+                      inputFormatters: keyLocked ? null : [_keyDeny],
                       onChanged: (_) {
-                        if (!keyLocked) {
-                         
-                          if (!userEditedKey) {
-                            setLocal(() => userEditedKey = true);
-                          }
+                        if (!keyLocked && !userEditedKey) {
+                          setLocal(() => userEditedKey = true);
                         }
                       },
-                      decoration: InputDecoration(
+                      decoration: _inputDecoration(
+                        isDark: isDark,
+                        text: text,
+                        border: border,
+                        fill: fieldBg,
+                        brand: brand,
                         labelText: "Chave (Key) — sem espaços",
                         hintText: "Ex: lote",
-                        labelStyle: TextStyle(
-                          color: Colors.black.withOpacity(0.6),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF2B2B2B),
-                          fontWeight: FontWeight.w800,
-                        ),
                         helperText: keyLocked
                             ? "A key não pode ser alterada depois de criada."
                             : (userEditedKey
@@ -923,7 +972,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                                 : "Gerada automaticamente pelo Label."),
                         prefixIcon: Icon(
                           keyLocked ? Icons.lock_outline : Icons.key_outlined,
-                          color: keyLocked ? Colors.black.withOpacity(0.55) : const Color(0xFF2B2B2B),
+                          color: keyLocked ? muted : brand,
                         ),
                         suffixIcon: (!keyLocked && userEditedKey)
                             ? IconButton(
@@ -934,7 +983,7 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                                     syncKeyFromLabel();
                                   });
                                 },
-                                icon: const Icon(Icons.auto_fix_high),
+                                icon: Icon(Icons.auto_fix_high, color: brand),
                               )
                             : IconButton(
                                 tooltip: "Copiar key",
@@ -946,116 +995,102 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                                     );
                                   }
                                 },
-                                icon: const Icon(Icons.copy_outlined),
+                                icon: Icon(
+                                  Icons.copy_outlined,
+                                  color: isDark ? brand : null,
+                                ),
                               ),
-                        filled: true,
-                        fillColor: const Color(0xFFFAF7F1),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
-                   
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Preview da key: $previewKey",
-                        style: TextStyle(color: Colors.black.withOpacity(0.60), fontSize: 12.5),
+                        style: TextStyle(color: muted, fontSize: 12.5),
                       ),
                     ),
-
                     const SizedBox(height: 14),
-
-                
                     DropdownButtonFormField<CampoTipo>(
                       value: tipo,
-                      decoration: InputDecoration(
+                      dropdownColor: dialogBg,
+                      style: TextStyle(color: text),
+                      decoration: _inputDecoration(
+                        isDark: isDark,
+                        text: text,
+                        border: border,
+                        fill: fieldBg,
+                        brand: brand,
                         labelText: "Tipo do campo",
-                        labelStyle: TextStyle(
-                          color: Colors.black.withOpacity(0.6),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF2B2B2B),
-                          fontWeight: FontWeight.w800,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFAF7F1),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFF2B2B2B), width: 1.6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: CampoTipo.text, child: Text("Texto")),
-                        DropdownMenuItem(value: CampoTipo.number, child: Text("Número")),
-                        DropdownMenuItem(value: CampoTipo.multiline, child: Text("Texto grande")),
-                        DropdownMenuItem(value: CampoTipo.date, child: Text("Data")),
-                        DropdownMenuItem(value: CampoTipo.boolType, child: Text("Sim/Não")),
+                      items: [
+                        DropdownMenuItem(
+                          value: CampoTipo.text,
+                          child: Text("Texto", style: TextStyle(color: text)),
+                        ),
+                        DropdownMenuItem(
+                          value: CampoTipo.number,
+                          child: Text("Número", style: TextStyle(color: text)),
+                        ),
+                        DropdownMenuItem(
+                          value: CampoTipo.multiline,
+                          child: Text("Texto grande", style: TextStyle(color: text)),
+                        ),
+                        DropdownMenuItem(
+                          value: CampoTipo.date,
+                          child: Text("Data", style: TextStyle(color: text)),
+                        ),
+                        DropdownMenuItem(
+                          value: CampoTipo.boolType,
+                          child: Text("Sim/Não", style: TextStyle(color: text)),
+                        ),
                       ],
                       onChanged: (v) => setLocal(() => tipo = v ?? CampoTipo.text),
                     ),
-
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Como será preenchido: ${_campoTipoHint(tipo)}",
-                        style: TextStyle(color: Colors.black.withOpacity(0.60), fontSize: 12.5),
+                        style: TextStyle(color: muted, fontSize: 12.5),
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: obrigatorio
-                              ? const Color(0xFF428e2e).withOpacity(0.22)
-                              : Colors.black.withOpacity(0.10),
+                          color: obrigatorio ? brand.withOpacity(0.22) : border,
                         ),
                         borderRadius: BorderRadius.circular(14),
-                        color: obrigatorio
-                            ? const Color(0xFF428e2e).withOpacity(0.10)
-                            : const Color(0xFFFAF7F1),
+                        color: obrigatorio ? brand.withOpacity(0.10) : fieldBg,
                       ),
                       child: SwitchTheme(
                         data: SwitchThemeData(
                           thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return const Color(0xFF428e2e);
+                            if (states.contains(WidgetState.selected)) return brand;
                             return null;
                           }),
                           trackColor: WidgetStateProperty.resolveWith((states) {
                             if (states.contains(WidgetState.selected)) {
-                              return const Color(0xFF428e2e).withOpacity(0.35);
+                              return brand.withOpacity(0.35);
                             }
                             return null;
                           }),
                         ),
                         child: SwitchListTile(
-                          title: const Text(
+                          title: Text(
                             "Campo obrigatório",
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: text,
+                            ),
                           ),
                           subtitle: Text(
                             "Se ativo, a etiqueta só salva se este campo estiver preenchido.",
-                            style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                            style: TextStyle(
+                              color: muted,
+                              fontSize: 12,
+                            ),
                           ),
                           value: obrigatorio,
                           onChanged: (v) => setLocal(() => obrigatorio = v),
@@ -1066,35 +1101,36 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
                 ),
               ),
             ),
-
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF2B2B2B),
+                  foregroundColor: isDark ? brand : const Color(0xFF2B2B2B),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF428e2e),
-                  foregroundColor: Colors.white,
+                  backgroundColor: brand,
+                  foregroundColor: onBrand,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 onPressed: () {
                   final label = labelCtrl.text.trim();
-                  final key = keyCtrl.text.trim();
 
-              
                   if (!keyLocked && !userEditedKey) {
                     final generated = _makeKeyFromLabel(label);
                     keyCtrl.text = generated;
                   }
 
+                  final key = keyCtrl.text.trim();
                   final keyOk = RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(key);
 
                   if (label.isEmpty) {
@@ -1119,7 +1155,10 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
 
                   Navigator.pop(context);
                 },
-                child: Text(isEdit ? "Salvar" : "Adicionar", style: const TextStyle(fontWeight: FontWeight.w900)),
+                child: Text(
+                  isEdit ? "Salvar" : "Adicionar",
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ],
           );
@@ -1127,7 +1166,6 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
       ),
     );
 
- 
     labelCtrl.removeListener(labelListener);
     labelCtrl.dispose();
     keyCtrl.dispose();
@@ -1164,6 +1202,54 @@ class _TiposEtiquetaScreenState extends State<TiposEtiquetaScreen> {
         return "Alternância Sim/Não (ex: Conferido?)";
     }
   }
+
+  InputDecoration _inputDecoration({
+    required bool isDark,
+    required Color text,
+    required Color border,
+    required Color fill,
+    required Color brand,
+    required String labelText,
+    String? hintText,
+    String? helperText,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    final labelColor = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.6);
+
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      helperText: helperText,
+      helperStyle: TextStyle(color: labelColor),
+      hintStyle: TextStyle(color: labelColor),
+      labelStyle: TextStyle(
+        color: labelColor,
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: TextStyle(
+        color: brand,
+        fontWeight: FontWeight.w800,
+      ),
+      filled: true,
+      fillColor: fill,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: brand, width: 1.6),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    );
+  }
 }
 
 class _TipoCard extends StatelessWidget {
@@ -1179,17 +1265,26 @@ class _TipoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final count = tipo.camposCustom.length;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.07);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.62);
+    final iconColor = isDark ? const Color(0xFFD4AF37) : null;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.07)),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDark ? 0.24 : 0.06),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -1197,25 +1292,39 @@ class _TipoCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.layers_outlined),
+          Icon(Icons.layers_outlined, color: iconColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tipo.nome, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                
                 Text(
-                  "$count campo(s) • validade automática: ${tipo.usarRegraValidadeCategoria ? "sim" : "não"}"
-                  " • lote: ${tipo.controlaLote ? "sim" : "não"}",
-                  style: TextStyle(color: Colors.black.withOpacity(0.62)),
+                  tipo.nome,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "$count campo(s) • validade automática: ${tipo.usarRegraValidadeCategoria ? "sim" : "não"} • lote: ${tipo.controlaLote ? "sim" : "não"}",
+                  style: TextStyle(color: muted),
                 ),
               ],
             ),
           ),
-          IconButton(onPressed: onEdit, icon: const Icon(Icons.edit_outlined)),
-          IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline, color: Colors.red)),
+          IconButton(
+            onPressed: onEdit,
+            icon: Icon(
+              Icons.edit_outlined,
+              color: isDark ? const Color(0xFFD4AF37) : null,
+            ),
+          ),
+          IconButton(
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+          ),
         ],
       ),
     );
