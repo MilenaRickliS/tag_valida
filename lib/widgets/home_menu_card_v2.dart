@@ -22,32 +22,35 @@ class HomeMenuCardV2 extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final cardColor = isDark
-        ? const Color(0xFF2A2A2A).withOpacity(0.94)
+        ? const Color(0xFF1E1E1E).withOpacity(0.96)
         : Colors.white.withOpacity(0.94);
 
     final innerIconBg = isDark
-        ? const Color(0xFF353535)
+        ? const Color(0xFF2A2A2A)
         : Colors.white;
 
-    final titleColor = theme.textTheme.bodyLarge?.color ??
-        (isDark ? Colors.white : Colors.black87);
+    final titleColor = isDark
+        ? Colors.white
+        : (theme.textTheme.bodyLarge?.color ?? Colors.black87);
 
     final subtitleColor = isDark
-        ? Colors.white.withOpacity(0.72)
+        ? const Color(0xFFD8D8D8)
         : Colors.black.withOpacity(0.62);
 
     final borderColor = isDark
-        ? Colors.white.withOpacity(0.08)
+        ? const Color(0xFFD4AF37).withOpacity(0.18)
         : Colors.black.withOpacity(0.08);
 
     final chevronColor = isDark
-        ? Colors.white.withOpacity(0.35)
+        ? const Color(0xFFD4AF37).withOpacity(0.85)
         : Colors.black.withOpacity(0.35);
 
-    final iconColor = isDark ? Colors.white : Colors.black87;
+    final iconColor = isDark
+        ? const Color(0xFFD4AF37)
+        : Colors.black87;
 
-    final shadow1 = Colors.black.withOpacity(isDark ? 0.18 : 0.06);
-    final shadow2 = Colors.black.withOpacity(isDark ? 0.30 : 0.12);
+    final shadow1 = Colors.black.withOpacity(isDark ? 0.22 : 0.06);
+    final shadow2 = Colors.black.withOpacity(isDark ? 0.38 : 0.12);
 
     return Container(
       decoration: BoxDecoration(

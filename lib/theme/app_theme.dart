@@ -25,21 +25,24 @@ class AppThemes {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF1B1B1B),
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFFED7227),
-      brightness: Brightness.dark,
+    scaffoldBackgroundColor: const Color(0xFF0F0F0F),
+    colorScheme: const ColorScheme.dark(
+      primary: Color(0xFFD4AF37),
+      secondary: Color(0xFFD4AF37),
+      surface: Color(0xFF1E1E1E),
+      onPrimary: Colors.black,
+      onSurface: Colors.white,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1B1B1B),
-      foregroundColor: Color(0xFFFDF7ED),
+      backgroundColor: Color(0xFF0F0F0F),
+      foregroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
     ),
-    cardColor: const Color(0xFF2A2A2A),
+    cardColor: const Color(0xFF1E1E1E),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white),
-      bodyMedium: TextStyle(color: Colors.white70),
+      bodyMedium: TextStyle(color: Color(0xFFD6D6D6)),
     ),
   );
 }

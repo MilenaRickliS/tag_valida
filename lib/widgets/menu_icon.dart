@@ -26,16 +26,18 @@ class MenuIcon extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isDark
-        ? const Color(0xFF2D2D2D)
+        ? const Color(0xFF2A2A2A)
         : const Color(0xFFF2E1BB);
 
     final borderColor = isDark
-        ? const Color(0xFFF2E1BB)
+        ? const Color(0xFFD4AF37).withOpacity(0.85)
         : const Color(0xFF2A2828);
 
     final iconColor = isDark
-        ? const Color(0xFFF2E1BB)
+        ? const Color(0xFFD4AF37)
         : Colors.black87;
+
+    final shadowColor = Colors.black.withOpacity(isDark ? 0.30 : 0.12);
 
     return Tooltip(
       message: tooltip,
@@ -55,9 +57,9 @@ class MenuIcon extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.28 : 0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: shadowColor,
+                blurRadius: 12,
+                offset: const Offset(0, 5),
               ),
             ],
           ),

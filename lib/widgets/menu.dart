@@ -1,9 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'menu_icon.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/theme_provider.dart';
+import 'menu_icon.dart';
 
 class TopMenu extends StatelessWidget {
   const TopMenu({super.key});
@@ -21,12 +22,10 @@ class TopMenu extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
 
-
     final gap = 18.0;
     final btnSize = 56.0;
     final iconSize = 28.0;
     final borderW = 2.0;
-
 
     final mBtnSize = 46.0;
     final mIconSize = 24.0;
@@ -36,16 +35,36 @@ class TopMenu extends StatelessWidget {
         ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
+    final menuBgColor = isDark
+        ? const Color(0xFF161616)
+        : Colors.white;
+
+    final menuBorderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.18)
+        : Colors.black.withOpacity(0.08);
+
+    final menuShadowColor = isDark
+        ? Colors.black.withOpacity(0.30)
+        : Colors.black.withOpacity(0.08);
+
+    final popupColor = isDark
+        ? const Color(0xFF1E1E1E)
+        : Colors.white;
+
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: menuBgColor,
         borderRadius: BorderRadius.circular(compact ? 26 : 32),
+        border: Border.all(
+          color: menuBorderColor,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: menuShadowColor,
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -53,15 +72,21 @@ class TopMenu extends StatelessWidget {
           ? PopupMenuButton<_MenuItem>(
               tooltip: "Menu",
               offset: const Offset(0, 52),
+              color: popupColor,
+              elevation: 10,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
+                side: isDark
+                    ? BorderSide(
+                        color: const Color(0xFFD4AF37).withOpacity(0.18),
+                      )
+                    : BorderSide.none,
               ),
-           
               child: IgnorePointer(
                 child: MenuIcon(
                   tooltip: "Menu",
                   icon: Icons.menu_rounded,
-                  onPressed: () {}, 
+                  onPressed: () {},
                   size: mBtnSize,
                   iconSize: mIconSize,
                   borderW: mBorderW,
@@ -87,7 +112,9 @@ class TopMenu extends StatelessWidget {
                 PopupMenuItem(
                   value: _MenuItem.tema,
                   child: _MenuRow(
-                    isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                    isDark
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
                     isDark ? "Modo claro" : "Modo escuro",
                   ),
                 ),
@@ -104,8 +131,8 @@ class TopMenu extends StatelessWidget {
                     _go(context, '/ajuda');
                     break;
                   case _MenuItem.scanner:
-                  _go(context, '/scanner');
-                  break;
+                    _go(context, '/scanner');
+                    break;
                   case _MenuItem.tema:
                     context.read<ThemeProvider>().toggleTheme();
                     break;
@@ -153,7 +180,9 @@ class TopMenu extends StatelessWidget {
                 SizedBox(width: gap),
                 MenuIcon(
                   tooltip: isDark ? "Modo claro" : "Modo escuro",
-                  icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  icon: isDark
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
                   onPressed: () {
                     context.read<ThemeProvider>().toggleTheme();
                   },
@@ -172,15 +201,28 @@ enum _MenuItem { home, perfil, ajuda, scanner, tema }
 class _MenuRow extends StatelessWidget {
   final IconData icon;
   final String text;
+
   const _MenuRow(this.icon, this.text);
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final color = isDark
+        ? const Color(0xFFF2E1BB)
+        : Colors.black87;
+
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.black87),
+        Icon(icon, size: 20, color: color),
         const SizedBox(width: 10),
-        Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
       ],
     );
   }
