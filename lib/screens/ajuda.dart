@@ -6,13 +6,15 @@ import '../widgets/menu.dart';
 class AjudaScreen extends StatelessWidget {
   const AjudaScreen({super.key});
 
-  static const _bg = Color(0xFFFDF7ED);
-  static const _text = Color(0xFF2B2B2B);
-  static const _muted = Color(0xFF6B6B6B);
-  static const _card = Colors.white;
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bg = theme.scaffoldBackgroundColor;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : const Color(0xFF6B6B6B);
+
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
 
@@ -20,39 +22,39 @@ class AjudaScreen extends StatelessWidget {
       _FaqItem(
         question: "Como faço para criar uma nova etiqueta?",
         answer:
-            "Vá em **Criar Etiqueta**, selecione o **Tipo**, **Setor** e **Categoria** (se houver), preencha os campos (ex: produto, lote, datas) e toque em **Salvar**. Depois você pode **visualizar** e **imprimir**.",
+            "Vá em Criar Etiqueta, selecione o Tipo, Setor e Categoria (se houver), preencha os campos (ex: produto, lote, datas) e toque em Salvar. Depois você pode visualizar e imprimir.",
       ),
       _FaqItem(
         question: "Para que servem as etiquetas diárias?",
         answer:
-            "As **etiquetas diárias** ajudam a padronizar e acelerar a rotina: você salva modelos prontos para itens que você faz todo dia e gera várias etiquetas rapidamente, evitando digitar tudo sempre.",
+            "As etiquetas diárias ajudam a padronizar e acelerar a rotina: você salva modelos prontos para itens que você faz todo dia e gera várias etiquetas rapidamente, evitando digitar tudo sempre.",
       ),
       _FaqItem(
         question: "Como adicionar as etiquetas no meu estoque?",
         answer:
-            "Ao **Salvar** uma etiqueta, ela pode ser registrada no seu controle. Depois, use a tela de **Estoque** para filtrar por **Setor/Categoria** e acompanhar **quantidade**, **alertas** e **vencimentos**.",
+            "Ao salvar uma etiqueta, ela pode ser registrada no seu controle. Depois, use a tela de Estoque para filtrar por Setor/Categoria e acompanhar quantidade, alertas e vencimentos.",
       ),
       _FaqItem(
         question: "Como excluir as etiquetas do meu estoque?",
         answer:
-            "Abra a etiqueta no **Estoque** e escolha **Excluir** (ou Remover do estoque). Se você quiser manter o histórico, pode usar **Baixa/Movimentação** em vez de excluir.",
+            "Abra a etiqueta no Estoque e escolha Excluir (ou Remover do estoque). Se você quiser manter o histórico, pode usar Baixa/Movimentação em vez de excluir.",
       ),
       _FaqItem(
         question: "Como reimprimir etiquetas?",
         answer:
-            "Abra a etiqueta, toque em **Visualizar** e depois em **Imprimir/Reimprimir**. Se existir QR Code, ele será gerado novamente automaticamente com os mesmos dados.",
+            "Abra a etiqueta, toque em Visualizar e depois em Imprimir/Reimprimir. Se existir QR Code, ele será gerado novamente automaticamente com os mesmos dados.",
       ),
       _FaqItem(
         question: "Como atualizar a data de um grupo de etiquetas?",
         answer:
-            "Use a opção de **Edição em lote** (quando disponível): selecione várias etiquetas e escolha **Atualizar validade/fabricação**. Se ainda não tiver essa função, posso te montar esse fluxo com seleção múltipla.",
+            "Use a opção de Edição em lote (quando disponível): selecione várias etiquetas e escolha Atualizar validade/fabricação. Se ainda não tiver essa função, posso te montar esse fluxo com seleção múltipla.",
       ),
     ];
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: bg,
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -78,7 +80,6 @@ class AjudaScreen extends StatelessWidget {
           builder: (context, c) {
             final maxW = c.maxWidth;
 
-          
             int crossAxisCount = 3;
             if (maxW < 980) crossAxisCount = 2;
             if (maxW < 560) crossAxisCount = 1;
@@ -94,34 +95,31 @@ class AjudaScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                   
                       Center(
                         child: Column(
-                          children: const [
+                          children: [
                             Text(
                               "Precisa de ajuda?",
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
-                                color: _text,
+                                color: text,
                               ),
                             ),
-                            SizedBox(height: 6),
+                            const SizedBox(height: 6),
                             Text(
                               "Principais dúvidas com relação ao app",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
-                                color: _muted,
+                                color: muted,
                               ),
                             ),
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 18),
-
                       GridView.builder(
                         itemCount: faqs.length,
                         shrinkWrap: true,
@@ -140,24 +138,20 @@ class AjudaScreen extends StatelessWidget {
                           );
                         },
                       ),
-
                       const SizedBox(height: 22),
-
-                    
-                      const Text(
+                      Text(
                         "Contato Suporte",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: _text,
+                          color: text,
                         ),
                       ),
                       const SizedBox(height: 10),
-
-                      Wrap(
+                      const Wrap(
                         spacing: 14,
                         runSpacing: 10,
-                        children: const [
+                        children: [
                           _ContactPill(
                             icon: Icons.phone_rounded,
                             text: "(42) 99999-0000",
@@ -168,21 +162,16 @@ class AjudaScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 22),
-
-                    
-                      const Text(
+                      Text(
                         "Tutoriais e Documentação",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: _text,
+                          color: text,
                         ),
                       ),
                       const SizedBox(height: 10),
-
-
                       const SizedBox(height: 10),
                     ],
                   ),
@@ -196,6 +185,24 @@ class AjudaScreen extends StatelessWidget {
   }
 
   void _openAnswer(BuildContext context, _FaqItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final iconBg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : const Color(0xFF428E2E).withOpacity(0.12);
+    final iconColor = isDark
+        ? const Color(0xFFD4AF37)
+        : const Color(0xFF2B2B2B);
+    final buttonColor = isDark
+        ? const Color(0xFFD4AF37)
+        : const Color(0xFF428E2E);
+    final buttonFg = isDark ? Colors.black : Colors.white;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -205,15 +212,15 @@ class AjudaScreen extends StatelessWidget {
           margin: const EdgeInsets.all(14),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
           decoration: BoxDecoration(
-            color: _card,
+            color: card,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.black.withOpacity(0.08)),
+            border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
                 blurRadius: 18,
                 spreadRadius: 0,
                 offset: const Offset(0, 10),
-                color: Colors.black.withOpacity(0.10),
+                color: Colors.black.withOpacity(isDark ? 0.28 : 0.10),
               ),
             ],
           ),
@@ -229,42 +236,43 @@ class AjudaScreen extends StatelessWidget {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF428E2E).withOpacity(0.12),
+                        color: iconBg,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.black.withOpacity(0.06),
-                        ),
+                        border: Border.all(color: borderColor),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.help_outline_rounded,
-                        color: Color(0xFF2B2B2B),
+                        color: iconColor,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         item.question,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: _text,
+                          color: text,
                         ),
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: text,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Text(
                   item.answer,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14.2,
                     height: 1.35,
                     fontWeight: FontWeight.w600,
-                    color: _text,
+                    color: text,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -272,8 +280,8 @@ class AjudaScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF428E2E),
-                      foregroundColor: Colors.white,
+                      backgroundColor: buttonColor,
+                      foregroundColor: buttonFg,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
@@ -305,11 +313,20 @@ class _HelpCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _text = Color(0xFF2B2B2B);
-  static const _bg = Colors.white;
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final arrowBg = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFAF7F1);
+    final arrowColor = isDark
+        ? const Color(0xFFD4AF37)
+        : const Color(0xFF2B2B2B);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -317,14 +334,14 @@ class _HelpCard extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: _bg,
+            color: bg,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.black.withOpacity(0.08)),
+            border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
                 blurRadius: 12,
                 offset: const Offset(0, 6),
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withOpacity(isDark ? 0.24 : 0.06),
               ),
             ],
           ),
@@ -335,11 +352,11 @@ class _HelpCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.4,
                       height: 1.2,
                       fontWeight: FontWeight.w800,
-                      color: _text,
+                      color: text,
                     ),
                   ),
                 ),
@@ -348,14 +365,14 @@ class _HelpCard extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF7F1),
+                    color: arrowBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black.withOpacity(0.08)),
+                    border: Border.all(color: borderColor),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_forward_ios,
                     size: 14,
-                    color: Color(0xFF2B2B2B),
+                    color: arrowColor,
                   ),
                 ),
               ],
@@ -376,28 +393,34 @@ class _ContactPill extends StatelessWidget {
     required this.text,
   });
 
-  static const _textColor = Color(0xFF2B2B2B);
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final color = isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B);
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bg,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: _textColor),
+          Icon(icon, size: 18, color: color),
           const SizedBox(width: 8),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.2,
               fontWeight: FontWeight.w800,
-              color: _textColor,
+              color: color,
             ),
           ),
         ],
