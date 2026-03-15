@@ -19,11 +19,6 @@ class _EditarPerfilModal extends StatefulWidget {
 }
 
 class _EditarPerfilModalState extends State<_EditarPerfilModal> {
-  static const _bg = Color(0xFFFDF7ED);
-  static const _card = Colors.white;
-  static const _text = Color(0xFF2B2B2B);
-  static const _muted = Color(0xFF6B6B6B);
-  static const _brand = Color(0xFFED7227);
 
   final _formKey = GlobalKey<FormState>();
   final FocusNode _numeroFocus = FocusNode();
@@ -262,13 +257,24 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? const Color(0xFF111111) : const Color(0xFFFDF7ED);
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : const Color(0xFF6B6B6B);
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFFED7227);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.06);
+
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(bottom: bottom),
         child: Container(
-          decoration: const BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -279,7 +285,9 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                 width: 44,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.10),
+                  color: isDark
+                    ? Colors.white.withOpacity(0.14)
+                    : Colors.black.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -294,14 +302,14 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: _brand.withOpacity(0.12),
+                        color: brand.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black.withOpacity(0.06)),
+                        border: Border.all(color: border),
                       ),
-                      child: const Icon(Icons.edit_rounded, color: _brand),
+                      child: Icon(Icons.edit_rounded, color: brand),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -310,16 +318,16 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: _text,
+                              color: text,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             "Atualize as informações da empresa",
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: _muted,
+                              color: muted,
                             ),
                           ),
                         ],
@@ -327,7 +335,7 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: Icon(Icons.close_rounded, color: text),
                     ),
                   ],
                 ),
@@ -339,14 +347,14 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: _card,
+                      color: card,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: Colors.black.withOpacity(0.06)),
+                      border: Border.all(color: border),
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 18,
                           offset: const Offset(0, 10),
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
                         ),
                       ],
                     ),
@@ -354,18 +362,24 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          _sectionTitle("Dados principais"),
+                          _sectionTitle("Dados principais", brand, text),
                           _field(
                             c: nome,
                             label: "Nome (fantasia)",
                             validator: _vNome,
                             prefixIcon: const Icon(Icons.storefront_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: razao,
                             label: "Razão social",
                             validator: _vRazao,
                             prefixIcon: const Icon(Icons.business_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: telefone,
@@ -374,19 +388,27 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                             validator: _vTelefone,
                             inputFormatters: [_phoneMask],
                             prefixIcon: const Icon(Icons.phone_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: responsavel,
                             label: "Responsável",
                             validator: _vResponsavel,
                             prefixIcon: const Icon(Icons.person_outline),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
 
                           const SizedBox(height: 4),
-                          Divider(height: 18, color: Colors.black.withOpacity(0.06)),
+                          Divider(height: 18, color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.06),),
                           const SizedBox(height: 2),
 
-                          _sectionTitle("Endereço"),
+                          _sectionTitle("Endereço", brand, text),
                           _field(
                             c: cep,
                             label: "CEP",
@@ -406,18 +428,24 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                                 : IconButton(
                                     tooltip: "Buscar CEP",
                                     onPressed: () => _buscarCep(_cepMask.getUnmaskedText()),
-                                    icon: const Icon(Icons.search),
+                                    icon: Icon(Icons.search, color: text),
                                   ),
                             onChanged: (_) {
                               final digits = _cepMask.getUnmaskedText();
                               if (digits.length == 8) _buscarCep(digits);
                             },
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: rua,
                             label: "Rua",
                             validator: _vRua,
                             prefixIcon: const Icon(Icons.signpost_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: numero,
@@ -427,24 +455,36 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             prefixIcon: const Icon(Icons.tag_outlined),
                             focusNode: _numeroFocus,
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: bairro,
                             label: "Bairro",
                             validator: _vBairro,
                             prefixIcon: const Icon(Icons.map_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: complemento,
                             label: "Complemento (opcional)",
                             validator: (_) => null,
                             prefixIcon: const Icon(Icons.add_location_alt_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: cidade,
                             label: "Cidade",
                             validator: _vCidade,
                             prefixIcon: const Icon(Icons.location_city_outlined),
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
                           _field(
                             c: estado,
@@ -464,6 +504,9 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                                 );
                               }
                             },
+                            isDark: isDark,
+                            textColor: text,
+                            borderColor: border,
                           ),
 
                           const SizedBox(height: 10),
@@ -475,8 +518,10 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                                 child: OutlinedButton(
                                   onPressed: _saving ? null : () => Navigator.pop(context),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: _text,
-                                    side: BorderSide(color: Colors.black.withOpacity(0.12), width: 1.4),
+                                    foregroundColor: text,
+                                    side: BorderSide(color: border, width: 1.4),
+                                    backgroundColor:
+                                      isDark ? const Color(0xFF1A1A1A) : null,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                     padding: const EdgeInsets.symmetric(vertical: 14),
                                   ),
@@ -488,16 +533,16 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
                                 child: ElevatedButton(
                                   onPressed: _saving ? null : _save,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: _brand,
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: brand,
+                                    foregroundColor: isDark ? Colors.black : Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                     padding: const EdgeInsets.symmetric(vertical: 14),
                                   ),
                                   child: _saving
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           height: 18,
                                           width: 18,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? Colors.black : Colors.white,),
                                         )
                                       : const Text("Salvar", style: TextStyle(fontWeight: FontWeight.w900)),
                                 ),
@@ -518,7 +563,7 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
     );
   }
 
-  Widget _sectionTitle(String t) {
+  Widget _sectionTitle(String t, Color brand, Color text) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 6, 2, 10),
       child: Row(
@@ -527,17 +572,17 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: _brand,
+              color: brand,
               borderRadius: BorderRadius.circular(3),
             ),
           ),
           const SizedBox(width: 8),
           Text(
             t,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w900,
-              color: _text,
+              color: text,
             ),
           ),
         ],
@@ -555,7 +600,15 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
     Widget? suffixIcon,
     List<TextInputFormatter>? inputFormatters,
     void Function(String)? onChanged,
+    required bool isDark,
+    required Color textColor,
+    required Color borderColor,
   }) {
+    final fill = isDark ? const Color(0xFF161616) : const Color(0xFFFAF7F1);
+    final prefixColor = isDark ? const Color(0xFFD4AF37) : textColor;
+    final labelColor =
+        isDark ? const Color(0xFFD6D6D6) : textColor.withOpacity(0.6);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
@@ -564,16 +617,22 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
         inputFormatters: inputFormatters,
         focusNode: focusNode,
         onChanged: onChanged,
+        style: TextStyle(color: textColor),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: _text.withOpacity(0.6), fontWeight: FontWeight.w700),
-          floatingLabelStyle: const TextStyle(
-            color: _text,
+          labelStyle: TextStyle(color: labelColor, fontWeight: FontWeight.w700),
+          floatingLabelStyle: TextStyle(
+            color: isDark ? const Color(0xFFD4AF37) : textColor,
             fontWeight: FontWeight.w900,
           ),
           filled: true,
-          fillColor: const Color(0xFFFAF7F1),
-          prefixIcon: prefixIcon,
+          fillColor: fill,
+          prefixIcon: prefixIcon != null
+                      ? IconTheme(
+                          data: IconThemeData(color: prefixColor),
+                          child: prefixIcon,
+                        )
+                      : null,
           suffixIcon: suffixIcon,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
@@ -582,11 +641,11 @@ class _EditarPerfilModalState extends State<_EditarPerfilModal> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+            borderSide: BorderSide(color: borderColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _text, width: 1.6),
+            borderSide: BorderSide( color: isDark ? const Color(0xFFD4AF37) : textColor, width: 1.6),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -628,20 +687,18 @@ class PerfilScreen extends StatelessWidget {
     this.onLogout,
   });
 
-  static const _bg = Color(0xFFFDF7ED);
-  static const card = Colors.white;
-  static const text = Color(0xFF2B2B2B);
-  static const muted = Color(0xFF6B6B6B);
-  static const brand = Color(0xFFED7227);
-
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
+    final theme = Theme.of(context);
+  
+
+    final bg = theme.scaffoldBackgroundColor;
 
     if (user == null) {
-      return const Scaffold(
-        backgroundColor: _bg,
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: bg,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -649,9 +706,9 @@ class PerfilScreen extends StatelessWidget {
     final compact = w < 835;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: bg,
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -745,10 +802,15 @@ class PerfilScreen extends StatelessWidget {
   }
 
   void _defaultLogout(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final dialogBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF2B2B2B);
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: dialogBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Row(
           children: [
@@ -762,19 +824,24 @@ class PerfilScreen extends StatelessWidget {
               child: const Icon(Icons.logout_rounded, color: Colors.red),
             ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
                 "Sair",
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w900, color: titleColor,),
               ),
             ),
           ],
         ),
-        content: const Text("Deseja sair da sua conta agora?"),
+        content: Text(
+          "Deseja sair da sua conta agora?",
+          style: TextStyle(
+            color: isDark ? const Color(0xFFD6D6D6) : const Color(0xFF2B2B2B),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar", style: TextStyle(color: Colors.black),),
+            child: Text("Cancelar", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700,)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -817,28 +884,36 @@ class _HeaderCard extends StatelessWidget {
     required this.onLogout,
   });
 
-  static const _card = Colors.white;
-  static const _text = Color(0xFF2B2B2B);
-  static const _muted = Color(0xFF6B6B6B);
   static const _brand = Color(0xFFED7227);
+  static const _gold = Color(0xFFD4AF37);
 
   @override
   Widget build(BuildContext context) {
-    final avatar = _buildAvatar();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : const Color(0xFF6B6B6B);
+    final border = isDark
+        ? _gold.withOpacity(0.16)
+        : Colors.black.withOpacity(0.06);
+    final shadow = Colors.black.withOpacity(isDark ? 0.28 : 0.06);
+
+    final avatar = _buildAvatar(isDark);
 
     return Container(
       padding: EdgeInsets.all(compact ? 14 : 18),
       decoration: BoxDecoration(
-        color: _card,
+        color: card,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
             blurRadius: 22,
             offset: const Offset(0, 10),
-            color: Colors.black.withOpacity(0.06),
+            color: shadow,
           ),
         ],
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: [
@@ -854,10 +929,10 @@ class _HeaderCard extends StatelessWidget {
                       user.nome,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: _text,
+                        color: text,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -868,7 +943,7 @@ class _HeaderCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: _muted.withOpacity(0.95),
+                        color: muted.withOpacity(0.95),
                         height: 1.2,
                       ),
                     ),
@@ -908,7 +983,7 @@ class _HeaderCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar() {
+  Widget _buildAvatar(bool isDark) {
   
     final logo = user.logo.trim();
 
@@ -949,17 +1024,25 @@ class _HeaderCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            _brand.withOpacity(0.95),
-            _brand.withOpacity(0.35),
-          ],
+           colors: isDark
+              ? [
+                  _gold.withOpacity(0.95),
+                  _gold.withOpacity(0.35),
+                ]
+              : [
+                  _brand.withOpacity(0.95),
+                  _brand.withOpacity(0.35),
+                ],
         ),
       ),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: Colors.white, width: 2),
+          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+            width: 2,
+          ),
         ),
         child: Center(child: child),
       ),
@@ -980,10 +1063,18 @@ class _HeaderButtons extends StatelessWidget {
 
   const _HeaderButtons({required this.onEdit, required this.onLogout});
 
-  static const _text = Color(0xFF2B2B2B);
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final textColor = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final outlineColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.35)
+        : Colors.black.withOpacity(0.12);
+    final editIconColor = isDark
+        ? const Color(0xFFD4AF37)
+        : Colors.black;
+
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -992,15 +1083,16 @@ class _HeaderButtons extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onEdit,
           style: OutlinedButton.styleFrom(
-            foregroundColor: _text,
-            side: BorderSide(color: Colors.black.withOpacity(0.12), width: 1.4),
+            foregroundColor: textColor,
+            side: BorderSide(color: outlineColor, width: 1.4),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            backgroundColor: isDark ? const Color(0xFF1A1A1A) : null,
           ),
-          icon: const Icon(Icons.edit_rounded, size: 18, color: Colors.black,),
-          label: const Text(
+          icon: Icon(Icons.edit_rounded, size: 18, color: editIconColor,),
+          label: Text(
             "Editar",
-            style: TextStyle(fontWeight: FontWeight.w900),
+            style: TextStyle(fontWeight: FontWeight.w900, color: textColor,),
           ),
         ),
         ElevatedButton.icon(
@@ -1033,22 +1125,33 @@ class _InfoCard extends StatelessWidget {
     required this.rows,
   });
 
-  static const _card = Colors.white;
-  static const _text = Color(0xFF2B2B2B);
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.06);
+    final iconBg = isDark
+        ? const Color(0xFF2A2A2A)
+        : Colors.black.withOpacity(0.05);
+    final iconColor = isDark
+        ? const Color(0xFFD4AF37)
+        : text;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
       decoration: BoxDecoration(
-        color: _card,
+        color: card,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
             blurRadius: 18,
             offset: const Offset(0, 10),
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
           ),
         ],
       ),
@@ -1060,19 +1163,20 @@ class _InfoCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.05),
+                  color: iconBg,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: border),
                 ),
-                child: Icon(icon, color: _text, size: 20),
+                child: Icon(icon, color: iconColor, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w900,
-                    color: _text,
+                    color: text,
                   ),
                 ),
               ),
@@ -1082,7 +1186,10 @@ class _InfoCard extends StatelessWidget {
           for (int i = 0; i < rows.length; i++) ...[
             rows[i],
             if (i != rows.length - 1)
-              Divider(height: 14, color: Colors.black.withOpacity(0.06)),
+              Divider(height: 14,  color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.06),
+              ),
           ],
         ],
       ),
@@ -1099,12 +1206,13 @@ class _InfoRow extends StatelessWidget {
     required this.value,
   });
 
-  static const _text = Color(0xFF2B2B2B);
-  static const _muted = Color(0xFF6B6B6B);
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final v = value.trim().isEmpty ? "-" : value.trim();
+
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : const Color(0xFF6B6B6B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1116,7 +1224,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: _muted.withOpacity(0.95),
+                color: muted.withOpacity(0.95),
                 fontWeight: FontWeight.w800,
                 fontSize: 12.5,
               ),
@@ -1126,8 +1234,8 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               v,
-              style: const TextStyle(
-                color: _text,
+              style: TextStyle(
+                color: text,
                 fontWeight: FontWeight.w800,
                 fontSize: 13.5,
                 height: 1.25,
@@ -1146,28 +1254,38 @@ class _Pill extends StatelessWidget {
 
   const _Pill({required this.icon, required this.text});
 
-  static const _text = Color(0xFF2B2B2B);
-
   @override
   Widget build(BuildContext context) {
+     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark
+        ? const Color(0xFF2A2A2A)
+        : Colors.black.withOpacity(0.05);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.06);
+    final color = isDark
+        ? const Color(0xFFD4AF37)
+        : const Color(0xFF2B2B2B);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.05),
+        color: bg,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: _text),
+          Icon(icon, size: 16, color: color),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w900,
-              color: _text,
+              color: color,
             ),
           ),
         ],
@@ -1180,8 +1298,6 @@ class _InitialsAvatar extends StatelessWidget {
   final String text;
   const _InitialsAvatar({required this.text});
 
-  static const _textColor = Color(0xFF2B2B2B);
-
   String _initials(String s) {
     final parts = s.trim().split(RegExp(r"\s+")).where((p) => p.isNotEmpty).toList();
     if (parts.isEmpty) return "U";
@@ -1193,20 +1309,29 @@ class _InitialsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark
+        ? const Color(0xFF2A2A2A)
+        : Colors.black.withOpacity(0.06);
+    final color = isDark
+        ? const Color(0xFFD4AF37)
+        : const Color(0xFF2B2B2B);
+
     return Container(
       width: 78,
       height: 78,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.black.withOpacity(0.06),
+        color: bg,
       ),
       child: Center(
         child: Text(
           _initials(text),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w900,
-            color: _textColor,
+            color: color,
           ),
         ),
       ),
