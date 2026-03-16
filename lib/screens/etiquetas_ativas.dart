@@ -32,14 +32,28 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
   bool _showFooter = true;
 
   Widget _viewToggles() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     Widget pill({
       required IconData icon,
       required String label,
       required bool on,
       required VoidCallback tap,
     }) {
+      final bg = isDark
+          ? (on ? const Color(0xFFD4AF37) : const Color(0xFF1E1E1E))
+          : (on ? Colors.white : Colors.black);
+
+      final fg = isDark
+          ? (on ? Colors.black : const Color(0xFFD4AF37))
+          : (on ? Colors.black : Colors.white);
+
+      final border = isDark
+          ? const Color(0xFFD4AF37).withOpacity(0.20)
+          : (on ? Colors.black.withOpacity(0.35) : Colors.white);
+
       return Material(
-        color: on ? Colors.white : Colors.black,
+        color: bg,
         borderRadius: BorderRadius.circular(999),
         child: InkWell(
           borderRadius: BorderRadius.circular(999),
@@ -48,12 +62,10 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: on ? Colors.black.withOpacity(0.35) : Colors.white,
-              ),
+              border: Border.all(color: border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withOpacity(isDark ? 0.18 : 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 6),
                 )
@@ -62,13 +74,13 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 16, color: on ? Colors.black : Colors.white),
+                Icon(icon, size: 16, color: fg),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
-                    color: on ? Colors.black : Colors.white,
+                    color: fg,
                   ),
                 ),
               ],
@@ -78,28 +90,23 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, c) {
-        
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            pill(
-              icon: _showTop ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-              label: _showTop ? "Esconder topo" : "Mostrar topo",
-              on: _showTop,
-              tap: () => setState(() => _showTop = !_showTop),
-            ),
-            pill(
-              icon: _showFooter ? Icons.expand_more_rounded : Icons.expand_less_rounded,
-              label: _showFooter ? "Esconder estoque" : "Mostrar estoque",
-              on: _showFooter,
-              tap: () => setState(() => _showFooter = !_showFooter),
-            ),
-          ],
-        );
-      },
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        pill(
+          icon: _showTop ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+          label: _showTop ? "Esconder topo" : "Mostrar topo",
+          on: _showTop,
+          tap: () => setState(() => _showTop = !_showTop),
+        ),
+        pill(
+          icon: _showFooter ? Icons.expand_more_rounded : Icons.expand_less_rounded,
+          label: _showFooter ? "Esconder estoque" : "Mostrar estoque",
+          on: _showFooter,
+          tap: () => setState(() => _showFooter = !_showFooter),
+        ),
+      ],
     );
   }
   
@@ -127,13 +134,27 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bg = theme.scaffoldBackgroundColor;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+
     final w = MediaQuery.of(context).size.width;
     final compact = w < 835;
-    
 
     final uid = context.watch<AuthProvider>().user?.uid;
     if (uid == null) {
-      return const Scaffold(body: Center(child: Text("Faça login novamente.")));
+      return Scaffold(
+        backgroundColor: bg,
+        body: Center(
+          child: Text(
+            "Faça login novamente.",
+            style: TextStyle(color: text),
+          ),
+        ),
+      );
     }
 
     final tiposProv = context.watch<TiposEtiquetaLocalProvider>();
@@ -150,9 +171,9 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
             : null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7ED),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7ED),
+        backgroundColor: bg,
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -191,7 +212,11 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                           : _statusFiltro == "alerta"
                               ? "Produtos em alerta"
                               : "Etiquetas ativas",
-                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: text,
+                      ),
                     );
 
                     final refreshBtn = IconButton(
@@ -205,7 +230,10 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.refresh),
+                          : Icon(
+                              Icons.refresh,
+                              color: isDark ? const Color(0xFFD4AF37) : null,
+                            ),
                     );
 
                     if (!isNarrow) {
@@ -219,7 +247,6 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                       );
                     }
 
-                    
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -230,7 +257,10 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        Align(alignment: Alignment.centerLeft, child: _viewToggles()),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: _viewToggles(),
+                        ),
                       ],
                     );
                   },
@@ -238,7 +268,7 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                 const SizedBox(height: 6),
                 Text(
                   "Clique em um tipo para ver as etiquetas ativas dele.",
-                  style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                  style: TextStyle(color: muted),
                 ),
                 const SizedBox(height: 14),
                 _TiposChips(
@@ -253,20 +283,18 @@ class _EtiquetasAtivasScreenState extends State<EtiquetasAtivasScreen> {
                       ? const _EmptyBox(
                           icon: Icons.label_outline,
                           title: "Nenhum tipo cadastrado",
-                          subtitle:
-                              "Cadastre um tipo de etiqueta para começar.",
+                          subtitle: "Cadastre um tipo de etiqueta para começar.",
                         )
                       : _EtiquetasPorTipoList(
-                        uid: uid,
-                        tipoId: _tipoSelecionadoId!,
-                        tipo: tipoAtual,
-                        initialStatusFiltro: _statusFiltro,
-
-                        showTop: _showTop,
-                        showFooter: _showFooter,
-                        onShowTopChanged: (v) => setState(() => _showTop = v),
-                        onShowFooterChanged: (v) => setState(() => _showFooter = v),
-                      ),
+                          uid: uid,
+                          tipoId: _tipoSelecionadoId!,
+                          tipo: tipoAtual,
+                          initialStatusFiltro: _statusFiltro,
+                          showTop: _showTop,
+                          showFooter: _showFooter,
+                          onShowTopChanged: (v) => setState(() => _showTop = v),
+                          onShowFooterChanged: (v) => setState(() => _showFooter = v),
+                        ),
                 ),
               ],
             ),
@@ -292,6 +320,14 @@ class _TiposChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final card = isDark ? const Color(0xFF181818) : const Color(0xFFFDF7ED);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.10);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+
     if (loading && tipos.isEmpty) {
       return const LinearProgressIndicator(minHeight: 3);
     }
@@ -301,13 +337,13 @@ class _TiposChips extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF7ED),
+          color: card,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withOpacity(0.10)),
+          border: Border.all(color: border),
         ),
         child: Text(
           "Nenhum tipo encontrado. Cadastre em “Tipos de etiqueta”.",
-          style: TextStyle(color: Colors.black.withOpacity(0.60)),
+          style: TextStyle(color: muted),
         ),
       );
     }
@@ -320,17 +356,31 @@ class _TiposChips extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(right: 10),
             child: ChoiceChip(
-              label: Text(t.nome),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(t.nome),
+                ],
+              ),
               selected: selected,
+              showCheckmark: false,
               onSelected: (_) => onSelected(t.id),
-              selectedColor: const Color(0xff428e2e),
+              selectedColor: brand,
               labelStyle: TextStyle(
-                color: selected ? Colors.white : const Color(0xff428e2e),
+                color: selected
+                    ? (isDark ? Colors.black : Colors.white)
+                    : brand,
                 fontWeight: FontWeight.w700,
               ),
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               shape: StadiumBorder(
-                side: BorderSide(color: Colors.black.withOpacity(0.12)),
+                side: BorderSide(color: border),
               ),
             ),
           );
@@ -476,6 +526,17 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
   required int countAlerta,
   required int countVencido,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final sheetBg = isDark ? const Color(0xFF111111) : const Color(0xFFFDF7ED);
+  final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+  final border = isDark
+      ? const Color(0xFFD4AF37).withOpacity(0.16)
+      : Colors.black.withOpacity(0.08);
+  final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+  final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.65);
+  final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+  final onBrand = isDark ? Colors.black : Colors.white;
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -490,9 +551,9 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
         builder: (context, scrollCtrl) {
           return Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFDF7ED),
+              color: sheetBg,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: Colors.black.withOpacity(0.08)),
+              border: Border.all(color: border),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.18),
@@ -505,40 +566,42 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
             child: Column(
               children: [
                 const SizedBox(height: 10),
-
-                
                 Container(
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.18),
+                    color: isDark
+                        ? Colors.white.withOpacity(0.18)
+                        : Colors.black.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
-              
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 2, 12, 10),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           "Filtros",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: text,
+                          ),
                         ),
                       ),
                       IconButton(
                         tooltip: "Fechar",
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: isDark ? brand : null,
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-               
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollCtrl,
@@ -566,41 +629,35 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
                           countAlerta: countAlerta,
                           countVencido: countVencido,
                         ),
-
                         const SizedBox(height: 14),
-
-                      
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: card,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.black.withOpacity(0.08)),
+                            border: Border.all(color: border),
                           ),
                           child: Text(
                             "Você pode combinar status + setor + categoria + busca.",
                             style: TextStyle(
-                              color: Colors.black.withOpacity(0.65),
+                              color: muted,
                               height: 1.35,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-
-                        const SizedBox(height: 90),  
+                        const SizedBox(height: 90),
                       ],
                     ),
                   ),
                 ),
-
-              
                 Container(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFDF7ED),
+                    color: sheetBg,
                     border: Border(
-                      top: BorderSide(color: Colors.black.withOpacity(0.08)),
+                      top: BorderSide(color: border),
                     ),
                   ),
                   child: Row(
@@ -612,14 +669,27 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
                             Navigator.pop(context);
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF2B2B2B),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            foregroundColor:
+                                isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
-                          icon: const Icon(Icons.restart_alt_rounded, size: 18, color: Colors.black,),
-                          label: const Text(
+                          icon: Icon(
+                            Icons.restart_alt_rounded,
+                            size: 18,
+                            color: isDark ? const Color(0xFFD4AF37) : Colors.black,
+                          ),
+                          label: Text(
                             "Limpar",
-                            style: TextStyle(fontWeight: FontWeight.w800, color: Colors.black),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? const Color(0xFFD4AF37) : Colors.black,
+                            ),
                           ),
                         ),
                       ),
@@ -628,13 +698,22 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
                         child: ElevatedButton.icon(
                           onPressed: () => Navigator.pop(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff428e2e),
-                            foregroundColor: Colors.white,
+                            backgroundColor: brand,
+                            foregroundColor: onBrand,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
-                          icon: const Icon(Icons.check_rounded, size: 18, color: Colors.white,),
+                          icon: Icon(
+                            Icons.check_rounded,
+                            size: 18,
+                            color: onBrand,
+                          ),
                           label: const Text(
                             "Aplicar",
                             style: TextStyle(fontWeight: FontWeight.w900),
@@ -662,15 +741,24 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
       builder: (context, c) {
         final isNarrow = c.maxWidth < 600;
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        final border = isDark
+            ? const Color(0xFFD4AF37).withOpacity(0.16)
+            : Colors.black.withOpacity(0.08);
+        final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.55);
+        final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+        final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+
         final searchBox = Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.08)),
+            border: Border.all(color: border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withOpacity(isDark ? 0.20 : 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               )
@@ -678,16 +766,17 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
           ),
           child: Row(
             children: [
-              Icon(Icons.search, color: Colors.black.withOpacity(0.55)),
+              Icon(Icons.search, color: isDark ? brand : muted),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: _searchCtrl,
+                  style: TextStyle(color: text),
                   decoration: InputDecoration(
                     hintText: "Pesquisar por nome do produto...",
                     border: InputBorder.none,
                     isDense: true,
-                    hintStyle: TextStyle(color: Colors.black.withOpacity(0.45)),
+                    hintStyle: TextStyle(color: muted),
                   ),
                 ),
               ),
@@ -698,9 +787,13 @@ class _EtiquetasPorTipoListState extends State<_EtiquetasPorTipoList> {
                         key: const ValueKey("clearSearch"),
                         tooltip: "Limpar busca",
                         onPressed: () => _searchCtrl.clear(),
-                        icon: const Icon(Icons.close_rounded),
+                        icon: Icon(Icons.close_rounded, color: isDark ? brand : null),
                       )
-                    : const SizedBox(key: ValueKey("noClear"), width: 0, height: 0),
+                    : const SizedBox(
+                        key: ValueKey("noClear"),
+                        width: 0,
+                        height: 0,
+                      ),
               ),
             ],
           ),
@@ -1033,6 +1126,9 @@ class _ActiveChipsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final clearColor = isDark ? const Color(0xFFD4AF37) : Colors.black;
+
     return Row(
       children: [
         Expanded(
@@ -1054,8 +1150,8 @@ class _ActiveChipsRow extends StatelessWidget {
         const SizedBox(width: 8),
         TextButton.icon(
           onPressed: onClearAll,
-          icon: const Icon(Icons.clear_all_rounded, size: 18, color: Colors.black),
-          label: const Text("Limpar", style: TextStyle(color: Colors.black),),
+          icon: Icon(Icons.clear_all_rounded, size: 18, color: clearColor),
+          label: Text("Limpar", style: TextStyle(color: clearColor)),
         ),
       ],
     );
@@ -1071,17 +1167,24 @@ class _ActiveFilterChip extends StatelessWidget {
     this.onRemove,
   });
 
-  @override
+ @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.10);
+    final textColor = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.80);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.10)),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.18 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 6),
           )
@@ -1094,7 +1197,7 @@ class _ActiveFilterChip extends StatelessWidget {
             text,
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              color: Colors.black.withOpacity(0.80),
+              color: textColor,
               fontSize: 12.5,
             ),
           ),
@@ -1106,7 +1209,7 @@ class _ActiveFilterChip extends StatelessWidget {
               child: Icon(
                 Icons.close_rounded,
                 size: 16,
-                color: Colors.black.withOpacity(0.65),
+                color: textColor,
               ),
             )
           ],
@@ -1128,8 +1231,15 @@ class _FilterButtonAnimated extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.12);
+    final text = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.75);
+
     return Material(
-      color: Colors.white,
+      color: card,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -1139,10 +1249,10 @@ class _FilterButtonAnimated extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.12)),
+            border: Border.all(color: border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withOpacity(isDark ? 0.18 : 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               )
@@ -1151,12 +1261,14 @@ class _FilterButtonAnimated extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.tune_rounded,
-                  size: 20, color: Colors.black.withOpacity(0.75)),
+              Icon(Icons.tune_rounded, size: 20, color: text),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "Filtros",
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: text,
+                ),
               ),
               const SizedBox(width: 8),
               AnimatedSwitcher(
@@ -1168,16 +1280,15 @@ class _FilterButtonAnimated extends StatelessWidget {
                 child: activeCount > 0
                     ? Container(
                         key: ValueKey(activeCount),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: isDark ? const Color(0xFFD4AF37) : Colors.black,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           "$activeCount",
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: isDark ? Colors.black : Colors.white,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
                           ),
@@ -1208,12 +1319,19 @@ class _IconSquareButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  @override
+ @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.12);
+    final iconColor = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.75);
+
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -1223,16 +1341,16 @@ class _IconSquareButton extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withOpacity(0.12)),
+              border: Border.all(color: border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withOpacity(isDark ? 0.18 : 0.04),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 )
               ],
             ),
-            child: Icon(icon, color: Colors.black.withOpacity(0.75)),
+            child: Icon(icon, color: iconColor),
           ),
         ),
       ),
@@ -1289,259 +1407,273 @@ class _FiltersBarPretty extends StatelessWidget {
     required this.countVencido,
   });
 
-@override
-Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final text = isDark ? Colors.white : Colors.black.withOpacity(0.75);
+    final plainChip = isDark ? const Color(0xFF181818) : Colors.white;
 
-  Widget statusChip({
-  required String label,
-  required bool selected,
-  required VoidCallback onTap,
-  required int count,
-  required IconData icon,
-}) {
+    Widget statusChip({
+      required String label,
+      required bool selected,
+      required VoidCallback onTap,
+      required int count,
+      required IconData icon,
+    }) {
+      Color base;
+      Color lightBg;
 
-  Color base;
-  Color lightBg;
+      switch (label) {
+        case "Vencido":
+          base = const Color(0xFFB00020);
+          lightBg = const Color(0xFFFFEBEE);
+          break;
+        case "Em alerta":
+          base = const Color(0xFFEF6C00);
+          lightBg = const Color(0xFFFFF3E0);
+          break;
+        default:
+          base = const Color(0xFF428E2E);
+          lightBg = const Color(0xFFE8F5E9);
+      }
 
-  switch (label) {
-    case "Vencido":
-      base = const Color(0xFFB00020);      
-      lightBg = const Color(0xFFFFEBEE);   
-      break;
-    case "Em alerta":
-      base = const Color(0xFFEF6C00);      
-      lightBg = const Color(0xFFFFF3E0);   
-      break;
-    default: 
-      base = const Color(0xff428e2e);      
-      lightBg = const Color(0xFFE8F5E9);   
-  }
+      final bg = selected
+          ? (isDark ? base.withOpacity(0.14) : lightBg)
+          : (isDark ? plainChip : Colors.white);
 
-  final bg = selected ? lightBg : Colors.white;
-  final fg = selected ? base : const Color.fromARGB(255, 24, 44, 18);
-  final border = selected ? base.withOpacity(0.35) : Colors.black.withOpacity(0.10);
+      final fg = selected
+          ? base
+          : (isDark
+              ? const Color(0xFFD6D6D6)
+              : const Color.fromARGB(255, 24, 44, 18));
 
-  return Material(
-    color: bg,
-    borderRadius: BorderRadius.circular(999),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(selected ? 0.06 : 0.03),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: fg),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: fg,
-                letterSpacing: 0.1,
-              ),
-            ),
-            const SizedBox(width: 8),
+      final borderColor = selected
+          ? base.withOpacity(0.35)
+          : (isDark
+              ? const Color(0xFFD4AF37).withOpacity(0.16)
+              : Colors.black.withOpacity(0.10));
 
-          
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: selected ? base : base.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: selected ? base.withOpacity(0.20) : base.withOpacity(0.25),
-                ),
-              ),
-              child: Text(
-                "$count",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: selected ? Colors.white : base,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-  Widget clearChip() {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
+      return Material(
+        color: bg,
         borderRadius: BorderRadius.circular(999),
-        onTap: onClearAll,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.black.withOpacity(0.10)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.restart_alt_rounded, size: 16, color: Colors.black.withOpacity(0.75)),
-              const SizedBox(width: 8),
-              Text(
-                "Limpar",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black.withOpacity(0.80),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(selected ? 0.06 : 0.03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  return Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.black.withOpacity(0.08)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 16,
-          offset: const Offset(0, 8),
-        )
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Status",
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Colors.black.withOpacity(0.75),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            statusChip(
-              label: "Bom",
-              selected: fBom,
-              onTap: onToggleBom,
-              count: countBom,
-              icon: Icons.check_circle_outline_rounded,
+              ],
             ),
-            statusChip(
-              label: "Em alerta",
-              selected: fAlerta,
-              onTap: onToggleAlerta,
-              count: countAlerta,
-              icon: Icons.notification_important_outlined,
-            ),
-            statusChip(
-              label: "Vencido",
-              selected: fVencido,
-              onTap: onToggleVencido,
-              count: countVencido,
-              icon: Icons.warning_amber_rounded,
-            ),
-            clearChip(),
-          ],
-        ),
-
-        const SizedBox(height: 14),
-
-        Text(
-          "Refinar por",
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Colors.black.withOpacity(0.75),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        LayoutBuilder(
-          builder: (context, c) {
-            final isNarrow = c.maxWidth < 600;
-
-            if (!isNarrow) {
-              return Row(
-                children: [
-                  Expanded(
-                    child: _DropCount(
-                      label: "Setor",
-                      value: setorSelecionado,
-                      items: setores,
-                      onChanged: onSetorChanged,
-                      counts: countBySetor,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: fg),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: fg,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: selected ? base : base.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: selected ? base.withOpacity(0.20) : base.withOpacity(0.25),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _DropCount(
-                      label: "Categoria",
-                      value: categoriaSelecionada,
-                      items: categorias,
-                      onChanged: onCategoriaChanged,
-                      counts: countByCategoria,
+                  child: Text(
+                    "$count",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: selected ? Colors.white : base,
+                      fontSize: 12,
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget clearChip() {
+      final iconColor = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.75);
+      final textColor = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.80);
+
+      return Material(
+        color: plainChip,
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: onClearAll,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.restart_alt_rounded, size: 16, color: iconColor),
+                const SizedBox(width: 8),
+                Text(
+                  "Limpar",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Status",
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: text,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              statusChip(
+                label: "Bom",
+                selected: fBom,
+                onTap: onToggleBom,
+                count: countBom,
+                icon: Icons.check_circle_outline_rounded,
+              ),
+              statusChip(
+                label: "Em alerta",
+                selected: fAlerta,
+                onTap: onToggleAlerta,
+                count: countAlerta,
+                icon: Icons.notification_important_outlined,
+              ),
+              statusChip(
+                label: "Vencido",
+                selected: fVencido,
+                onTap: onToggleVencido,
+                count: countVencido,
+                icon: Icons.warning_amber_rounded,
+              ),
+              clearChip(),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            "Refinar por",
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: text,
+            ),
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, c) {
+              final isNarrow = c.maxWidth < 600;
+
+              if (!isNarrow) {
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _DropCount(
+                        label: "Setor",
+                        value: setorSelecionado,
+                        items: setores,
+                        onChanged: onSetorChanged,
+                        counts: countBySetor,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _DropCount(
+                        label: "Categoria",
+                        value: categoriaSelecionada,
+                        items: categorias,
+                        onChanged: onCategoriaChanged,
+                        counts: countByCategoria,
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  _DropCount(
+                    label: "Setor",
+                    value: setorSelecionado,
+                    items: setores,
+                    onChanged: onSetorChanged,
+                    counts: countBySetor,
+                  ),
+                  const SizedBox(height: 10),
+                  _DropCount(
+                    label: "Categoria",
+                    value: categoriaSelecionada,
+                    items: categorias,
+                    onChanged: onCategoriaChanged,
+                    counts: countByCategoria,
                   ),
                 ],
               );
-            }
-
-           
-            return Column(
-              children: [
-                _DropCount(
-                  label: "Setor",
-                  value: setorSelecionado,
-                  items: setores,
-                  onChanged: onSetorChanged,
-                  counts: countBySetor,
-                ),
-                const SizedBox(height: 10),
-                _DropCount(
-                  label: "Categoria",
-                  value: categoriaSelecionada,
-                  items: categorias,
-                  onChanged: onCategoriaChanged,
-                  counts: countByCategoria,
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DropCount extends StatelessWidget {
@@ -1561,7 +1693,18 @@ class _DropCount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xff428e2e);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final primary = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final bg = isDark ? const Color(0xFF181818) : Colors.white;
+    final fillSelected = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.10)
+        : const Color(0xFFE8F5E9);
+    final borderIdle = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.10);
+    final text = isDark ? Colors.white : Colors.black.withOpacity(0.85);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
 
     final hasValue = value != null;
 
@@ -1573,7 +1716,7 @@ class _DropCount extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: hasValue ? primary.withOpacity(0.35) : Colors.black.withOpacity(0.10),
+            color: hasValue ? primary.withOpacity(0.35) : borderIdle,
             width: hasValue ? 1.4 : 1.0,
           ),
         ),
@@ -1583,25 +1726,25 @@ class _DropCount extends StatelessWidget {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         filled: true,
-        fillColor: hasValue ? const Color(0xFFE8F5E9) : Colors.white, 
+        fillColor: hasValue ? fillSelected : bg,
+        labelStyle: TextStyle(color: muted),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: value,
           isExpanded: true,
-          dropdownColor: Colors.white,
+          dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: hasValue ? primary : Colors.black.withOpacity(0.65),
+            color: hasValue ? primary : muted,
           ),
-
           selectedItemBuilder: (context) {
             return [
               Text(
                 "Todos",
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: Colors.black.withOpacity(0.75),
+                  color: muted,
                 ),
               ),
               ...items.map((s) {
@@ -1612,9 +1755,9 @@ class _DropCount extends StatelessWidget {
                       child: Text(
                         s,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          color: Color(0xff428e2e),
+                          color: primary,
                         ),
                       ),
                     ),
@@ -1627,9 +1770,9 @@ class _DropCount extends StatelessWidget {
                       ),
                       child: Text(
                         "$c",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: isDark ? Colors.black : Colors.white,
                           fontSize: 12,
                         ),
                       ),
@@ -1639,16 +1782,14 @@ class _DropCount extends StatelessWidget {
               }),
             ];
           },
-
           hint: Text(
             "Todos",
-            style: TextStyle(color: Colors.black.withOpacity(0.60)),
+            style: TextStyle(color: muted),
           ),
-
           items: [
-            const DropdownMenuItem<String?>(
+            DropdownMenuItem<String?>(
               value: null,
-              child: Text("Todos"),
+              child: Text("Todos", style: TextStyle(color: text)),
             ),
             ...items.map((s) {
               final c = counts[s] ?? 0;
@@ -1659,7 +1800,7 @@ class _DropCount extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSel ? const Color(0xFFE8F5E9) : Colors.transparent,
+                    color: isSel ? fillSelected : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -1670,7 +1811,7 @@ class _DropCount extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
-                            color: isSel ? primary : Colors.black.withOpacity(0.85),
+                            color: isSel ? primary : text,
                           ),
                         ),
                       ),
@@ -1678,14 +1819,16 @@ class _DropCount extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: isSel ? primary : Colors.black.withOpacity(0.06),
+                          color: isSel ? primary : (isDark ? Colors.white10 : Colors.black.withOpacity(0.06)),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           "$c",
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            color: isSel ? Colors.white : Colors.black.withOpacity(0.75),
+                            color: isSel
+                                ? (isDark ? Colors.black : Colors.white)
+                                : muted,
                             fontSize: 12,
                           ),
                         ),
@@ -1724,23 +1867,35 @@ class _SetorSection extends StatelessWidget {
     final minSetor =
         minValidadeOf(categoriasMap.values.expand((v) => v).toList());
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF181818) : Colors.white.withOpacity(0.55);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.07);
+    final text = isDark ? Colors.white : Colors.black;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.55),
+        color: bg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.07)),
+        border: Border.all(color: border),
       ),
       child: ExpansionTile(
         initiallyExpanded: true,
         tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        iconColor: isDark ? const Color(0xFFD4AF37) : null,
+        collapsedIconColor: isDark ? const Color(0xFFD4AF37) : null,
         title: Row(
           children: [
             Expanded(
               child: Text(
                 setorNome,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: text,
+                ),
               ),
             ),
             _Badge(text: "Mais próximo a vencer: ${_fmt(minSetor)}"),
@@ -1784,23 +1939,35 @@ class _CategoriaSection extends StatelessWidget {
     etiquetas.sort((a, b) => a.dataValidade.compareTo(b.dataValidade));
     final minCat = etiquetas.first.dataValidade;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.06);
+    final text = isDark ? Colors.white : Colors.black;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: border),
       ),
       child: ExpansionTile(
         initiallyExpanded: true,
         tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        iconColor: isDark ? const Color(0xFFD4AF37) : null,
+        collapsedIconColor: isDark ? const Color(0xFFD4AF37) : null,
         title: Row(
           children: [
             Expanded(
               child: Text(
                 categoriaNome,
-                style: const TextStyle(
-                    fontSize: 14.5, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w900,
+                  color: text,
+                ),
               ),
             ),
             _Badge(text: "Mais próximo a vencer: ${_fmt(minCat)}"),
@@ -1831,18 +1998,23 @@ class _EtiquetaCard extends StatelessWidget {
   const _EtiquetaCard({required this.uid, required this.e});
 
 Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) async {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+  final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+  final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+  final cancelColor = isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B);
+
   final ok = await showDialog<bool>(
     context: context,
     barrierColor: Colors.black.withOpacity(0.35),
     builder: (_) => AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: dialogBg,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
       actionsPadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-
       title: Row(
         children: [
           Container(
@@ -1856,42 +2028,56 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
             child: const Icon(Icons.delete_outline, color: Colors.red),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               "Excluir etiqueta?",
-              style: TextStyle(fontWeight: FontWeight.w900),
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: text,
+              ),
             ),
           ),
         ],
       ),
-
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Produto:", style: TextStyle(color: Colors.black.withOpacity(0.65))),
+          Text(
+            "Produto:",
+            style: TextStyle(color: muted),
+          ),
           const SizedBox(height: 4),
           Text(
             "“${produtoNome.isEmpty ? "Sem nome" : produtoNome}”",
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: text,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
             "A etiqueta será desativada (exclusão suave).\nEla pode continuar aparecendo em históricos.",
-            style: TextStyle(color: Colors.black.withOpacity(0.60), height: 1.4),
+            style: TextStyle(
+              color: muted,
+              height: 1.4,
+            ),
           ),
         ],
       ),
-
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF2B2B2B),
+            foregroundColor: cancelColor,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
-          child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w700)),
+          child: const Text(
+            "Cancelar",
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
@@ -1902,7 +2088,10 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
-          child: const Text("Excluir", style: TextStyle(fontWeight: FontWeight.w900)),
+          child: const Text(
+            "Excluir",
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
         ),
       ],
     ),
@@ -1914,6 +2103,17 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.07);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+    final neutralIconBg = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.12)
+        : Colors.black.withOpacity(0.08);
+    final neutralIconColor = isDark ? const Color(0xFFD4AF37) : Colors.black87;
     final repo = context.read<EtiquetasLocalRepo>();
 
     final produto = e.produtoNome;
@@ -1944,12 +2144,12 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: card,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withOpacity(0.07)),
+              border: Border.all(color: border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 )
@@ -1965,8 +2165,8 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
                     color: vencida
                         ? Colors.red.withOpacity(0.12)
                         : alerta
-                            ? Colors.orange.withOpacity(0.12)
-                            : Colors.black.withOpacity(0.08),
+                            ? const Color.fromARGB(255, 255, 123, 0).withOpacity(0.12)
+                            : neutralIconBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -1976,10 +2176,10 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
                             ? Icons.notification_important_outlined
                             : Icons.local_offer_outlined,
                     color: vencida
-                        ? Colors.red
-                        : alerta
-                            ? Colors.orange
-                            : Colors.black87,
+                      ? Colors.red
+                      : alerta
+                          ? Colors.orange
+                          : neutralIconColor,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1989,8 +2189,8 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
                     children: [
                       Text(
                         produto.isEmpty ? "Sem nome" : produto,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800, color: text),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1999,7 +2199,7 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
                           if (setor.isNotEmpty) setor,
                         ].join(" • "),
                         style:
-                            TextStyle(color: Colors.black.withOpacity(0.60)),
+                            TextStyle(color: muted),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -2034,17 +2234,17 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
           splashRadius: 22,
           offset: const Offset(0, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           elevation: 10,
-
-          
           child: Container(
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.92),
+              color: isDark
+                  ? const Color(0xFF1A1A1A).withOpacity(0.92)
+                  : Colors.white.withOpacity(0.92),
+              border: Border.all(color: border),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withOpacity(0.10)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.10),
@@ -2056,10 +2256,9 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
             child: Icon(
               Icons.more_vert,
               size: 18,
-              color: Colors.black.withOpacity(0.75),
+              color: isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.75),
             ),
           ),
-
           onSelected: (v) async {
             if (v == "edit") {
               Navigator.push(
@@ -2112,26 +2311,34 @@ Future<bool> _confirmDeleteEtiqueta(BuildContext context, String produtoNome) as
               }
             }
           },
-
-          itemBuilder: (_) => const [
+          itemBuilder: (_) => [
             PopupMenuItem(
               value: "edit",
               child: ListTile(
                 dense: true,
-                leading: Icon(Icons.edit_outlined),
-                title: Text("Editar"),
+                leading: Icon(
+                  Icons.edit_outlined,
+                  color: isDark ? const Color(0xFFD4AF37) : null,
+                ),
+                title: Text(
+                  "Editar",
+                  style: TextStyle(color: isDark ? Colors.white : null),
+                ),
               ),
             ),
             PopupMenuItem(
               value: "delete",
               child: ListTile(
                 dense: true,
-                leading: Icon(Icons.delete_outline, color: Colors.red),
-                title: Text("Excluir"),
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: Text(
+                  "Excluir",
+                  style: TextStyle(color: isDark ? Colors.white : null),
+                ),
               ),
             ),
           ],
-        ),
+        )
       ),
       ],
     );
@@ -2152,18 +2359,25 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF2A2A2A) : Colors.black.withOpacity(0.05);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.10);
+    final color = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.70);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.05),
+        color: bg,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.10)),
+        border: Border.all(color: border),
       ),
       child: Text(
         text,
         style: TextStyle(
           fontWeight: FontWeight.w800,
-          color: Colors.black.withOpacity(0.70),
+          color: color,
           fontSize: 12,
         ),
       ),
@@ -2186,23 +2400,31 @@ class _MiniPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final border = danger
         ? Colors.red.withOpacity(0.30)
         : warn
             ? Colors.orange.withOpacity(0.30)
-            : Colors.black.withOpacity(0.12);
+            : isDark
+                ? const Color(0xFFD4AF37).withOpacity(0.20)
+                : Colors.black.withOpacity(0.12);
 
     final bg = danger
         ? Colors.red.withOpacity(0.07)
         : warn
             ? Colors.orange.withOpacity(0.07)
-            : Colors.black.withOpacity(0.04);
+            : isDark
+                ? const Color(0xFFD4AF37).withOpacity(0.10)
+                : Colors.black.withOpacity(0.04);
 
     final fg = danger
         ? Colors.red
         : warn
             ? Colors.orange
-            : Colors.black87;
+            : isDark
+                ? const Color(0xFFD4AF37)
+                : Colors.black87;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -2236,26 +2458,41 @@ class _EmptyBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.07);
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+    final iconColor = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.75);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.07)),
+        border: Border.all(color: border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 42, color: Colors.black.withOpacity(0.75)),
+          Icon(icon, size: 42, color: iconColor),
           const SizedBox(height: 10),
-          Text(title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: text,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black.withOpacity(0.60)),
+            style: TextStyle(color: muted),
           ),
         ],
       ),
