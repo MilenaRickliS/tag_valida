@@ -29,13 +29,37 @@ class EtiquetaPreviewScreen extends StatelessWidget {
     required this.etiquetaId,
   });
 
- 
-  static const _bg = Color(0xFFFDF7ED);
-  static const _card = Colors.white;
-  static const _text = Color(0xFF2B2B2B);
-  static const _muted = Color(0xFF6B6B6B);
+  static const _lightBg = Color(0xFFFDF7ED);
+  static const _lightCard = Colors.white;
+  static const _lightText = Color(0xFF2B2B2B);
+  static const _lightMuted = Color(0xFF6B6B6B);
 
-  void _openQrFullscreen(BuildContext context, String qrData) {
+  static const _darkBg = Color(0xFF0F0F0F);
+  static const _darkCard = Color(0xFF1E1E1E);
+  static const _darkCard2 = Color(0xFF181818);
+  static const _darkText = Colors.white;
+  static const _darkMuted = Color(0xFFD6D6D6);
+  static const _gold = Color(0xFFD4AF37);
+
+    bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _bg(BuildContext context) => _isDark(context) ? _darkBg : _lightBg;
+  Color _card(BuildContext context) => _isDark(context) ? _darkCard : _lightCard;
+  Color _cardAlt(BuildContext context) => _isDark(context) ? _darkCard2 : const Color(0xFFFAF7F1);
+  Color _text(BuildContext context) => _isDark(context) ? _darkText : _lightText;
+  Color _muted(BuildContext context) => _isDark(context) ? _darkMuted : _lightMuted;
+  Color _border(BuildContext context) => _isDark(context)
+      ? _gold.withOpacity(0.16)
+      : Colors.black.withOpacity(0.06);
+
+    void _openQrFullscreen(BuildContext context, String qrData) {
+    final isDark = _isDark(context);
+    final cardColor = _card(context);
+    final textColor = _text(context);
+    final mutedColor = _muted(context);
+    final borderColor = _border(context);
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -48,7 +72,6 @@ class EtiquetaPreviewScreen extends StatelessWidget {
             color: Colors.transparent,
             child: Stack(
               children: [
-               
                 Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 720),
@@ -56,23 +79,22 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       margin: const EdgeInsets.all(18),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: borderColor),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
+                          Text(
                             "QR Code",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
-                              color: _text,
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(height: 12),
-
-                          
                           LayoutBuilder(
                             builder: (context, constraints) {
                               final side = (constraints.maxWidth < constraints.maxHeight)
@@ -81,24 +103,30 @@ class EtiquetaPreviewScreen extends StatelessWidget {
 
                               final qrSize = (side * 0.90).clamp(180.0, 900.0);
 
-                              return SizedBox(
-                                width: qrSize,
-                                height: qrSize,
-                                child: QrImageView(
-                                  data: qrData,
-                                  size: qrSize,
-                                  padding: const EdgeInsets.all(6),
+                              return Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: SizedBox(
+                                  width: qrSize,
+                                  height: qrSize,
+                                  child: QrImageView(
+                                    data: qrData,
+                                    size: qrSize,
+                                    padding: const EdgeInsets.all(6),
+                                  ),
                                 ),
                               );
                             },
                           ),
-
                           const SizedBox(height: 12),
                           Text(
                             "Aponte a câmera para abrir",
                             style: TextStyle(
                               fontSize: 12.5,
-                              color: Colors.black.withOpacity(0.62),
+                              color: mutedColor,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -107,14 +135,16 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-              
                 Positioned(
                   top: 10,
                   right: 10,
                   child: IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: isDark ? _gold : Colors.white,
+                      size: 28,
+                    ),
                     tooltip: "Fechar",
                   ),
                 ),
@@ -127,7 +157,10 @@ class EtiquetaPreviewScreen extends StatelessWidget {
         final curved = CurvedAnimation(parent: anim, curve: Curves.easeOut);
         return FadeTransition(
           opacity: curved,
-          child: ScaleTransition(scale: Tween(begin: 0.98, end: 1.0).animate(curved), child: child),
+          child: ScaleTransition(
+            scale: Tween(begin: 0.98, end: 1.0).animate(curved),
+            child: child,
+          ),
         );
       },
     );
@@ -192,14 +225,20 @@ class EtiquetaPreviewScreen extends StatelessWidget {
   }
 
 
-  Future<bool> _confirmDelete(BuildContext context, String nome) async {
+    Future<bool> _confirmDelete(BuildContext context, String nome) async {
+    final textColor = _text(context);
+    final mutedColor = _muted(context);
+    final cardColor = _card(context);
+    final cancelColor = _isDark(context) ? _gold : _lightText;
+
     final ok = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (_) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          backgroundColor: Colors.white,
+          backgroundColor: cardColor,
+          surfaceTintColor: Colors.transparent,
           titlePadding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
           contentPadding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
           actionsPadding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
@@ -216,11 +255,11 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                 child: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   "Excluir etiqueta?",
                   style: TextStyle(
-                    color: _text,
+                    color: textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -230,13 +269,13 @@ class EtiquetaPreviewScreen extends StatelessWidget {
           ),
           content: Text(
             "Tem certeza que deseja excluir “$nome”?\nEssa ação não pode ser desfeita.",
-            style: const TextStyle(color: _muted, height: 1.25),
+            style: TextStyle(color: mutedColor, height: 1.25),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               style: TextButton.styleFrom(
-                foregroundColor: _text,
+                foregroundColor: cancelColor,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
@@ -672,7 +711,11 @@ class EtiquetaPreviewScreen extends StatelessWidget {
 }) {
   showDialog(
     context: context,
-    builder: (_) => Dialog(
+    builder: (_) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+
+      return Dialog(
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -683,12 +726,12 @@ class EtiquetaPreviewScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Pré-visualização da etiqueta',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: _text,
+                  color: isDark ? Colors.white : _lightText,
                 ),
               ),
               const SizedBox(height: 8),
@@ -696,7 +739,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                 'Visualização ampliada da etiqueta 60x40 mm',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.black.withOpacity(0.58),
+                  color: isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.58),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -733,25 +776,31 @@ class EtiquetaPreviewScreen extends StatelessWidget {
           ),
         ),
       ),
-    ),
+    );
+    }
   );
 }
 
   @override
   Widget build(BuildContext context) {
     final repo = context.read<EtiquetasLocalRepo>();
+    final isDark = _isDark(context);
+    final bgColor = _bg(context);
+    final cardColor = _card(context);
+    final textColor = _text(context);
+    final borderColor = _border(context);
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: bgColor,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Preview da etiqueta",
-          style: TextStyle(color: _text, fontWeight: FontWeight.w900),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w900),
         ),
-        iconTheme: const IconThemeData(color: _text),
+        iconTheme: IconThemeData(color: isDark ? _gold : textColor),
         actions: [
           FutureBuilder<EtiquetaModel?>(
             future: repo.getById(uid: uid, id: etiquetaId),
@@ -761,8 +810,12 @@ class EtiquetaPreviewScreen extends StatelessWidget {
 
               return PopupMenuButton<String>(
                 tooltip: "Opções",
-                color: Colors.white,
-                icon: const Icon(Icons.more_horiz_rounded, color: _text),
+                color: isDark ? _darkCard : Colors.white,
+                surfaceTintColor: Colors.transparent,
+                icon: Icon(
+                  Icons.more_horiz_rounded,
+                  color: isDark ? _gold : textColor,
+                ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 6,
                 onSelected: (v) async {
@@ -773,8 +826,6 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                     if (!ok) return;
 
                     final mov = context.read<EstoqueMovLocalProvider>();
-
-                    
                     final before = await repo.getById(uid: uid, id: e.id);
                     if (before == null) return;
 
@@ -784,7 +835,6 @@ class EtiquetaPreviewScreen extends StatelessWidget {
 
                     final rest = before.quantidadeRestante;
 
-                    
                     if (st == "ativo" && rest > 0) {
                       await mov.registrarCancelamento(
                         uid: uid,
@@ -795,7 +845,6 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       );
                     }
 
-                   
                     await mov.registrarExclusao(
                       uid: uid,
                       etiquetaId: before.id,
@@ -803,7 +852,6 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       motivo: "Exclusão suave",
                     );
 
-                 
                     await repo.deleteSoft(uid, before.id);
 
                     if (context.mounted) {
@@ -811,7 +859,9 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                         SnackBar(
                           content: const Text("Etiqueta excluída."),
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       );
                       Navigator.pop(context);
@@ -822,10 +872,20 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                   PopupMenuItem(
                     value: "edit",
                     child: Row(
-                      children: const [
-                        Icon(Icons.edit_outlined, size: 20),
-                        SizedBox(width: 10),
-                        Text("Editar", style: TextStyle(fontWeight: FontWeight.w700)),
+                      children: [
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: isDark ? _gold : textColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "Editar",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : textColor,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -836,7 +896,13 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       children: const [
                         Icon(Icons.delete_outline, size: 20, color: Colors.red),
                         SizedBox(width: 10),
-                        Text("Excluir", style: TextStyle(fontWeight: FontWeight.w800, color: Colors.red)),
+                        Text(
+                          "Excluir",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.red,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -847,6 +913,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
           const SizedBox(width: 6),
         ],
       ),
+
       body: FutureBuilder<EtiquetaModel?>(
         future: repo.getById(uid: uid, id: etiquetaId),
         builder: (context, snap) {
@@ -913,9 +980,9 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: _card,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black.withOpacity(0.06)),
+                        border: Border.all(color: borderColor),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.06),
@@ -937,10 +1004,10 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       tipoNome,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w900,
-                                        color: _text,
+                                        color: textColor,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -949,7 +1016,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: _text.withOpacity(0.75),
+                                        color: textColor.withOpacity(0.75),
                                       ),
                                     ),
                                   ],
@@ -978,12 +1045,12 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           Divider(color: Colors.black.withOpacity(0.06), height: 1),
                           const SizedBox(height: 14),
 
-                          _linha("Categoria", categoriaNome),
-                          _linha("Setor/Responsável", setorNome),
-                          _linha("Fabricação", _fmtDate(fabricacao)),
-                          _linhaColor("Validade", _fmtDate(validade), _validadeColor(validade)),
+                          _linha(context, "Categoria", categoriaNome),
+                          _linha(context, "Setor/Responsável", setorNome),
+                          _linha(context, "Fabricação", _fmtDate(fabricacao)),
+                          _linhaColor(context, "Validade", _fmtDate(validade), _validadeColor(validade)),
                           if (hasLote) ...[
-                            _linha(loteLabel, loteFormatado!),
+                            _linha(context, loteLabel, loteFormatado!),
                             const SizedBox(height: 6),
                             Container(
                               width: double.infinity,
@@ -995,7 +1062,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.confirmation_number_outlined, size: 18, color: _text),
+                                  Icon(Icons.confirmation_number_outlined, size: 18, color: Colors.black.withOpacity(0.55)),
                                   const SizedBox(width: 10),
                                   Text(
                                     "$loteLabel: ",
@@ -1007,7 +1074,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       lotePrefixo!,
-                                      style: const TextStyle(fontWeight: FontWeight.w900, color: _text),
+                                      style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black.withOpacity(0.55)),
                                     ),
                                   ),
                                 ],
@@ -1017,11 +1084,11 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Expanded(child: _metric("Quantidade", _fmtNum(qtd))),
+                              Expanded(child: _metric(context, "Quantidade", _fmtNum(qtd))),
                               const SizedBox(width: 10),
-                              Expanded(child: _metric("Saídas", _fmtNum(saidas))),
+                              Expanded(child: _metric(context, "Saídas", _fmtNum(saidas))),
                               const SizedBox(width: 10),
-                              Expanded(child: _metric("Restante", _fmtNum(restanteView))),
+                              Expanded(child: _metric(context, "Restante", _fmtNum(restanteView))),
                             ],
                           ),
 
@@ -1029,9 +1096,9 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                             const SizedBox(height: 16),
                             Divider(color: Colors.black.withOpacity(0.06), height: 1),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               "Campos adicionais",
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _text),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textColor),
                             ),
                             const SizedBox(height: 10),
                             ...customSemLote.entries.map((entry) {
@@ -1049,7 +1116,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                                 texto = val?.toString() ?? "";
                               }
 
-                              return _linha(label, texto);
+                              return _linha(context, label, texto);
                             }),
                           ],
                         ],
@@ -1063,9 +1130,9 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _card,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black.withOpacity(0.06)),
+                        border: Border.all(color: borderColor),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
@@ -1079,9 +1146,13 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFAF7F1),
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: Colors.black.withOpacity(0.06)),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFFD4AF37).withOpacity(0.25)
+                                    : borderColor,
+                              ),
                             ),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(18),
@@ -1098,7 +1169,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,
-                                      color: Colors.black.withOpacity(0.55),
+                                      color: Colors.black, 
                                     ),
                                   ),
                                 ],
@@ -1108,7 +1179,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                           const SizedBox(height: 10),
                           Text(
                             "Escaneie para abrir e gerar PDF",
-                            style: TextStyle(fontSize: 12.5, color: Colors.black.withOpacity(0.62)),
+                            style: TextStyle(fontSize: 12.5, color: textColor),
                           ),
                         ],
                       ),
@@ -1140,7 +1211,10 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                             lotePrefixo: lotePrefixo,
                             customSemLote: customSemLote,
                           ),
-                          icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.black),
+                          icon: Icon(
+                            Icons.picture_as_pdf_outlined,
+                            color: isDark ? Colors.black : Colors.black,
+                          ),
                           label: const Text("Salvar PDF"),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1164,13 +1238,16 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                             quantidade: _fmtNum(restanteView),
                             qrData: qrData,
                           ),
-                          icon: const Icon(Icons.remove_red_eye_outlined),
+                          icon: Icon(
+                            Icons.remove_red_eye_outlined,
+                            color: isDark ? _gold : textColor,
+                          ),
                           label: const Text("Pré-visualização"),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            foregroundColor: _text,
-                            backgroundColor: Colors.white,
-                            side: BorderSide(color: Colors.black.withOpacity(0.12)),
+                            foregroundColor: isDark ? _gold : textColor,
+                            backgroundColor: isDark ? _darkCard : Colors.white,
+                            side: BorderSide(color: borderColor),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -1209,7 +1286,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       style: TextButton.styleFrom(
-                        foregroundColor: _text,
+                        foregroundColor: isDark ? _gold : textColor,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
@@ -1227,7 +1304,10 @@ class EtiquetaPreviewScreen extends StatelessWidget {
   }
 
 
-  Widget _linha(String label, String value) {
+   Widget _linha(BuildContext context, String label, String value) {
+    final textColor = _text(context);
+    final mutedColor = _muted(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -1239,7 +1319,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12.5,
-                color: Colors.black.withOpacity(0.52),
+                color: mutedColor,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1248,10 +1328,10 @@ class EtiquetaPreviewScreen extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: _text,
+                color: textColor,
               ),
             ),
           ),
@@ -1260,7 +1340,9 @@ class EtiquetaPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _linhaColor(String label, String value, Color color) {
+    Widget _linhaColor(BuildContext context, String label, String value, Color color) {
+    final mutedColor = _muted(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -1272,7 +1354,7 @@ class EtiquetaPreviewScreen extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12.5,
-                color: Colors.black.withOpacity(0.52),
+                color: mutedColor,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1293,38 +1375,43 @@ class EtiquetaPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _metric(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF7F1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.black.withOpacity(0.55),
-              fontWeight: FontWeight.w700,
+    Widget _metric(BuildContext context, String label, String value) {
+      final textColor = _text(context);
+      final mutedColor = _muted(context);
+      final bg = _cardAlt(context);
+      final borderColor = _border(context);
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: mutedColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: _text,
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: textColor,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+    }
 }
 
 class _StatusChip extends StatelessWidget {
@@ -1430,6 +1517,8 @@ class EtiquetaPrintPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     const previewWidth = 420.0;
     const ratio = 60 / 40;
     final previewHeight = previewWidth / ratio;
@@ -1440,8 +1529,12 @@ class EtiquetaPrintPreview extends StatelessWidget {
         height: previewHeight,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.black.withOpacity(0.10)),
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFFD4AF37).withOpacity(0.16)
+                : Colors.black.withOpacity(0.10),
+          ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1463,18 +1556,20 @@ class EtiquetaPrintPreview extends StatelessWidget {
                     produto,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                       height: 1.05,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                   const Spacer(),
                   Text(
                     'Val: $validade',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -1482,17 +1577,19 @@ class EtiquetaPrintPreview extends StatelessWidget {
                     'Lote: $lote',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Qtd: $quantidade',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                 ],
@@ -1502,9 +1599,16 @@ class EtiquetaPrintPreview extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Center(
-                child: QrImageView(
-                  data: qrData,
-                  size: 125,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: QrImageView(
+                    data: qrData,
+                    size: 125,
+                  ),
                 ),
               ),
             ),
