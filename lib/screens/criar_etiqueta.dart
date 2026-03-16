@@ -92,6 +92,16 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
   }
 
   InputDecoration appInputDecoration(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B);
+    final fill = isDark ? const Color(0xFF141414) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.18);
+    final labelColor = isDark
+        ? const Color(0xFFD6D6D6)
+        : Colors.black.withOpacity(0.6);
+
     const radius = 16.0;
 
     OutlineInputBorder border(Color c) => OutlineInputBorder(
@@ -101,22 +111,24 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
 
     return InputDecoration(
       labelText: label,
-      border: border(Colors.black.withOpacity(0.18)),
-      enabledBorder: border(Colors.black.withOpacity(0.18)),
-      focusedBorder: border(const Color(0xFF2B2B2B)),
+      filled: true,
+      fillColor: fill,
+      border: border(borderColor),
+      enabledBorder: border(borderColor),
+      focusedBorder: border(brand),
       errorBorder: border(Colors.red.withOpacity(0.75)),
       focusedErrorBorder: border(Colors.red),
       labelStyle: TextStyle(
-        color: Colors.black.withOpacity(0.6),
+        color: labelColor,
         fontWeight: FontWeight.w600,
       ),
-      floatingLabelStyle: const TextStyle(
-        color: Color(0xFF2B2B2B),
+      floatingLabelStyle: TextStyle(
+        color: brand,
         fontWeight: FontWeight.w800,
       ),
     );
   }
-
+  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -287,7 +299,14 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+        final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.75);
+        final cancelColor = isDark ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.85);
+
         return AlertDialog(
+          backgroundColor: dialogBg,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
           contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -308,14 +327,17 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: text,
+                  ),
                 ),
               ),
             ],
           ),
           content: Text(
             message,
-            style: TextStyle(color: Colors.black.withOpacity(0.75)),
+            style: TextStyle(color: muted),
           ),
           actions: [
             SizedBox(
@@ -323,11 +345,18 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  side: BorderSide(color: Colors.black.withOpacity(0.14)),
-                  foregroundColor: Colors.black.withOpacity(0.85),
+                  side: BorderSide(
+                    color: isDark
+                        ? const Color(0xFFD4AF37).withOpacity(0.22)
+                        : Colors.black.withOpacity(0.14),
+                  ),
+                  foregroundColor: cancelColor,
                 ),
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.w800)),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ),
             SizedBox(
@@ -340,7 +369,10 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
                   elevation: 0,
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text("Salvar mesmo assim", style: TextStyle(fontWeight: FontWeight.w900)),
+                child: const Text(
+                  "Salvar mesmo assim",
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ),
           ],
@@ -351,459 +383,596 @@ class _CriarEtiquetaScreenState extends State<CriarEtiquetaScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    debugPrint("templateId: ${widget.templateId} | editarEtiquetaId: ${widget.editarEtiquetaId}");
-    final w = MediaQuery.of(context).size.width;
-    final compact = w < 835;
+Widget build(BuildContext context) {
+  debugPrint("templateId: ${widget.templateId} | editarEtiquetaId: ${widget.editarEtiquetaId}");
 
-    final uid = context.watch<AuthProvider>().user?.uid;
-    if (uid == null) {
-      return const Scaffold(body: Center(child: Text("Faça login novamente.")));
-    }
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
 
-    final cats = context.watch<CategoriasLocalProvider>().items;
-    final sets = context.watch<SetoresLocalProvider>().items;
-    final tipos = context.watch<TiposEtiquetaLocalProvider>().items;
-    final gerar = context.watch<GerarEtiquetaLocalProvider>();
+  final bg = theme.scaffoldBackgroundColor;
+  final card = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+  final softCard = isDark ? const Color(0xFF181818) : const Color(0xFFFDF7ED);
+  final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+  final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+  final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+  final onBrand = isDark ? Colors.black : Colors.white;
+  final border = isDark
+      ? const Color(0xFFD4AF37).withOpacity(0.16)
+      : Colors.black.withOpacity(0.07);
 
-   
-    if (widget.editarEtiquetaId != null) {
-      _tryLoadEditIfNeeded(uid: uid, cats: cats, sets: sets, tipos: tipos);
-      _loadedTemplate = true;
-    } else {
-      _tryLoadTemplateIfNeeded(uid: uid, cats: cats, sets: sets, tipos: tipos);
-    }
+  final w = MediaQuery.of(context).size.width;
+  final compact = w < 835;
 
-    final bool isEditing = widget.editarEtiquetaId != null;
-
-    final TipoEtiquetaModel? tipoAtual = (gerar.tipoId == null)
-        ? null
-        : (tipos.any((t) => t.id == gerar.tipoId) ? tipos.firstWhere((t) => t.id == gerar.tipoId) : null);
-
-  
-    final deveAutoValidade = tipoAtual?.usarRegraValidadeCategoria == true &&
-        gerar.categoria != null &&
-        gerar.fabricacao != null;
-
-    if (deveAutoValidade) {
-      final novaValidade =
-          gerar.fabricacao!.add(Duration(days: gerar.categoria!.diasVencimento));
-
-      if (gerar.validade != novaValidade) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          context.read<GerarEtiquetaLocalProvider>().setValidadeManual(novaValidade);
-        });
-      }
-    }
-
+  final uid = context.watch<AuthProvider>().user?.uid;
+  if (uid == null) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7ED),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7ED),
-        elevation: 0,
-        toolbarHeight: compact ? 160 : 100,
-        centerTitle: true,
-        title: compact
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset('assets/logo6.png', height: 78),
-                  const SizedBox(height: 10),
-                  const TopMenu(),
-                ],
-              )
-            : Row(
-                children: [
-                  Image.asset('assets/logo6.png', height: 92),
-                  const Spacer(),
-                  const TopMenu(),
-                ],
-              ),
-      ),
+      backgroundColor: bg,
       body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 980),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(18),
-            child: Column(
+        child: Text(
+          "Faça login novamente.",
+          style: TextStyle(color: text),
+        ),
+      ),
+    );
+  }
+
+  final cats = context.watch<CategoriasLocalProvider>().items;
+  final sets = context.watch<SetoresLocalProvider>().items;
+  final tipos = context.watch<TiposEtiquetaLocalProvider>().items;
+  final gerar = context.watch<GerarEtiquetaLocalProvider>();
+
+  if (widget.editarEtiquetaId != null) {
+    _tryLoadEditIfNeeded(uid: uid, cats: cats, sets: sets, tipos: tipos);
+    _loadedTemplate = true;
+  } else {
+    _tryLoadTemplateIfNeeded(uid: uid, cats: cats, sets: sets, tipos: tipos);
+  }
+
+  final bool isEditing = widget.editarEtiquetaId != null;
+
+  final TipoEtiquetaModel? tipoAtual = (gerar.tipoId == null)
+      ? null
+      : (tipos.any((t) => t.id == gerar.tipoId)
+          ? tipos.firstWhere((t) => t.id == gerar.tipoId)
+          : null);
+
+  final deveAutoValidade = tipoAtual?.usarRegraValidadeCategoria == true &&
+      gerar.categoria != null &&
+      gerar.fabricacao != null;
+
+  if (deveAutoValidade) {
+    final novaValidade =
+        gerar.fabricacao!.add(Duration(days: gerar.categoria!.diasVencimento));
+
+    if (gerar.validade != novaValidade) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<GerarEtiquetaLocalProvider>().setValidadeManual(novaValidade);
+      });
+    }
+  }
+
+  return Scaffold(
+    backgroundColor: bg,
+    appBar: AppBar(
+      backgroundColor: bg,
+      elevation: 0,
+      toolbarHeight: compact ? 160 : 100,
+      centerTitle: true,
+      title: compact
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => Navigator.pushNamed(context, '/tipos-etiqueta'),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    margin: const EdgeInsets.only(bottom: 18),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFDF7ED),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black.withOpacity(0.10)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFed7227),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.label_outline, color: Colors.white, size: 22),
+                Image.asset('assets/logo6.png', height: 78),
+                const SizedBox(height: 10),
+                const TopMenu(),
+              ],
+            )
+          : Row(
+              children: [
+                Image.asset('assets/logo6.png', height: 92),
+                const Spacer(),
+                const TopMenu(),
+              ],
+            ),
+    ),
+    body: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 980),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => Navigator.pushNamed(context, '/tipos-etiqueta'),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  margin: const EdgeInsets.only(bottom: 18),
+                  decoration: BoxDecoration(
+                    color: softCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.22 : 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: brand,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
+                        child: Icon(
+                          Icons.label_outline,
+                          color: onBrand,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "Gerenciar tipos de etiqueta",
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: text,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 "Crie ou edite os modelos de etiquetas e campos personalizados",
-                                style: TextStyle(fontSize: 13, color: Colors.black.withOpacity(0.60)),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: muted,
+                                ),
                               ),
                             ],
                           ),
-                          ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black54),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black.withOpacity(0.07)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      )
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: isDark
+                            ? const Color(0xFFD4AF37)
+                            : Colors.black54,
+                      ),
                     ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isEditing ? "Editar etiqueta" : "Gerar etiqueta",
-                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: card,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.22 : 0.06),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isEditing ? "Editar etiqueta" : "Gerar etiqueta",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: text,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isEditing
+                          ? "Altere os dados e salve as mudanças."
+                          : "Selecione o tipo, preencha os dados e gere sua etiqueta.",
+                      style: TextStyle(color: muted),
+                    ),
+                    const SizedBox(height: 18),
+
+                    if (tipos.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: softCard,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: border),
+                        ),
+                        child: Text(
+                          "Cadastre um tipo de etiqueta primeiro.",
+                          style: TextStyle(color: muted),
+                        ),
+                      )
+                    else
+                      DropdownButtonFormField<String>(
+                        value: (gerar.tipoId != null && tipos.any((t) => t.id == gerar.tipoId))
+                            ? gerar.tipoId
+                            : null,
+                        dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        style: TextStyle(color: text),
+                        items: tipos
+                            .map((t) => DropdownMenuItem<String>(
+                                  value: t.id,
+                                  child: Text(
+                                    t.nome,
+                                    style: TextStyle(color: text),
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (id) {
+                          if (id == null) return;
+                          final novoTipo = tipos.firstWhere((t) => t.id == id);
+                          context.read<GerarEtiquetaLocalProvider>().setTipoId(
+                                id,
+                                tipoAtual: novoTipo,
+                              );
+                        },
+                        decoration: appInputDecoration("Tipo de etiqueta"),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: gerar.produtoCtrl,
+                      style: TextStyle(color: text),
+                      decoration: appInputDecoration("Nome do produto"),
+                      inputFormatters: [
+                        TitleCaseFormatter(
+                          allowed: RegExp(r"[0-9A-Za-zÀ-ÿçÇ]"),
+                          maxLen: 40,
+                        ),
+                      ],
+                      validator: (v) {
+                        final s = (v ?? "").trim();
+                        if (s.isEmpty) return "Informe o nome do produto.";
+                        if (!_allowedBasic.hasMatch(s)) {
+                          return "Use apenas letras, números, espaços, acentos e ç.";
+                        }
+                        if (s.length > 40) return "Máximo de 40 caracteres.";
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: gerar.quantidadeCtrl,
+                      style: TextStyle(color: text),
+                      keyboardType: TextInputType.number,
+                      decoration: appInputDecoration("Quantidade"),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      validator: (v) {
+                        final s = (v ?? "").trim();
+                        if (s.isEmpty) return "Informe a quantidade.";
+                        final n = int.tryParse(s);
+                        if (n == null) return "Quantidade inválida.";
+                        if (n <= 0) return "Quantidade deve ser maior que 0.";
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    if (!isEditing)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: brand.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: brand.withOpacity(0.30)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: brand,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              "Status do estoque: Ativo",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: text,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      DropdownButtonFormField<String>(
+                        value: (gerar.editingStatusEstoque == null ||
+                                gerar.editingStatusEstoque!.isEmpty)
+                            ? "ativo"
+                            : gerar.editingStatusEstoque,
+                        dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        style: TextStyle(color: text),
+                        items: [
+                          DropdownMenuItem(
+                            value: "ativo",
+                            child: Text("Ativo", style: TextStyle(color: text)),
+                          ),
+                          DropdownMenuItem(
+                            value: "vendido",
+                            child: Text("Vendido", style: TextStyle(color: text)),
+                          ),
+                          DropdownMenuItem(
+                            value: "cancelado",
+                            child: Text("Cancelado", style: TextStyle(color: text)),
+                          ),
+                        ],
+                        onChanged: (v) => context
+                            .read<GerarEtiquetaLocalProvider>()
+                            .setStatusEstoqueEdicao(v),
+                        decoration: appInputDecoration("Status do estoque"),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    _Dropdown<CategoriaModel>(
+                      label: "Categoria",
+                      value: gerar.categoria,
+                      items: cats,
+                      getLabel: (c) => c.nome,
+                      onChanged: (c) => context
+                          .read<GerarEtiquetaLocalProvider>()
+                          .setCategoria(c, tipoAtual: tipoAtual),
+                      emptyHint: "Cadastre categorias na tela Categorias.",
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    _Dropdown<SetorModel>(
+                      label: "Setor/Responsável",
+                      value: gerar.setor,
+                      items: sets,
+                      getLabel: (s) => s.nome,
+                      onChanged: (s) =>
+                          context.read<GerarEtiquetaLocalProvider>().setSetor(s),
+                      emptyHint: "Cadastre setores na tela Setores.",
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DateField(
+                            label: "Fabricação",
+                            value: gerar.fabricacao,
+                            onPick: (d) => context
+                                .read<GerarEtiquetaLocalProvider>()
+                                .setFabricacao(d, tipoAtual: tipoAtual),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _DateField(
+                            label: "Validade",
+                            value: gerar.validade,
+                            onPick: (d) => context
+                                .read<GerarEtiquetaLocalProvider>()
+                                .setValidadeManual(d),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    if (tipoAtual?.usarRegraValidadeCategoria == true) ...[
                       const SizedBox(height: 8),
                       Text(
-                        isEditing ? "Altere os dados e salve as mudanças." : "Selecione o tipo, preencha os dados e gere sua etiqueta.",
-                        style: TextStyle(color: Colors.black.withOpacity(0.60)),
-                      ),
-                      const SizedBox(height: 18),
-
-                      if (tipos.isEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFDF7ED),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.black.withOpacity(0.10)),
-                          ),
-                          child: Text(
-                            "Cadastre um tipo de etiqueta primeiro.",
-                            style: TextStyle(color: Colors.black.withOpacity(0.60)),
-                          ),
-                        )
-                      else
-                        DropdownButtonFormField<String>(
-                          value: (gerar.tipoId != null && tipos.any((t) => t.id == gerar.tipoId)) ? gerar.tipoId : null,
-                          items: tipos.map((t) => DropdownMenuItem<String>(value: t.id, child: Text(t.nome))).toList(),
-                          onChanged: (id) {
-                            if (id == null) return;
-                            final novoTipo = tipos.firstWhere((t) => t.id == id);
-                            context.read<GerarEtiquetaLocalProvider>().setTipoId(id, tipoAtual: novoTipo);
-                          },
-                          decoration: appInputDecoration(
-                             "Tipo de etiqueta",
-                           
-                          ),
+                        "A validade é calculada automaticamente pela categoria (você ainda pode ajustar manualmente).",
+                        style: TextStyle(
+                          color: muted,
+                          fontSize: 12,
                         ),
+                      ),
+                    ],
 
+                    const SizedBox(height: 12),
+
+                    if (tipoAtual?.controlaLote == true) ...[
                       const SizedBox(height: 12),
-
-                      TextFormField(
-                        controller: gerar.produtoCtrl,
-                        decoration: appInputDecoration("Nome do produto"),
-                        inputFormatters: [
-                          TitleCaseFormatter(allowed: RegExp(r"[0-9A-Za-zÀ-ÿçÇ]"), maxLen: 40),
-                        ],
-                        validator: (v) {
-                          final s = (v ?? "").trim();
-                          if (s.isEmpty) return "Informe o nome do produto.";
-                          if (!_allowedBasic.hasMatch(s)) return "Use apenas letras, números, espaços, acentos e ç.";
-                          if (s.length > 40) return "Máximo de 40 caracteres.";
-                          return null;
+                      _LoteReadOnlyCard(
+                        lote: (gerar.camposValores["lote"]?["value"] ?? "").toString(),
+                        onRegenerate: () {
+                          context.read<GerarEtiquetaLocalProvider>().setCampoValor(
+                                key: "lote",
+                                label: "Lote",
+                                value: "",
+                              );
+                          context
+                              .read<GerarEtiquetaLocalProvider>()
+                              .ensureLoteAuto(tipoAtual: tipoAtual!);
                         },
                       ),
+                      const SizedBox(height: 6),
+                    ],
 
-                      const SizedBox(height: 12),
+                    const SizedBox(height: 18),
 
-                      TextFormField(
-                        controller: gerar.quantidadeCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: appInputDecoration("Quantidade"),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
-                        ],
-                        validator: (v) {
-                          final s = (v ?? "").trim();
-                          if (s.isEmpty) return "Informe a quantidade.";
-                          final n = int.tryParse(s);
-                          if (n == null) return "Quantidade inválida.";
-                          if (n <= 0) return "Quantidade deve ser maior que 0.";
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      if (!isEditing)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.10),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.withOpacity(0.30)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.check_circle_outline, color: Colors.green.withOpacity(0.90)),
-                              const SizedBox(width: 10),
-                              const Expanded(
-                                child: Text("Status do estoque: Ativo", style: TextStyle(fontWeight: FontWeight.w800)),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        DropdownButtonFormField<String>(
-                          value: (gerar.editingStatusEstoque == null || gerar.editingStatusEstoque!.isEmpty) ? "ativo" : gerar.editingStatusEstoque,
-                          items: const [
-                            DropdownMenuItem(value: "ativo", child: Text("Ativo")),
-                            DropdownMenuItem(value: "vendido", child: Text("Vendido")),
-                            DropdownMenuItem(value: "cancelado", child: Text("Cancelado")),
-                          ],
-                          onChanged: (v) => context.read<GerarEtiquetaLocalProvider>().setStatusEstoqueEdicao(v),
-                          decoration: appInputDecoration(
-                            "Status do estoque",
-                            ),
+                    if (tipoAtual != null) ...[
+                      Text(
+                        "Campos adicionais",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: text,
                         ),
-
-                      const SizedBox(height: 12),
-
-                      _Dropdown<CategoriaModel>(
-                        label: "Categoria",
-                        value: gerar.categoria,
-                        items: cats,
-                        getLabel: (c) => c.nome,
-                        onChanged: (c) => context.read<GerarEtiquetaLocalProvider>().setCategoria(c, tipoAtual: tipoAtual),
-                        emptyHint: "Cadastre categorias na tela Categorias.",
                       ),
+                      const SizedBox(height: 10),
+                      ...tipoAtual.camposCustom.map((campo) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildCampoDinamico(context, gerar, campo),
+                        );
+                      }),
+                      const SizedBox(height: 6),
+                    ],
 
-                      const SizedBox(height: 12),
+                    const SizedBox(height: 18),
 
-                      _Dropdown<SetorModel>(
-                        label: "Setor/Responsável",
-                        value: gerar.setor,
-                        items: sets,
-                        getLabel: (s) => s.nome,
-                        onChanged: (s) => context.read<GerarEtiquetaLocalProvider>().setSetor(s),
-                        emptyHint: "Cadastre setores na tela Setores.",
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _DateField(
-                              label: "Fabricação",
-                              value: gerar.fabricacao,
-                              onPick: (d) => context.read<GerarEtiquetaLocalProvider>().setFabricacao(d, tipoAtual: tipoAtual),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _DateField(
-                              label: "Validade",
-                              value: gerar.validade,
-                              onPick: (d) => context.read<GerarEtiquetaLocalProvider>().setValidadeManual(d),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      if (tipoAtual?.usarRegraValidadeCategoria == true) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          "A validade é calculada automaticamente pela categoria (você ainda pode ajustar manualmente).",
-                          style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
-                        ),
-                      ],
-
-                      const SizedBox(height: 12),
-
-                      if (tipoAtual?.controlaLote == true) ...[
-                        const SizedBox(height: 12),
-                        _LoteReadOnlyCard(
-                          lote: (gerar.camposValores["lote"]?["value"] ?? "").toString(),
-                          onRegenerate: () {
-                           
-                            context.read<GerarEtiquetaLocalProvider>().setCampoValor(
-                              key: "lote",
-                              label: "Lote",
-                              value: "", 
-                            );
-                            context.read<GerarEtiquetaLocalProvider>().ensureLoteAuto(tipoAtual: tipoAtual!);
-                          },
-                        ),
-                        const SizedBox(height: 6),
-                      ],
-
-                      const SizedBox(height: 18),
-
-                      if (tipoAtual != null) ...[
-                        const Text(
-                          "Campos adicionais",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 10),
-                        ...tipoAtual.camposCustom.map((campo) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildCampoDinamico(context, gerar, campo),
-                          );
-                        }),
-                        const SizedBox(height: 6),
-                      ],
-
-                      const SizedBox(height: 18),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: gerar.saving
-                              ? null
-                              : () async {
-                               
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: gerar.saving
+                            ? null
+                            : () async {
                                 final okForm = _formKey.currentState?.validate() ?? false;
                                 if (!okForm) return;
 
-                                
-                                final dateErr = _validateDates(gerar.fabricacao, gerar.validade);
+                                final dateErr =
+                                    _validateDates(gerar.fabricacao, gerar.validade);
                                 if (dateErr != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(dateErr)));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(dateErr)),
+                                  );
                                   return;
                                 }
 
                                 final now = DateTime.now();
                                 final val = gerar.validade!;
-                                final days = val.difference(DateTime(now.year, now.month, now.day)).inDays;
+                                final days = val
+                                    .difference(DateTime(now.year, now.month, now.day))
+                                    .inDays;
 
                                 if (val.isBefore(DateTime(now.year, now.month, now.day))) {
                                   final go = await _confirmSaveWithWarning(
                                     context: context,
                                     title: "Validade vencida",
-                                    message: "Essa etiqueta ficará com validade no passado. Deseja salvar mesmo assim?",
+                                    message:
+                                        "Essa etiqueta ficará com validade no passado. Deseja salvar mesmo assim?",
                                   );
                                   if (!go) return;
                                 } else if (days <= 1) {
                                   final go = await _confirmSaveWithWarning(
                                     context: context,
                                     title: "Validade em alerta",
-                                    message: "A validade está muito próxima (até 1 dia). Deseja salvar mesmo assim?",
+                                    message:
+                                        "A validade está muito próxima (até 1 dia). Deseja salvar mesmo assim?",
                                   );
                                   if (!go) return;
                                 }
-                                  final prov = context.read<GerarEtiquetaLocalProvider>();
 
-                                  final TipoEtiquetaModel? tipoParaSalvar = tipoAtual;
-                                  if (tipoParaSalvar == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Selecione o tipo de etiqueta.")),
+                                final prov = context.read<GerarEtiquetaLocalProvider>();
+
+                                final TipoEtiquetaModel? tipoParaSalvar = tipoAtual;
+                                if (tipoParaSalvar == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Selecione o tipo de etiqueta."),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  if (isEditing) {
+                                    await prov.salvarEdicao(
+                                      uid: uid,
+                                      tipoAtual: tipoParaSalvar,
                                     );
-                                    return;
-                                  }
 
-                                  try {
-                                    if (isEditing) {
-                                      await prov.salvarEdicao(uid: uid, tipoAtual: tipoParaSalvar);
-
-                                      if (!context.mounted) return;
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => EtiquetaPreviewScreen(
-                                            uid: uid,
-                                            etiquetaId: widget.editarEtiquetaId!,
-                                          ),
+                                    if (!context.mounted) return;
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EtiquetaPreviewScreen(
+                                          uid: uid,
+                                          etiquetaId: widget.editarEtiquetaId!,
                                         ),
-                                      );
-                                    } else {
-                                      final id = await prov.salvarEtiqueta(uid: uid, tipoAtual: tipoParaSalvar);
+                                      ),
+                                    );
+                                  } else {
+                                    final id = await prov.salvarEtiqueta(
+                                      uid: uid,
+                                      tipoAtual: tipoParaSalvar,
+                                    );
 
-                                      if (!context.mounted) return;
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => EtiquetaPreviewScreen(uid: uid, etiquetaId: id),
+                                    if (!context.mounted) return;
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EtiquetaPreviewScreen(
+                                          uid: uid,
+                                          etiquetaId: id,
                                         ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(e.toString().replaceAll("Exception: ", "")),
                                       ),
                                     );
                                   }
-                                },
-                          icon: gerar.saving
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                              : Icon(isEditing ? Icons.save_outlined : Icons.local_offer_outlined, color: Colors.white,),
-                          label: Text(gerar.saving ? "Salvando..." : (isEditing ? "Salvar alterações" : "Gerar etiqueta")),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF428e2e),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        e.toString().replaceAll("Exception: ", ""),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                        icon: gerar.saving
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: onBrand,
+                                ),
+                              )
+                            : Icon(
+                                isEditing
+                                    ? Icons.save_outlined
+                                    : Icons.local_offer_outlined,
+                                color: onBrand,
+                              ),
+                        label: Text(
+                          gerar.saving
+                              ? "Salvando..."
+                              : (isEditing ? "Salvar alterações" : "Gerar etiqueta"),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: brand,
+                          foregroundColor: onBrand,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                       ),
-                       const SizedBox(height: 18),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildCampoDinamico(
     BuildContext context,
@@ -940,7 +1109,17 @@ class _DateField extends StatelessWidget {
     required this.onPick,
   });
 
-  InputDecoration _decoration(String label) {
+  InputDecoration _decoration(BuildContext context, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B);
+    final fill = isDark ? const Color(0xFF141414) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.18);
+    final labelColor = isDark
+        ? const Color(0xFFD6D6D6)
+        : Colors.black.withOpacity(0.6);
+
     const radius = 16.0;
 
     OutlineInputBorder border(Color c) => OutlineInputBorder(
@@ -950,24 +1129,30 @@ class _DateField extends StatelessWidget {
 
     return InputDecoration(
       labelText: label,
-      border: border(Colors.black.withOpacity(0.18)),
-      enabledBorder: border(Colors.black.withOpacity(0.18)),
-      focusedBorder: border(const Color(0xFF2B2B2B)),
+      filled: true,
+      fillColor: fill,
+      border: border(borderColor),
+      enabledBorder: border(borderColor),
+      focusedBorder: border(brand),
       errorBorder: border(Colors.red.withOpacity(0.75)),
       focusedErrorBorder: border(Colors.red),
       labelStyle: TextStyle(
-        color: Colors.black.withOpacity(0.6),
+        color: labelColor,
         fontWeight: FontWeight.w600,
       ),
-      floatingLabelStyle: const TextStyle(
-        color: Color(0xFF2B2B2B),
+      floatingLabelStyle: TextStyle(
+        color: brand,
         fontWeight: FontWeight.w800,
       ),
     );
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final iconColor = isDark ? const Color(0xFFD4AF37) : null;
+
     final text = (value == null)
         ? "Selecionar"
         : "${value!.day.toString().padLeft(2, "0")}/"
@@ -977,6 +1162,7 @@ class _DateField extends StatelessWidget {
     return InkWell(
       onTap: () async {
         final rootContext = Navigator.of(context, rootNavigator: true).context;
+        final isDarkPicker = Theme.of(context).brightness == Brightness.dark;
 
         final d = await showDatePicker(
           context: rootContext,
@@ -987,8 +1173,13 @@ class _DateField extends StatelessWidget {
           builder: (context, child) {
             final base = Theme.of(context);
 
-            const primary = Color(0xFFed7227);
-            const onPrimary = Colors.white;
+            final primary = isDarkPicker
+                ? const Color(0xFFD4AF37)
+                : const Color(0xFFED7227);
+
+            final onPrimary = isDarkPicker ? Colors.black : Colors.white;
+            final surface = isDarkPicker ? const Color(0xFF1E1E1E) : Colors.white;
+            final onSurface = isDarkPicker ? Colors.white : const Color(0xFF1E1E1E);
 
             final dialogShape = RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(22),
@@ -1000,8 +1191,8 @@ class _DateField extends StatelessWidget {
                 colorScheme: base.colorScheme.copyWith(
                   primary: primary,
                   onPrimary: onPrimary,
-                  surface: Colors.white,
-                  onSurface: const Color(0xFF1E1E1E),
+                  surface: surface,
+                  onSurface: onSurface,
                 ),
                 dialogTheme: DialogTheme(shape: dialogShape),
                 textButtonTheme: TextButtonThemeData(
@@ -1012,55 +1203,33 @@ class _DateField extends StatelessWidget {
                 ),
                 datePickerTheme: DatePickerThemeData(
                   shape: dialogShape,
-                  backgroundColor: Colors.white,
-
+                  backgroundColor: surface,
                   headerBackgroundColor: primary,
                   headerForegroundColor: onPrimary,
                   headerHeadlineStyle: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                   ),
-                  headerHelpStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: onPrimary.withOpacity(0.9),
-                  ),
-
                   dayForegroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) return onPrimary;
-                    return const Color(0xFF1E1E1E);
+                    return onSurface;
                   }),
                   dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) return primary;
                     return Colors.transparent;
                   }),
-                 todayForegroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return onPrimary;
-                  return const Color(0xFF1E1E1E); 
-                }),
-                todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return primary; 
-                  return primary.withOpacity(0.14); 
-                }),
-                todayBorder: BorderSide(
-                  color: primary.withOpacity(0.45),
-                  width: 1.6,
-                ),
-
-                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                  todayForegroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) return onPrimary;
-                    return const Color(0xFF1E1E1E);
+                    return onSurface;
                   }),
-                  yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                  todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) return primary;
-                    return Colors.transparent;
+                    return primary.withOpacity(0.14);
                   }),
-
-                  weekdayStyle: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black.withOpacity(0.55),
+                  todayBorder: BorderSide(
+                    color: primary.withOpacity(0.45),
+                    width: 1.6,
                   ),
-                  dayStyle: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
               child: child!,
@@ -1071,11 +1240,16 @@ class _DateField extends StatelessWidget {
         if (d != null) onPick(d);
       },
       child: InputDecorator(
-        decoration: _decoration(label),
+        decoration: _decoration(context, label),
         child: Row(
           children: [
-            Expanded(child: Text(text)),
-            const Icon(Icons.calendar_month_outlined, size: 18),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(color: textColor),
+              ),
+            ),
+            Icon(Icons.calendar_month_outlined, size: 18, color: iconColor),
           ],
         ),
       ),
@@ -1100,7 +1274,17 @@ class _Dropdown<T> extends StatelessWidget {
     required this.emptyHint,
   });
 
-  InputDecoration appInputDecorationGlobal(String label) {
+  InputDecoration appInputDecorationGlobal(BuildContext context, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF2B2B2B);
+    final fill = isDark ? const Color(0xFF141414) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.18);
+    final labelColor = isDark
+        ? const Color(0xFFD6D6D6)
+        : Colors.black.withOpacity(0.6);
+
     const radius = 16.0;
 
     OutlineInputBorder border(Color c) => OutlineInputBorder(
@@ -1110,36 +1294,46 @@ class _Dropdown<T> extends StatelessWidget {
 
     return InputDecoration(
       labelText: label,
-      border: border(Colors.black.withOpacity(0.18)),
-      enabledBorder: border(Colors.black.withOpacity(0.18)),
-      focusedBorder: border(const Color(0xFF2B2B2B)),
+      filled: true,
+      fillColor: fill,
+      border: border(borderColor),
+      enabledBorder: border(borderColor),
+      focusedBorder: border(brand),
       errorBorder: border(Colors.red.withOpacity(0.75)),
       focusedErrorBorder: border(Colors.red),
       labelStyle: TextStyle(
-        color: Colors.black.withOpacity(0.6),
+        color: labelColor,
         fontWeight: FontWeight.w600,
       ),
-      floatingLabelStyle: const TextStyle(
-        color: Color(0xFF2B2B2B),
+      floatingLabelStyle: TextStyle(
+        color: brand,
         fontWeight: FontWeight.w800,
       ),
     );
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final softCard = isDark ? const Color(0xFF181818) : const Color(0xFFFDF7ED);
+    final border = isDark
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.10);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.60);
+
     if (items.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF7ED),
+          color: softCard,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withOpacity(0.10)),
+          border: Border.all(color: border),
         ),
         child: Text(
           emptyHint,
-          style: TextStyle(color: Colors.black.withOpacity(0.60)),
+          style: TextStyle(color: muted),
         ),
       );
     }
@@ -1148,17 +1342,25 @@ class _Dropdown<T> extends StatelessWidget {
 
     return DropdownButtonFormField<T>(
       value: safeValue,
+      dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      style: TextStyle(color: text),
       items: items
-          .map((e) => DropdownMenuItem<T>(
-                value: e,
-                child: Text(getLabel(e)),
-              ))
+          .map(
+            (e) => DropdownMenuItem<T>(
+              value: e,
+              child: Text(
+                getLabel(e),
+                style: TextStyle(color: text),
+              ),
+            ),
+          )
           .toList(),
       onChanged: onChanged,
-       decoration: appInputDecorationGlobal(label),
+      decoration: appInputDecorationGlobal(context, label),
     );
   }
 }
+
 class _LoteReadOnlyCard extends StatelessWidget {
   final String lote;
   final VoidCallback? onRegenerate;
@@ -1170,13 +1372,20 @@ class _LoteReadOnlyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final brand = isDark ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
+    final onBrand = isDark ? Colors.black : Colors.white;
+    final text = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final muted = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.55);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF428e2e).withOpacity(0.08),
+        color: brand.withOpacity(0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF428e2e).withOpacity(0.25)),
+        border: Border.all(color: brand.withOpacity(0.25)),
       ),
       child: Row(
         children: [
@@ -1184,26 +1393,41 @@ class _LoteReadOnlyCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF428e2e),
+              color: brand,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.confirmation_number_outlined, color: Colors.white),
+            child: Icon(
+              Icons.confirmation_number_outlined,
+              color: onBrand,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Lote (automático)", style: TextStyle(fontWeight: FontWeight.w900)),
+                Text(
+                  "Lote (automático)",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: text,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   lote.isEmpty ? "Gerando..." : lote,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: text,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "Gerado automaticamente pelo tipo de etiqueta.",
-                  style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12),
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -1212,7 +1436,10 @@ class _LoteReadOnlyCard extends StatelessWidget {
             IconButton(
               tooltip: "Gerar novo lote",
               onPressed: onRegenerate,
-              icon: const Icon(Icons.refresh),
+              icon: Icon(
+                Icons.refresh,
+                color: isDark ? brand : null,
+              ),
             ),
         ],
       ),
