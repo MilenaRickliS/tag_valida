@@ -32,13 +32,18 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
 
   final _df = DateFormat('dd/MM/yyyy');
 
- 
   final GlobalKey _pieKey = GlobalKey();
   final GlobalKey _barKey = GlobalKey();
 
   final GlobalKey _pieKeyPrint = GlobalKey();
   final GlobalKey _barKeyPrint = GlobalKey();
   bool _printing = false;
+
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _bg(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF0F0F0F) : const Color(0xFFFDF7ED);
 
   @override
   void initState() {
@@ -49,7 +54,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   Future<void> _initDefaultRangeAndLoad() async {
     final now = DateTime.now();
     _range = DateTimeRange(
-      start: DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29)),
+      start: DateTime(now.year, now.month, now.day)
+          .subtract(const Duration(days: 29)),
       end: DateTime(now.year, now.month, now.day, 23, 59, 59),
     );
     await _load();
@@ -77,12 +83,10 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       return;
     }
 
-   
     final start = DateTime(r.start.year, r.start.month, r.start.day, 0, 0, 0);
     final end = DateTime(r.end.year, r.end.month, r.end.day, 23, 59, 59, 999);
 
     _filtered = _movs.where((m) {
-    
       final d = m.createdAt.toLocal();
       return !d.isBefore(start) && !d.isAfter(end);
     }).toList();
@@ -90,6 +94,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
 
   Future<void> _pickRange() async {
     final now = DateTime.now();
+    final isDark = _isDark(context);
 
     final picked = await showDateRangePicker(
       context: context,
@@ -99,32 +104,56 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       helpText: 'Selecione o período do relatório',
       locale: const Locale('pt', 'BR'),
       builder: (context, child) {
-       
         final base = Theme.of(context);
-        final scheme = base.colorScheme.copyWith(
-          primary: const Color(0xff428e2e),
-          onPrimary: Colors.white,
-          surface: const Color(0xFFFDF7ED),
-          onSurface: Colors.black87,
-        );
+        final scheme = isDark
+            ? base.colorScheme.copyWith(
+                primary: const Color(0xFFD4AF37),
+                onPrimary: Colors.black,
+                surface: const Color(0xFF1E1E1E),
+                onSurface: Colors.white,
+              )
+            : base.colorScheme.copyWith(
+                primary: const Color(0xff428e2e),
+                onPrimary: Colors.white,
+                surface: const Color(0xFFFDF7ED),
+                onSurface: Colors.black87,
+              );
 
         return Theme(
           data: base.copyWith(
             colorScheme: scheme,
             dialogTheme: DialogTheme(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              backgroundColor: const Color(0xFFFDF7ED),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              backgroundColor:
+                  isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFDF7ED),
             ),
             datePickerTheme: DatePickerThemeData(
-              backgroundColor: const Color(0xFFFDF7ED),
-              headerBackgroundColor: const Color(0xff428e2e),
-              headerForegroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              todayBackgroundColor: WidgetStateProperty.all(const Color(0x1a428e2e)),
-              todayForegroundColor: WidgetStateProperty.all(const Color(0xff428e2e)),
-              rangeSelectionBackgroundColor: const Color(0x26428e2e),
-              rangePickerBackgroundColor: const Color(0xFFFDF7ED),
-              dayForegroundColor: WidgetStateProperty.all(Colors.black87),
+              backgroundColor:
+                  isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFDF7ED),
+              headerBackgroundColor:
+                  isDark ? const Color(0xFFD4AF37) : const Color(0xff428e2e),
+              headerForegroundColor: isDark ? Colors.black : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              todayBackgroundColor: WidgetStateProperty.all(
+                isDark
+                    ? const Color(0x33D4AF37)
+                    : const Color(0x1a428e2e),
+              ),
+              todayForegroundColor: WidgetStateProperty.all(
+                isDark ? const Color(0xFFD4AF37) : const Color(0xff428e2e),
+              ),
+              rangeSelectionBackgroundColor: isDark
+                  ? const Color(0x33D4AF37)
+                  : const Color(0x26428e2e),
+              rangePickerBackgroundColor:
+                  isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFDF7ED),
+              dayForegroundColor: WidgetStateProperty.all(
+                isDark ? Colors.white : Colors.black87,
+              ),
               dayStyle: const TextStyle(fontWeight: FontWeight.w600),
               weekdayStyle: const TextStyle(fontWeight: FontWeight.w700),
               yearStyle: const TextStyle(fontWeight: FontWeight.w600),
@@ -168,7 +197,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
 
-  Future<Uint8List?> _capturePng(GlobalKey key, {double pixelRatio = 2.0}) async {
+  Future<Uint8List?> _capturePng(GlobalKey key,
+      {double pixelRatio = 2.0}) async {
     for (int attempt = 0; attempt < 3; attempt++) {
       try {
         await WidgetsBinding.instance.endOfFrame;
@@ -218,9 +248,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: const Color(0xFFFDF7ED),
+          backgroundColor: _bg(context),
           appBar: AppBar(
-            backgroundColor: const Color(0xFFFDF7ED),
+            backgroundColor: _bg(context),
             elevation: 0,
             toolbarHeight: compact ? 160 : 100,
             centerTitle: true,
@@ -256,10 +286,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                         onExportPdf: _exportPdf,
                       ),
                       const SizedBox(height: 14),
-
                       _KpiGrid(kpis: kpis),
                       const SizedBox(height: 14),
-
                       _SectionCard(
                         title: 'Insights rápidos',
                         child: Column(
@@ -267,16 +295,24 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                           children: [
                             _InsightLine(
                               label: 'Produto mais vendido',
-                              value: topSold.isEmpty ? '—' : '${topSold.first.name} (${_fmtNum(topSold.first.value)})',
-                              chipBg: RelatorioCores.bg(EstoqueMovModel.tipoVenda),
-                              chipFg: RelatorioCores.fg(EstoqueMovModel.tipoVenda),
+                              value: topSold.isEmpty
+                                  ? '—'
+                                  : '${topSold.first.name} (${_fmtNum(topSold.first.value)})',
+                              chipBg:
+                                  RelatorioCores.bg(EstoqueMovModel.tipoVenda),
+                              chipFg:
+                                  RelatorioCores.fg(EstoqueMovModel.tipoVenda),
                             ),
                             const SizedBox(height: 8),
                             _InsightLine(
                               label: 'Produto com mais perda',
-                              value: topLost.isEmpty ? '—' : '${topLost.first.name} (${_fmtNum(topLost.first.value)})',
-                              chipBg: RelatorioCores.bg(EstoqueMovModel.tipoExclusao),
-                              chipFg: RelatorioCores.fg(EstoqueMovModel.tipoExclusao),
+                              value: topLost.isEmpty
+                                  ? '—'
+                                  : '${topLost.first.name} (${_fmtNum(topLost.first.value)})',
+                              chipBg: RelatorioCores.bg(
+                                  EstoqueMovModel.tipoExclusao),
+                              chipFg: RelatorioCores.fg(
+                                  EstoqueMovModel.tipoExclusao),
                             ),
                             const SizedBox(height: 8),
                             _InsightLine(
@@ -286,25 +322,18 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 14),
-
-                      
                       _ChartsRow(
                         pieKey: _pieKey,
                         barKey: _barKey,
                         movs: _filtered,
                       ),
-
                       const SizedBox(height: 14),
-
                       _RankingsRow(
                         topSold: topSold,
                         topLost: topLost,
                       ),
-
                       const SizedBox(height: 14),
-
                       _SectionCard(
                         title: 'Movimentações (últimas do período)',
                         child: _MovList(movs: _filtered.take(25).toList()),
@@ -313,14 +342,12 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                   ),
                 ),
         ),
-
-       
         Offstage(
           offstage: !_printing,
           child: Material(
             type: MaterialType.transparency,
             child: SizedBox(
-              width: 900, 
+              width: 900,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -355,8 +382,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     num vendas = 0;
     num cancel = 0;
     num excl = 0;
-
-   
     num ajusteEnt = 0;
     num ajusteSai = 0;
 
@@ -368,7 +393,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       if (m.tipo == EstoqueMovModel.tipoCancelamento) cancel += q;
       if (m.tipo == EstoqueMovModel.tipoExclusao) excl += q;
 
-     
       if (_hasAjusteEntrada(m)) ajusteEnt += q;
       if (_hasAjusteSaida(m)) ajusteSai += q;
     }
@@ -385,7 +409,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       'Saldo': saldo,
     };
 
-  
     if (_existsTipoAjusteEntrada()) map['Ajuste Entrada'] = ajusteEnt;
     if (_existsTipoAjusteSaida()) map['Ajuste Saída'] = ajusteSai;
 
@@ -393,9 +416,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   }
 
   bool _existsTipoAjusteEntrada() {
-    
     try {
-      
       EstoqueMovModel.tipoAjusteEntrada;
       return true;
     } catch (_) {
@@ -405,7 +426,6 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
 
   bool _existsTipoAjusteSaida() {
     try {
-     
       EstoqueMovModel.tipoAjusteSaida;
       return true;
     } catch (_) {
@@ -429,11 +449,14 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     }
   }
 
-  List<_NamedValue> _topByType(List<EstoqueMovModel> movs, String tipo, {int topN = 5}) {
+  List<_NamedValue> _topByType(List<EstoqueMovModel> movs, String tipo,
+      {int topN = 5}) {
     final map = <String, num>{};
     for (final m in movs) {
       if (m.tipo != tipo) continue;
-      final name = (m.produtoNome?.trim().isNotEmpty ?? false) ? m.produtoNome!.trim() : 'Sem nome';
+      final name = (m.produtoNome?.trim().isNotEmpty ?? false)
+          ? m.produtoNome!.trim()
+          : 'Sem nome';
       map[name] = (map[name] ?? 0) + m.quantidade;
     }
     final list = map.entries.map((e) => _NamedValue(e.key, e.value)).toList()
@@ -444,9 +467,12 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   List<_NamedValue> _topLosses(List<EstoqueMovModel> movs, {int topN = 5}) {
     final map = <String, num>{};
     for (final m in movs) {
-      final isLoss = m.tipo == EstoqueMovModel.tipoCancelamento || m.tipo == EstoqueMovModel.tipoExclusao;
+      final isLoss = m.tipo == EstoqueMovModel.tipoCancelamento ||
+          m.tipo == EstoqueMovModel.tipoExclusao;
       if (!isLoss) continue;
-      final name = (m.produtoNome?.trim().isNotEmpty ?? false) ? m.produtoNome!.trim() : 'Sem nome';
+      final name = (m.produtoNome?.trim().isNotEmpty ?? false)
+          ? m.produtoNome!.trim()
+          : 'Sem nome';
       map[name] = (map[name] ?? 0) + m.quantidade;
     }
     final list = map.entries.map((e) => _NamedValue(e.key, e.value)).toList()
@@ -474,53 +500,83 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         build: (context) => [
-          pw.Text('Relatório de Estoque', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'Relatório de Estoque',
+            style:
+                pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 6),
           pw.Text('Período: $period'),
           pw.SizedBox(height: 12),
-
-       
-          pw.Text('Gráficos', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'Gráficos',
+            style:
+                pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 8),
-
           if (piePng != null) ...[
-            pw.Text('Distribuição por tipo', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              'Distribuição por tipo',
+              style:
+                  pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+            ),
             pw.SizedBox(height: 6),
             pw.Center(child: pw.Image(pw.MemoryImage(piePng), width: 420)),
             pw.SizedBox(height: 10),
           ],
-
           if (barPng != null) ...[
-            pw.Text('Top vendidos (barras)', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              'Top vendidos (barras)',
+              style:
+                  pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+            ),
             pw.SizedBox(height: 6),
             pw.Center(child: pw.Image(pw.MemoryImage(barPng), width: 420)),
             pw.SizedBox(height: 12),
           ],
-
-          pw.Text('Resumo', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'Resumo',
+            style:
+                pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 6),
           pw.Table(
             border: pw.TableBorder.all(width: 0.5),
             children: kpis.entries.map((e) {
               return pw.TableRow(children: [
-                pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(e.key)),
-                pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_fmtNum(e.value))),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(6),
+                  child: pw.Text(e.key),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(6),
+                  child: pw.Text(_fmtNum(e.value)),
+                ),
               ]);
             }).toList(),
           ),
-
           pw.SizedBox(height: 14),
-          pw.Text('Top produtos vendidos', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'Top produtos vendidos',
+            style:
+                pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 6),
           _pdfRankTable(topSold),
-
           pw.SizedBox(height: 14),
-          pw.Text('Top perdas (cancelamento/exclusão)', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'Top perdas (cancelamento/exclusão)',
+            style:
+                pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 6),
           _pdfRankTable(topLost),
-
           pw.SizedBox(height: 14),
-          pw.Text('Movimentações (amostra)', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'Movimentações (amostra)',
+            style:
+                pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 6),
           pw.Table(
             border: pw.TableBorder.all(width: 0.5),
@@ -534,13 +590,19 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                   _pdfCell('Motivo', bold: true),
                 ],
               ),
-              ...movs.take(35).map((m) => pw.TableRow(children: [
-                    _pdfCell(_df.format(m.createdAt)),
-                    _pdfCell((m.produtoNome?.trim().isNotEmpty ?? false) ? m.produtoNome!.trim() : 'Sem nome'),
-                    _pdfCell(m.tipo),
-                    _pdfCell(_fmtNum(m.quantidade)),
-                    _pdfCell(m.motivo ?? ''),
-                  ])),
+              ...movs.take(35).map(
+                    (m) => pw.TableRow(
+                      children: [
+                        _pdfCell(_df.format(m.createdAt)),
+                        _pdfCell((m.produtoNome?.trim().isNotEmpty ?? false)
+                            ? m.produtoNome!.trim()
+                            : 'Sem nome'),
+                        _pdfCell(m.tipo),
+                        _pdfCell(_fmtNum(m.quantidade)),
+                        _pdfCell(m.motivo ?? ''),
+                      ],
+                    ),
+                  ),
             ],
           ),
         ],
@@ -555,8 +617,13 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     return pw.Table(
       border: pw.TableBorder.all(width: 0.5),
       children: [
-        pw.TableRow(children: [_pdfCell('Produto', bold: true), _pdfCell('Quantidade', bold: true)]),
-        ...items.map((e) => pw.TableRow(children: [_pdfCell(e.name), _pdfCell(_fmtNum(e.value))])),
+        pw.TableRow(children: [
+          _pdfCell('Produto', bold: true),
+          _pdfCell('Quantidade', bold: true)
+        ]),
+        ...items.map((e) => pw.TableRow(
+              children: [_pdfCell(e.name), _pdfCell(_fmtNum(e.value))],
+            )),
       ],
     );
   }
@@ -564,7 +631,12 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   pw.Widget _pdfCell(String text, {bool bold = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
-      child: pw.Text(text, style: pw.TextStyle(fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+      ),
     );
   }
 }
@@ -581,12 +653,15 @@ class RelatorioCores {
       case EstoqueMovModel.tipoExclusao:
         return Colors.red.withOpacity(0.08);
       default:
-       
         try {
-          if (tipo == EstoqueMovModel.tipoAjusteEntrada) return Colors.blue.withOpacity(0.10);
+          if (tipo == EstoqueMovModel.tipoAjusteEntrada) {
+            return Colors.blue.withOpacity(0.10);
+          }
         } catch (_) {}
         try {
-          if (tipo == EstoqueMovModel.tipoAjusteSaida) return Colors.purple.withOpacity(0.10);
+          if (tipo == EstoqueMovModel.tipoAjusteSaida) {
+            return Colors.purple.withOpacity(0.10);
+          }
         } catch (_) {}
         return Colors.black.withOpacity(0.06);
     }
@@ -604,10 +679,14 @@ class RelatorioCores {
         return const Color(0xffc62828);
       default:
         try {
-          if (tipo == EstoqueMovModel.tipoAjusteEntrada) return const Color(0xff1565c0);
+          if (tipo == EstoqueMovModel.tipoAjusteEntrada) {
+            return const Color(0xff1565c0);
+          }
         } catch (_) {}
         try {
-          if (tipo == EstoqueMovModel.tipoAjusteSaida) return const Color(0xff6a1b9a);
+          if (tipo == EstoqueMovModel.tipoAjusteSaida) {
+            return const Color(0xff6a1b9a);
+          }
         } catch (_) {}
         return Colors.black87;
     }
@@ -621,8 +700,6 @@ class _NamedValue {
   final num value;
   _NamedValue(this.name, this.value);
 }
-
-
 
 class _HeaderActions extends StatelessWidget {
   final bool isPhone;
@@ -639,8 +716,14 @@ class _HeaderActions extends StatelessWidget {
     required this.onExportPdf,
   });
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final accent =
+        _isDark(context) ? const Color(0xFFD4AF37) : const Color(0xff428e2e);
+
     final trailing = Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -648,19 +731,21 @@ class _HeaderActions extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onPickRange,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xff428e2e)),
-            foregroundColor: const Color(0xff428e2e),
+            side: BorderSide(color: accent),
+            foregroundColor: accent,
           ),
-          icon: const Icon(Icons.date_range, color: Color(0xff428e2e)),
-          label: const Text('Período', style: TextStyle(color: Color(0xff428e2e))),
+          icon: Icon(Icons.date_range, color: accent),
+          label: Text('Período', style: TextStyle(color: accent)),
         ),
         FilledButton.icon(
           onPressed: onExportPdf,
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xff428e2e),
-            foregroundColor: Colors.white,
+            backgroundColor: accent,
+            foregroundColor: _isDark(context) ? Colors.black : Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           icon: const Icon(Icons.picture_as_pdf),
           label: const Text('Salvar PDF'),
@@ -674,7 +759,15 @@ class _HeaderActions extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(subtitle, style: const TextStyle(fontSize: 14, color: Color(0xFF6B5E4B))),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 14,
+              color: _isDark(context)
+                  ? const Color(0xFFD6D6D6)
+                  : const Color(0xFF6B5E4B),
+            ),
+          ),
           if (isPhone) ...[
             const SizedBox(height: 12),
             Align(alignment: Alignment.centerLeft, child: trailing),
@@ -768,7 +861,8 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final v = (value % 1 == 0) ? value.toInt().toString() : value.toStringAsFixed(2);
+    final v =
+        (value % 1 == 0) ? value.toInt().toString() : value.toStringAsFixed(2);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -776,7 +870,13 @@ class _KpiCard extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: fg.withOpacity(0.18)),
-        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3))],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          )
+        ],
       ),
       child: Row(
         children: [
@@ -795,9 +895,23 @@ class _KpiCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(label, style: TextStyle(fontSize: 13, color: fg.withOpacity(0.95), fontWeight: FontWeight.w800)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: fg.withOpacity(0.95),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text(v, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: fg)),
+                Text(
+                  v,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: fg,
+                  ),
+                ),
               ],
             ),
           ),
@@ -849,7 +963,8 @@ class _ChartsRow extends StatelessWidget {
     }
 
     final total = byType.values.fold<num>(0, (a, b) => a + b);
-    final entries = byType.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = byType.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     return LayoutBuilder(
       builder: (context, c) {
@@ -898,7 +1013,9 @@ class _ChartsRow extends StatelessWidget {
         );
 
         if (isNarrow) {
-          return Column(children: [pieCard, const SizedBox(height: 12), barCard]);
+          return Column(
+            children: [pieCard, const SizedBox(height: 12), barCard],
+          );
         }
 
         return Row(
@@ -919,10 +1036,14 @@ class _TopSoldBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final map = <String, num>{};
     for (final m in movs) {
       if (m.tipo != EstoqueMovModel.tipoVenda) continue;
-      final name = (m.produtoNome?.trim().isNotEmpty ?? false) ? m.produtoNome!.trim() : 'Sem nome';
+      final name = (m.produtoNome?.trim().isNotEmpty ?? false)
+          ? m.produtoNome!.trim()
+          : 'Sem nome';
       map[name] = (map[name] ?? 0) + m.quantidade;
     }
 
@@ -934,15 +1055,34 @@ class _TopSoldBarChart extends StatelessWidget {
     }
 
     final rodColor = RelatorioCores.solid(EstoqueMovModel.tipoVenda);
+    final axisColor = isDark ? Colors.white70 : Colors.black87;
+    final gridColor = isDark ? Colors.white12 : Colors.black12;
 
     return BarChart(
       BarChartData(
-        gridData: const FlGridData(show: true),
+        gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) {
+          return FlLine(color: gridColor, strokeWidth: 1);
+        }),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 34)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 34,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: TextStyle(
+                    color: axisColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                );
+              },
+            ),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -950,10 +1090,18 @@ class _TopSoldBarChart extends StatelessWidget {
                 final i = value.toInt();
                 if (i < 0 || i >= top.length) return const SizedBox.shrink();
                 final name = top[i].key;
-                final short = name.length > 10 ? '${name.substring(0, 10)}…' : name;
+                final short =
+                    name.length > 10 ? '${name.substring(0, 10)}…' : name;
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(short, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    short,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: axisColor,
+                    ),
+                  ),
                 );
               },
             ),
@@ -1000,7 +1148,9 @@ class _RankingsRow extends StatelessWidget {
         );
 
         if (isNarrow) {
-          return Column(children: [soldCard, const SizedBox(height: 12), lostCard]);
+          return Column(
+            children: [soldCard, const SizedBox(height: 12), lostCard],
+          );
         }
         return Row(
           children: [
@@ -1021,6 +1171,9 @@ class _RankList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor =
+        Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
+
     if (items.isEmpty) return const Text('Sem dados no período.');
 
     final bg = RelatorioCores.bg(tipo);
@@ -1029,7 +1182,9 @@ class _RankList extends StatelessWidget {
     return Column(
       children: List.generate(items.length, (i) {
         final it = items[i];
-        final v = (it.value % 1 == 0) ? it.value.toInt().toString() : it.value.toStringAsFixed(2);
+        final v = (it.value % 1 == 0)
+            ? it.value.toInt().toString()
+            : it.value.toStringAsFixed(2);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
@@ -1044,7 +1199,10 @@ class _RankList extends StatelessWidget {
               CircleAvatar(
                 radius: 14,
                 backgroundColor: fg.withOpacity(0.18),
-                child: Text('${i + 1}', style: TextStyle(fontWeight: FontWeight.w900, color: fg)),
+                child: Text(
+                  '${i + 1}',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: fg),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1052,11 +1210,17 @@ class _RankList extends StatelessWidget {
                   it.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
-              Text(v, style: TextStyle(fontWeight: FontWeight.w900, color: fg)),
+              Text(
+                v,
+                style: TextStyle(fontWeight: FontWeight.w900, color: fg),
+              ),
             ],
           ),
         );
@@ -1071,13 +1235,19 @@ class _MovList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final mutedColor = isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.65);
+
     if (movs.isEmpty) return const Text('Sem movimentações no período.');
 
     final df = DateFormat('dd/MM HH:mm');
 
     return Column(
       children: movs.map((m) {
-        final produto = (m.produtoNome?.trim().isNotEmpty ?? false) ? m.produtoNome!.trim() : 'Sem nome';
+        final produto = (m.produtoNome?.trim().isNotEmpty ?? false)
+            ? m.produtoNome!.trim()
+            : 'Sem nome';
         final bg = RelatorioCores.bg(m.tipo);
         final fg = RelatorioCores.fg(m.tipo);
 
@@ -1105,15 +1275,31 @@ class _MovList extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(produto, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900)),
+                    Text(
+                      produto,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('${df.format(m.createdAt)} • ${m.tipo} • ${m.motivo ?? ""}', style: TextStyle(color: Colors.black.withOpacity(0.65), fontSize: 12.5)),
+                    Text(
+                      '${df.format(m.createdAt)} • ${m.tipo} • ${m.motivo ?? ""}',
+                      style: TextStyle(
+                        color: mutedColor,
+                        fontSize: 12.5,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
               Text(
-                (m.quantidade % 1 == 0) ? m.quantidade.toInt().toString() : m.quantidade.toStringAsFixed(2),
+                (m.quantidade % 1 == 0)
+                    ? m.quantidade.toInt().toString()
+                    : m.quantidade.toStringAsFixed(2),
                 style: TextStyle(fontWeight: FontWeight.w900, color: fg),
               ),
             ],
@@ -1161,13 +1347,32 @@ class _InsightLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasChip = chipBg != null && chipFg != null;
+    final labelColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFD6D6D6)
+        : const Color(0xFF6B5E4B);
+    final valueColor =
+        Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
     return Row(
       children: [
-        Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF6B5E4B), fontWeight: FontWeight.w700))),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: labelColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
         const SizedBox(width: 12),
         if (!hasChip)
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900))
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: valueColor,
+            ),
+          )
         else
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1176,7 +1381,13 @@ class _InsightLine extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: chipFg!.withOpacity(0.25)),
             ),
-            child: Text(value, style: TextStyle(fontWeight: FontWeight.w900, color: chipFg)),
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: chipFg,
+              ),
+            ),
           ),
       ],
     );
@@ -1188,24 +1399,49 @@ class _SectionCard extends StatelessWidget {
   final Widget child;
   final Widget? trailing;
 
-  const _SectionCard({required this.title, required this.child, this.trailing});
+  const _SectionCard({
+    required this.title,
+    required this.child,
+    this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE7D8C2)),
-        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 4))],
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFFD4AF37).withOpacity(0.16)
+              : const Color(0xFFE7D8C2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.18 : 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900))),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
               if (trailing != null) trailing!,
             ],
           ),
@@ -1228,7 +1464,8 @@ class _ChartOnlyPie extends StatelessWidget {
       byType[m.tipo] = (byType[m.tipo] ?? 0) + m.quantidade;
     }
     final total = byType.values.fold<num>(0, (a, b) => a + b);
-    final entries = byType.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = byType.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     return Container(
       padding: const EdgeInsets.all(14),
