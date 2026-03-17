@@ -28,6 +28,22 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
   DateTimeRange? _periodo;
   bool _showGraficos = false;
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _bg(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF0F0F0F) : const Color(0xFFFDF7ED);
+
+  Color _cardAlt(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF181818) : Colors.white.withOpacity(0.75);
+
+  Color _muted(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.55);
+
+  Color _border(BuildContext context) => _isDark(context)
+      ? const Color(0xFFD4AF37).withOpacity(0.16)
+      : Colors.black.withOpacity(0.08);
+
   @override
   void initState() {
     super.initState();
@@ -44,26 +60,27 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 5, 1, 1);
     final lastDate = DateTime(now.year + 1, 12, 31);
+    final isDark = _isDark(context);
 
-   
     final base = Theme.of(context);
-    const seed = Color(0xFF2E7D32); 
+    final seed = isDark ? const Color(0xFFD4AF37) : const Color(0xFF2E7D32);
+
     final themed = base.copyWith(
       dialogTheme: base.dialogTheme.copyWith(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       colorScheme: base.colorScheme.copyWith(
         primary: seed,
-        onPrimary: Colors.white,
-        surface: Colors.white,
-        onSurface: Colors.black87,
+        onPrimary: isDark ? Colors.black : Colors.white,
+        surface: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        onSurface: isDark ? Colors.white : Colors.black87,
       ),
       datePickerTheme: base.datePickerTheme.copyWith(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         headerBackgroundColor: seed,
-        headerForegroundColor: Colors.white,
+        headerForegroundColor: isDark ? Colors.black : Colors.white,
         rangeSelectionBackgroundColor: seed.withOpacity(0.18),
-        rangePickerBackgroundColor: Colors.white,
+        rangePickerBackgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     );
@@ -96,8 +113,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
     required String? tipo,
     required String query,
   }) async {
-    
-
     final doc = pw.Document();
 
     final filtroPeriodo = (periodo == null)
@@ -106,7 +121,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
     final filtroTipo = "Tipo: ${tipo ?? "Todos"}";
     final filtroBusca = "Busca: ${query.trim().isEmpty ? "—" : query.trim()}";
 
-  
     final tableData = <List<String>>[
       ["Data", "Tipo", "Produto", "Qtd", "Motivo", "EtiquetaId"],
       ...all.map((m) {
@@ -136,7 +150,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
             style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
           ),
           pw.SizedBox(height: 10),
-
           pw.Container(
             padding: const pw.EdgeInsets.all(10),
             decoration: pw.BoxDecoration(
@@ -160,16 +173,12 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
               ],
             ),
           ),
-
           pw.SizedBox(height: 14),
-
-     
           pw.Text(
             "Gráficos",
             style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-
           _pdfChartCard(
             title: "Volume por tipo",
             subtitle: "Soma das quantidades por categoria.",
@@ -183,9 +192,7 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
               }).toList(),
             ),
           ),
-
           pw.SizedBox(height: 10),
-
           _pdfChartCard(
             title: "Movimentações por dia",
             subtitle: "Quantidade de registros por data.",
@@ -199,15 +206,12 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
               }).toList(),
             ),
           ),
-
           pw.SizedBox(height: 16),
-
           pw.Text(
             "Dados",
             style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-
           pw.Table.fromTextArray(
             data: tableData,
             headerStyle: pw.TextStyle(
@@ -223,12 +227,12 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
             cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             border: pw.TableBorder.all(color: PdfColors.grey300),
             columnWidths: {
-              0: const pw.FlexColumnWidth(1.2), 
-              1: const pw.FlexColumnWidth(1.0), 
-              2: const pw.FlexColumnWidth(1.8), 
-              3: const pw.FlexColumnWidth(0.7), 
-              4: const pw.FlexColumnWidth(1.6), 
-              5: const pw.FlexColumnWidth(1.2), 
+              0: const pw.FlexColumnWidth(1.2),
+              1: const pw.FlexColumnWidth(1.0),
+              2: const pw.FlexColumnWidth(1.8),
+              3: const pw.FlexColumnWidth(0.7),
+              4: const pw.FlexColumnWidth(1.6),
+              5: const pw.FlexColumnWidth(1.2),
             },
           ),
         ],
@@ -243,8 +247,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
     );
 
     final bytes = await doc.save();
-
-   
     await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
 
@@ -266,9 +268,9 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
     final movProv = context.read<EstoqueMovLocalProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7ED),
+      backgroundColor: _bg(context),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7ED),
+        backgroundColor: _bg(context),
         elevation: 0,
         toolbarHeight: compact ? 160 : 100,
         centerTitle: true,
@@ -305,7 +307,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
               var all = snap.data ?? [];
               all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-            
               if (_periodo != null) {
                 final start = DateTime(
                   _periodo!.start.year,
@@ -329,12 +330,10 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
                 }).toList();
               }
 
-             
               if (_tipoFiltro != null) {
                 all = all.where((m) => m.tipo == _tipoFiltro).toList();
               }
 
-              
               final q = _q.trim().toLowerCase();
               if (q.isNotEmpty) {
                 all = all.where((m) {
@@ -357,7 +356,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
                   final headerH = compact ? 86.0 : 78.0;
                   final filtersH = compact ? 160.0 : 86.0;
 
-                 
                   final cardH = (constraints.maxHeight - headerH - filtersH - footerH - 24)
                       .clamp(320.0, 700.0);
 
@@ -369,7 +367,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
                           child: _PageHeader(compact: compact),
                         ),
                       ),
-
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
@@ -432,7 +429,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
                           ),
                         ),
                       ),
-
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -440,12 +436,17 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
                             height: cardH,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.75),
+                                color: _cardAlt(context),
                                 borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: Colors.black.withOpacity(0.08)),
+                                border: Border.all(color: _border(context)),
                               ),
                               child: all.isEmpty
-                                  ? const Center(child: Text("Nenhuma movimentação encontrada."))
+                                  ? Center(
+                                      child: Text(
+                                        "Nenhuma movimentação encontrada.",
+                                        style: TextStyle(color: _muted(context)),
+                                      ),
+                                    )
                                   : AnimatedSwitcher(
                                       duration: const Duration(milliseconds: 220),
                                       child: _showGraficos
@@ -456,7 +457,6 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
                           ),
                         ),
                       ),
-
                       if (resumo != null)
                         SliverToBoxAdapter(
                           child: Padding(
@@ -494,8 +494,15 @@ class _PageHeader extends StatelessWidget {
   final bool compact;
   const _PageHeader({required this.compact});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final text = _isDark(context) ? Colors.white : Colors.black.withOpacity(0.86);
+    final muted =
+        _isDark(context) ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.55);
+
     return Row(
       children: [
         Expanded(
@@ -507,7 +514,7 @@ class _PageHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: compact ? 22 : 26,
                   fontWeight: FontWeight.w900,
-                  color: Colors.black.withOpacity(0.86),
+                  color: text,
                 ),
               ),
               const SizedBox(height: 6),
@@ -516,7 +523,7 @@ class _PageHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: compact ? 12.5 : 13.5,
                   height: 1.25,
-                  color: Colors.black.withOpacity(0.55),
+                  color: muted,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -532,36 +539,59 @@ class _TabelaView extends StatelessWidget {
   final List<EstoqueMovModel> all;
   const _TabelaView({required this.all});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      key: const ValueKey("tabela"),
-      scrollDirection: Axis.horizontal,
+    final text = _isDark(context) ? Colors.white : Colors.black87;
+    final headingBg =
+        _isDark(context) ? const Color(0xFF181818) : const Color(0xFFF5F5F5);
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        dividerColor: _isDark(context)
+            ? const Color(0xFFD4AF37).withOpacity(0.08)
+            : Colors.black.withOpacity(0.08),
+      ),
       child: SingleChildScrollView(
-        child: DataTable(
-          headingRowHeight: 44,
-          dataRowMinHeight: 44,
-          dataRowMaxHeight: 56,
-          columns: const [
-            DataColumn(label: Text("Data")),
-            DataColumn(label: Text("Tipo")),
-            DataColumn(label: Text("Produto")),
-            DataColumn(label: Text("Qtd")),
-            DataColumn(label: Text("Motivo")),
-            DataColumn(label: Text("EtiquetaId")),
-          ],
-          rows: all.map((m) {
-            return DataRow(
-              cells: [
-                DataCell(Text(_HistoricoScreenState._fmtDt(m.createdAt))),
-                DataCell(_TipoChip(tipo: m.tipo)),
-                DataCell(Text(m.produtoNome ?? "--")),
-                DataCell(Text(_HistoricoScreenState._fmtNum(m.quantidade))),
-                DataCell(Text(m.motivo ?? "")),
-                DataCell(Text(m.etiquetaId)),
-              ],
-            );
-          }).toList(),
+        key: const ValueKey("tabela"),
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          child: DataTable(
+            headingRowColor: WidgetStatePropertyAll(headingBg),
+            headingTextStyle: TextStyle(
+              color: text,
+              fontWeight: FontWeight.w900,
+            ),
+            dataTextStyle: TextStyle(
+              color: text,
+              fontWeight: FontWeight.w600,
+            ),
+            headingRowHeight: 44,
+            dataRowMinHeight: 44,
+            dataRowMaxHeight: 56,
+            columns: const [
+              DataColumn(label: Text("Data")),
+              DataColumn(label: Text("Tipo")),
+              DataColumn(label: Text("Produto")),
+              DataColumn(label: Text("Qtd")),
+              DataColumn(label: Text("Motivo")),
+              DataColumn(label: Text("EtiquetaId")),
+            ],
+            rows: all.map((m) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(_HistoricoScreenState._fmtDt(m.createdAt))),
+                  DataCell(_TipoChip(tipo: m.tipo)),
+                  DataCell(Text(m.produtoNome ?? "--")),
+                  DataCell(Text(_HistoricoScreenState._fmtNum(m.quantidade))),
+                  DataCell(Text(m.motivo ?? "")),
+                  DataCell(Text(m.etiquetaId)),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -603,8 +633,9 @@ class _GraficosView extends StatelessWidget {
                     .map((e) => _BarItem(
                           label: e.key,
                           value: e.value.toDouble(),
-                         
-                          color: Colors.black87,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFD4AF37)
+                              : Colors.black87,
                         ))
                     .toList(),
               ),
@@ -643,17 +674,27 @@ class _ChartCard extends StatelessWidget {
     required this.child,
   });
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final text = _isDark(context) ? Colors.white : Colors.black.withOpacity(0.86);
+    final muted =
+        _isDark(context) ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.55);
+    final border = _isDark(context)
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(_isDark(context) ? 0.16 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -667,7 +708,7 @@ class _ChartCard extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 15,
-              color: Colors.black.withOpacity(0.86),
+              color: text,
             ),
           ),
           const SizedBox(height: 4),
@@ -676,7 +717,7 @@ class _ChartCard extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 12.5,
-              color: Colors.black.withOpacity(0.55),
+              color: muted,
             ),
           ),
           const SizedBox(height: 12),
@@ -690,7 +731,7 @@ class _ChartCard extends StatelessWidget {
 class _BarItem {
   final String label;
   final double value;
-  final Color color; 
+  final Color color;
   _BarItem({required this.label, required this.value, required this.color});
 }
 
@@ -698,18 +739,25 @@ class _BarChart extends StatelessWidget {
   final List<_BarItem> items;
   const _BarChart({required this.items});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final muted =
+        _isDark(context) ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.55);
+
     if (items.isEmpty) {
       return Center(
         child: Text(
           "Sem dados para o período/filtros.",
-          style: TextStyle(color: Colors.black.withOpacity(0.55)),
+          style: TextStyle(color: muted),
         ),
       );
     }
 
-    final maxV = items.map((e) => e.value).fold<double>(0, (a, b) => a > b ? a : b);
+    final maxV =
+        items.map((e) => e.value).fold<double>(0, (a, b) => a > b ? a : b);
     final safeMax = maxV <= 0 ? 1.0 : maxV;
 
     return LayoutBuilder(
@@ -732,7 +780,6 @@ class _BarChart extends StatelessWidget {
                   width: barW,
                   child: Column(
                     children: [
-                      
                       SizedBox(
                         height: 18,
                         child: FittedBox(
@@ -744,14 +791,14 @@ class _BarChart extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
-                              color: Colors.black.withOpacity(0.70),
+                              color: _isDark(context)
+                                  ? Colors.white70
+                                  : Colors.black.withOpacity(0.70),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 6),
-
-                     
                       Expanded(
                         child: Align(
                           alignment: Alignment.bottomCenter,
@@ -768,10 +815,7 @@ class _BarChart extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
-                  
                       SizedBox(
                         height: 32,
                         child: Padding(
@@ -802,7 +846,7 @@ class _BarChart extends StatelessWidget {
 }
 
 class _MovStats {
-  final Map<String, double> byTipo; 
+  final Map<String, double> byTipo;
   final Map<String, int> byDay;
 
   _MovStats({required this.byTipo, required this.byDay});
@@ -861,16 +905,15 @@ class _ToggleViewButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black.withOpacity(0.86),
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFFED7227),
+        foregroundColor: Colors.black,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
       ),
       onPressed: onPressed,
       icon: Icon(
-        showGraficos ? Icons.table_rows_rounded : Icons.bar_chart_rounded,
-        color: Colors.white,
+        showGraficos ? Icons.table_rows_rounded : Icons.bar_chart_rounded, color: Colors.black,
       ),
       label: Text(
         showGraficos ? "Ver tabela" : "Ver gráficos",
@@ -896,20 +939,30 @@ class _PeriodoButton extends StatelessWidget {
     return "${two(d.day)}/${two(d.month)}/${d.year}";
   }
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
     final has = range != null;
     final text = has ? "${_fmt(range!.start)} • ${_fmt(range!.end)}" : "Período";
+    final border = _isDark(context)
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final fg = _isDark(context) ? Colors.white : Colors.black.withOpacity(0.78);
+    final icon = _isDark(context) ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.55);
+    final buttonColor =
+        _isDark(context) ? const Color(0xFFD4AF37) : const Color.fromARGB(255, 38, 116, 28);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(_isDark(context) ? 0.14 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 6),
           ),
@@ -918,20 +971,20 @@ class _PeriodoButton extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.date_range_rounded, color: Colors.black.withOpacity(0.55)),
+          Icon(Icons.date_range_rounded, color: icon),
           const SizedBox(width: 8),
           Text(
             text,
             style: TextStyle(
               fontWeight: FontWeight.w900,
-              color: Colors.black.withOpacity(0.78),
+              color: fg,
             ),
           ),
           const SizedBox(width: 8),
           TextButton(
             onPressed: onPick,
             style: TextButton.styleFrom(
-              foregroundColor: const Color.fromARGB(255, 38, 116, 28),
+              foregroundColor: buttonColor,
               textStyle: const TextStyle(fontWeight: FontWeight.w900),
             ),
             child: const Text("Selecionar"),
@@ -940,7 +993,10 @@ class _PeriodoButton extends StatelessWidget {
             IconButton(
               tooltip: "Limpar período",
               onPressed: onClear,
-              icon: const Icon(Icons.close_rounded),
+              icon: Icon(
+                Icons.close_rounded,
+                color: _isDark(context) ? Colors.white70 : Colors.black87,
+              ),
             ),
         ],
       ),
@@ -952,17 +1008,29 @@ class _SearchBox extends StatelessWidget {
   final TextEditingController controller;
   const _SearchBox({required this.controller});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final border = _isDark(context)
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+    final hint =
+        _isDark(context) ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.45);
+    final icon =
+        _isDark(context) ? const Color(0xFFD4AF37) : Colors.black.withOpacity(0.55);
+    final text = _isDark(context) ? Colors.white : Colors.black87;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(_isDark(context) ? 0.14 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -970,23 +1038,27 @@ class _SearchBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.search, color: Colors.black.withOpacity(0.55)),
+          Icon(Icons.search, color: icon),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
+              style: TextStyle(color: text),
               decoration: InputDecoration(
                 hintText: "Buscar por produto, motivo, etiqueta...",
                 border: InputBorder.none,
                 isDense: true,
-                hintStyle: TextStyle(color: Colors.black.withOpacity(0.45)),
+                hintStyle: TextStyle(color: hint),
               ),
             ),
           ),
           IconButton(
             tooltip: "Limpar",
             onPressed: () => controller.clear(),
-            icon: const Icon(Icons.close_rounded),
+            icon: Icon(
+              Icons.close_rounded,
+              color: _isDark(context) ? Colors.white70 : Colors.black87,
+            ),
           ),
         ],
       ),
@@ -1000,19 +1072,37 @@ class _TipoDrop extends StatelessWidget {
 
   const _TipoDrop({required this.value, required this.onChanged});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final border = _isDark(context)
+        ? const Color(0xFFD4AF37).withOpacity(0.16)
+        : Colors.black.withOpacity(0.08);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: value,
-          hint: const Text("Tipo"),
+          dropdownColor: _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white,
+          style: TextStyle(
+            color: _isDark(context) ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w700,
+          ),
+          iconEnabledColor: _isDark(context) ? const Color(0xFFD4AF37) : Colors.black87,
+          hint: Text(
+            "Tipo",
+            style: TextStyle(
+              color: _isDark(context) ? const Color(0xFFD6D6D6) : Colors.black87,
+            ),
+          ),
           items: const [
             DropdownMenuItem(value: null, child: Text("Todos")),
             DropdownMenuItem(value: EstoqueMovModel.tipoEntrada, child: Text("Entrada")),
@@ -1052,7 +1142,6 @@ class _TipoChip extends StatelessWidget {
     );
   }
 }
-
 
 class _TipoColors {
   static Color fg(String tipo) {
@@ -1098,18 +1187,28 @@ class _PdfButton extends StatelessWidget {
   final VoidCallback onPressed;
   const _PdfButton({required this.onPressed});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final bg =
+        _isDark(context) ? const Color(0xFFD4AF37) : const Color(0xFF2E7D32);
+
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
+        backgroundColor: bg,
+        foregroundColor: Colors.black,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
       ),
       onPressed: onPressed,
-      icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
+     icon: Icon(
+        Icons.picture_as_pdf_rounded,
+        color: Colors.black.withOpacity(0.78)
+            
+      ),
       label: const Text(
         "Gerar PDF",
         style: TextStyle(fontWeight: FontWeight.w900),
@@ -1152,12 +1251,14 @@ pw.Widget _pdfChartCard({
 
 pw.Widget _pdfBars({required List<_PdfBarItem> items}) {
   if (items.isEmpty) {
-    return pw.Text("Sem dados para o período/filtros.", style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700));
+    return pw.Text(
+      "Sem dados para o período/filtros.",
+      style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+    );
   }
 
   final maxV = items.map((e) => e.value).fold<double>(0, (a, b) => a > b ? a : b);
   final safeMax = maxV <= 0 ? 1.0 : maxV;
-
 
   return pw.Column(
     children: items.map((e) {
@@ -1180,8 +1281,8 @@ pw.Widget _pdfBars({required List<_PdfBarItem> items}) {
             pw.Expanded(
               child: pw.LayoutBuilder(
                 builder: (context, constraints) {
-                  final fullW = constraints?.maxWidth;
-                  final barW = fullW! * w;
+                  final fullW = constraints!.maxWidth;
+                  final barW = fullW * w;
 
                   return pw.Stack(
                     children: [
@@ -1212,7 +1313,11 @@ pw.Widget _pdfBars({required List<_PdfBarItem> items}) {
               child: pw.Text(
                 _pdfFmtNum(e.value),
                 textAlign: pw.TextAlign.right,
-                style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800),
+                style: pw.TextStyle(
+                  fontSize: 9,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.grey800,
+                ),
               ),
             ),
           ],
@@ -1227,16 +1332,14 @@ String _pdfFmtNum(double v) {
   return v.toStringAsFixed(2).replaceAll(".", ",");
 }
 
-
 class _TipoColorsPdf {
   static PdfColor fg(String tipo) {
-    
-    if (tipo == EstoqueMovModel.tipoEntrada) return PdfColor.fromInt(0xFF2E7D32); 
-    if (tipo == EstoqueMovModel.tipoVenda) return PdfColor.fromInt(0xFFF57C00); 
-    if (tipo == EstoqueMovModel.tipoCancelamento) return PdfColor.fromInt(0xFFC62828); 
-    if (tipo == EstoqueMovModel.tipoAjusteEntrada) return PdfColor.fromInt(0xFF1565C0); 
-    if (tipo == EstoqueMovModel.tipoAjusteSaida) return PdfColor.fromInt(0xFF6A1B9A); 
-    if (tipo == EstoqueMovModel.tipoExclusao) return PdfColor.fromInt(0xFFB71C1C); 
+    if (tipo == EstoqueMovModel.tipoEntrada) return PdfColor.fromInt(0xFF2E7D32);
+    if (tipo == EstoqueMovModel.tipoVenda) return PdfColor.fromInt(0xFFF57C00);
+    if (tipo == EstoqueMovModel.tipoCancelamento) return PdfColor.fromInt(0xFFC62828);
+    if (tipo == EstoqueMovModel.tipoAjusteEntrada) return PdfColor.fromInt(0xFF1565C0);
+    if (tipo == EstoqueMovModel.tipoAjusteSaida) return PdfColor.fromInt(0xFF6A1B9A);
+    if (tipo == EstoqueMovModel.tipoExclusao) return PdfColor.fromInt(0xFFB71C1C);
     return PdfColors.grey800;
   }
 }
