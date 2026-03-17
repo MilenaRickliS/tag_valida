@@ -9,15 +9,16 @@ import '../models/etiqueta_model.dart';
 import '../widgets/menu.dart';
 import '../screens/etiqueta_preview.dart';
 
-
 class EtiquetasFinalizadasScreen extends StatefulWidget {
   const EtiquetasFinalizadasScreen({super.key});
 
   @override
-  State<EtiquetasFinalizadasScreen> createState() => _EtiquetasFinalizadasScreenState();
+  State<EtiquetasFinalizadasScreen> createState() =>
+      _EtiquetasFinalizadasScreenState();
 }
 
-class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
+class _EtiquetasFinalizadasScreenState
+    extends State<EtiquetasFinalizadasScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
 
@@ -25,7 +26,26 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
   String _q = "";
 
   bool _loadedArgs = false;
-  String? _initialTab; 
+  String? _initialTab;
+
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _bg(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF0F0F0F) : const Color(0xFFFDF7ED);
+
+  Color _card(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white;
+
+  Color _text(BuildContext context) =>
+      _isDark(context) ? Colors.white : const Color(0xFF2B2B2B);
+
+  Color _border(BuildContext context) => _isDark(context)
+      ? const Color(0xFFD4AF37).withOpacity(0.16)
+      : Colors.black.withOpacity(0.08);
+
+  Color _brand(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFD4AF37) : const Color(0xFF428E2E);
 
   @override
   void initState() {
@@ -41,9 +61,8 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
 
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map) {
-      _initialTab = args["tab"]?.toString(); 
+      _initialTab = args["tab"]?.toString();
     }
-
 
     final idx = switch (_initialTab) {
       "vendido" => 0,
@@ -70,14 +89,27 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
 
     final uid = context.watch<AuthProvider>().user?.uid;
     if (uid == null) {
-      return const Scaffold(body: Center(child: Text("Faça login novamente.")));
+      return Scaffold(
+        backgroundColor: _bg(context),
+        body: Center(
+          child: Text(
+            "Faça login novamente.",
+            style: TextStyle(color: _text(context)),
+          ),
+        ),
+      );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFDF7ED),
+    final isDark = _isDark(context);
+    final bg = _bg(context);
+    final card = _card(context);
+    final border = _border(context);
+    final brand = _brand(context);
 
+    return Scaffold(
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7ED),
+        backgroundColor: bg,
         elevation: 0,
         centerTitle: true,
         toolbarHeight: compact ? 120 : 92,
@@ -98,9 +130,8 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
                 ],
               ),
       ),
-
       body: SafeArea(
-        top: false, 
+        top: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1100),
@@ -109,36 +140,33 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 
                   const _HeaderTitle(),
                   const SizedBox(height: 12),
-
-                
                   _SearchBox(
                     controller: _searchCtrl,
                     onClear: () => _searchCtrl.clear(),
                   ),
                   const SizedBox(height: 12),
-
-                
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: card,
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.black.withOpacity(0.10)),
+                      border: Border.all(color: border),
                     ),
                     child: TabBar(
                       controller: _tabCtrl,
                       indicator: BoxDecoration(
-                        color: const Color(0xff428e2e),
+                        color: brand,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.black.withOpacity(0.75),
+                      labelColor: isDark ? Colors.black : Colors.white,
+                      unselectedLabelColor:
+                          isDark ? const Color(0xFFD6D6D6) : Colors.black.withOpacity(0.75),
                       labelStyle: const TextStyle(fontWeight: FontWeight.w900),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900),
+                      unselectedLabelStyle:
+                          const TextStyle(fontWeight: FontWeight.w900),
                       dividerColor: Colors.transparent,
                       tabs: const [
                         Tab(text: "Vendidas"),
@@ -148,8 +176,6 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                 
                   Expanded(
                     child: TabBarView(
                       controller: _tabCtrl,
@@ -185,6 +211,16 @@ class _EtiquetasFinalizadasScreenState extends State<EtiquetasFinalizadasScreen>
 class _HeaderTitle extends StatelessWidget {
   const _HeaderTitle();
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _text(BuildContext context) =>
+      _isDark(context) ? Colors.white : const Color(0xFF2B2B2B);
+
+  Color _muted(BuildContext context) => _isDark(context)
+      ? const Color(0xFFD6D6D6)
+      : Colors.black.withOpacity(0.60);
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -192,14 +228,21 @@ class _HeaderTitle extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Etiquetas finalizadas",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: _text(context),
+            ),
           ),
           const SizedBox(height: 3),
           Text(
             "Vendidas e canceladas (arquivo). Abra para ver o preview ou reativar.",
-            style: TextStyle(color: Colors.black.withOpacity(0.60), fontSize: 12.8),
+            style: TextStyle(
+              color: _muted(context),
+              fontSize: 12.8,
+            ),
           ),
         ],
       ),
@@ -209,7 +252,7 @@ class _HeaderTitle extends StatelessWidget {
 
 class _FinalizadasList extends StatelessWidget {
   final String uid;
-  final String? statusEstoqueFilter; 
+  final String? statusEstoqueFilter;
   final String query;
 
   const _FinalizadasList({
@@ -227,7 +270,7 @@ class _FinalizadasList extends StatelessWidget {
         uid: uid,
         inicio: DateTime(2000, 1, 1),
         fim: DateTime(2100, 1, 1),
-        status: "ativa",  
+        status: "ativa",
         tipoId: null,
       ),
       builder: (context, snap) {
@@ -244,13 +287,16 @@ class _FinalizadasList extends StatelessWidget {
 
         var all = snap.data ?? [];
 
-       
         all = all.where((e) {
-          final st = (e.statusEstoque.trim().isEmpty) ? "ativo" : e.statusEstoque.trim().toLowerCase();
+          final st = (e.statusEstoque.trim().isEmpty)
+              ? "ativo"
+              : e.statusEstoque.trim().toLowerCase();
           final isFinal = st == "vendido" || st == "cancelado";
           if (!isFinal) return false;
 
-          if (statusEstoqueFilter != null && st != statusEstoqueFilter) return false;
+          if (statusEstoqueFilter != null && st != statusEstoqueFilter) {
+            return false;
+          }
 
           final q = query.trim().toLowerCase();
           if (q.isNotEmpty) {
@@ -267,7 +313,6 @@ class _FinalizadasList extends StatelessWidget {
           return true;
         }).toList();
 
-        
         DateTime sortKey(EtiquetaModel e) {
           return e.soldAt ??
               e.createdAt ??
@@ -306,13 +351,32 @@ class _EtiquetaFinalizadaCard extends StatelessWidget {
     required this.e,
   });
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _card(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF1E1E1E) : Colors.white;
+
+  Color _text(BuildContext context) =>
+      _isDark(context) ? Colors.white : const Color(0xFF2B2B2B);
+
+  Color _muted(BuildContext context) => _isDark(context)
+      ? const Color(0xFFD6D6D6)
+      : Colors.black.withOpacity(0.60);
+
+  Color _border(BuildContext context) => _isDark(context)
+      ? const Color(0xFFD4AF37).withOpacity(0.16)
+      : Colors.black.withOpacity(0.07);
+
   @override
   Widget build(BuildContext context) {
     final produto = e.produtoNome.trim().isEmpty ? "Sem nome" : e.produtoNome;
     final setor = e.setorNome.trim();
     final categoria = e.categoriaNome.trim();
 
-    final st = (e.statusEstoque.trim().isEmpty) ? "ativo" : e.statusEstoque.trim().toLowerCase();
+    final st = (e.statusEstoque.trim().isEmpty)
+        ? "ativo"
+        : e.statusEstoque.trim().toLowerCase();
     final isVendido = st == "vendido";
     final isCancelado = st == "cancelado";
 
@@ -335,18 +399,20 @@ class _EtiquetaFinalizadaCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => EtiquetaPreviewScreen(uid: uid, etiquetaId: e.id)),
+          MaterialPageRoute(
+            builder: (_) => EtiquetaPreviewScreen(uid: uid, etiquetaId: e.id),
+          ),
         );
       },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _card(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withOpacity(0.07)),
+          border: Border.all(color: _border(context)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(_isDark(context) ? 0.18 : 0.05),
               blurRadius: 12,
               offset: const Offset(0, 6),
             )
@@ -380,7 +446,11 @@ class _EtiquetaFinalizadaCard extends StatelessWidget {
                           produto,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: _text(context),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -396,42 +466,69 @@ class _EtiquetaFinalizadaCard extends StatelessWidget {
                     ].join(" • "),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.black.withOpacity(0.60)),
+                    style: TextStyle(color: _muted(context)),
                   ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 10,
                     runSpacing: 8,
                     children: [
-                      _Pill(icon: Icons.numbers_outlined, text: "Qtd: ${_fmtNum(e.quantidade)}"),
-                      _Pill(icon: Icons.inventory_2_outlined, text: "Rest: ${_fmtNum(e.quantidadeRestante)}"),
-                      _Pill(icon: Icons.event_available_outlined, text: "Val: ${_fmtDate(e.dataValidade)}"),
+                      _Pill(
+                        icon: Icons.numbers_outlined,
+                        text: "Qtd: ${_fmtNum(e.quantidade)}",
+                      ),
+                      _Pill(
+                        icon: Icons.inventory_2_outlined,
+                        text: "Rest: ${_fmtNum(e.quantidadeRestante)}",
+                      ),
+                      _Pill(
+                        icon: Icons.event_available_outlined,
+                        text: "Val: ${_fmtDate(e.dataValidade)}",
+                      ),
                       if (e.soldAt != null)
-                        _Pill(icon: Icons.schedule_rounded, text: "Final: ${_fmtDt(e.soldAt!)}"),
+                        _Pill(
+                          icon: Icons.schedule_rounded,
+                          text: "Final: ${_fmtDt(e.soldAt!)}",
+                        ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                     
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
-                           
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Reabrir no estoque (implementar)")),
+                              const SnackBar(
+                                content: Text("Reabrir no estoque (implementar)"),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff428e2e),
-                            foregroundColor: Colors.white,
+                            backgroundColor: _isDark(context)
+                                ? const Color(0xFFD4AF37)
+                                : const Color(0xFF428E2E),
+                            foregroundColor:
+                                _isDark(context) ? Colors.black : Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 14,
+                            ),
                           ),
-                          icon: const Icon(Icons.restart_alt_rounded, size: 18, color: Colors.white,),
-                          label: const Text("Reabrir", style: TextStyle(fontWeight: FontWeight.w900)),
+                          icon: Icon(
+                            Icons.restart_alt_rounded,
+                            size: 18,
+                            color: _isDark(context) ? Colors.black : Colors.white,
+                          ),
+                          label: const Text(
+                            "Reabrir",
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
                         ),
                       ),
                     ],
@@ -505,24 +602,41 @@ class _Pill extends StatelessWidget {
     required this.text,
   });
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final isDark = _isDark(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.04),
+        color: isDark ? const Color(0xFF181818) : Colors.black.withOpacity(0.04),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.10)),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFFD4AF37).withOpacity(0.16)
+              : Colors.black.withOpacity(0.10),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.black.withOpacity(0.70)),
+          Icon(
+            icon,
+            size: 16,
+            color: isDark
+                ? const Color(0xFFD4AF37)
+                : Colors.black.withOpacity(0.70),
+          ),
           const SizedBox(width: 6),
           Text(
             text,
             style: TextStyle(
-              color: Colors.black.withOpacity(0.80),
+              color: isDark
+                  ? const Color(0xFFD6D6D6)
+                  : Colors.black.withOpacity(0.80),
               fontWeight: FontWeight.w800,
               fontSize: 12,
             ),
@@ -542,17 +656,26 @@ class _SearchBox extends StatelessWidget {
     required this.onClear,
   });
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final isDark = _isDark(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFFD4AF37).withOpacity(0.16)
+              : Colors.black.withOpacity(0.08),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.18 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           )
@@ -560,16 +683,28 @@ class _SearchBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.search, color: Colors.black.withOpacity(0.55)),
+          Icon(
+            Icons.search,
+            color: isDark
+                ? const Color(0xFFD4AF37)
+                : Colors.black.withOpacity(0.55),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF2B2B2B),
+              ),
               decoration: InputDecoration(
                 hintText: "Buscar por produto, setor, categoria, tipo...",
                 border: InputBorder.none,
                 isDense: true,
-                hintStyle: TextStyle(color: Colors.black.withOpacity(0.45)),
+                hintStyle: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFD6D6D6)
+                      : Colors.black.withOpacity(0.45),
+                ),
               ),
             ),
           ),
@@ -580,9 +715,16 @@ class _SearchBox extends StatelessWidget {
                     key: const ValueKey("clear"),
                     tooltip: "Limpar",
                     onPressed: onClear,
-                    icon: const Icon(Icons.close_rounded),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: isDark ? const Color(0xFFD4AF37) : null,
+                    ),
                   )
-                : const SizedBox(key: ValueKey("noClear"), width: 0, height: 0),
+                : const SizedBox(
+                    key: ValueKey("noClear"),
+                    width: 0,
+                    height: 0,
+                  ),
           ),
         ],
       ),
@@ -601,27 +743,53 @@ class _EmptyBox extends StatelessWidget {
     required this.subtitle,
   });
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
+    final isDark = _isDark(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.07)),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFFD4AF37).withOpacity(0.16)
+              : Colors.black.withOpacity(0.07),
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 42, color: Colors.black.withOpacity(0.75)),
+          Icon(
+            icon,
+            size: 42,
+            color: isDark
+                ? const Color(0xFFD4AF37)
+                : Colors.black.withOpacity(0.75),
+          ),
           const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: isDark ? Colors.white : const Color(0xFF2B2B2B),
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black.withOpacity(0.60)),
+            style: TextStyle(
+              color: isDark
+                  ? const Color(0xFFD6D6D6)
+                  : Colors.black.withOpacity(0.60),
+            ),
           ),
         ],
       ),
